@@ -70,8 +70,18 @@ const extended = basePrisma.$extends({
           // Skip injecting centerId if the caller already provides a center
           // relation (center: { connect: { id } }) to avoid Prisma rejecting
           // the conflicting scalar + relation on the same foreign key.
-          if (!data.center) {
-            nextArgs.data = { ...data, centerId };
+          if (!data.center && !data.centerId) {
+            // Some models (Attendance, AttendanceQrSession) are created via
+            // checked input with `student: { connect }` / `lesson: { connect }`.
+            // Prisma's checked input does not accept scalar `centerId`; it
+            // requires `center: { connect }`. Detect relation-style creates.
+            const usesRelation =
+              data.student?.connect || data.lesson?.connect || data.teacher?.connect || data.user?.connect;
+            if (usesRelation) {
+              nextArgs.data = { ...data, center: { connect: { id: centerId } } };
+            } else {
+              nextArgs.data = { ...data, centerId };
+            }
           }
         } else if (operation === 'createMany') {
           const data = nextArgs.data;

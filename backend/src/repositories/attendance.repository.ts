@@ -48,8 +48,8 @@ export const attendanceRepository = {
     });
   },
 
-  createQrSession(data: Prisma.AttendanceQrSessionCreateInput) {
-    return prisma.attendanceQrSession.create({ data });
+  createQrSession(data: Prisma.AttendanceQrSessionUncheckedCreateInput | Prisma.AttendanceQrSessionCreateInput) {
+    return prisma.attendanceQrSession.create({ data: data as any });
   },
 
   markQrSessionUsed(id: string) {

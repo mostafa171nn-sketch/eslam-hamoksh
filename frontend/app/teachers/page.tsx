@@ -10,9 +10,9 @@ export default function BrowseTeachersRoute() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <PublicNav />
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-        <div className="mb-4">
-          <PageBackButton fallback="/centers" />
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <div className="mb-5">
+          <PageBackButton fallback="/" />
         </div>
         <Suspense
           fallback={
@@ -23,7 +23,7 @@ export default function BrowseTeachersRoute() {
         >
           <StudentTeachersPage />
         </Suspense>
-      </div>
+      </main>
     </div>
   );
 }

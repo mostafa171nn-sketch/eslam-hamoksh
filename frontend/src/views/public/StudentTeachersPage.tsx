@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { GraduationCap, Star } from 'lucide-react';
-import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Avatar } from '../../components/ui/Avatar';
 import { Badge } from '../../components/ui/Badge';
@@ -82,9 +81,23 @@ export default function StudentTeachersPage() {
 
   return (
     <div>
-      <PageHeader title={t('findTeacher')} subtitle={t('findTeacherSubtitle')} />
+      <div className="mb-6">
+        <div className="flex items-start gap-3">
+          <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white sm:flex">
+            <GraduationCap className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-[1.7rem]">
+              {t('findTeacher')}
+            </h1>
+            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+              {t('findTeacherSubtitle')}
+            </p>
+          </div>
+        </div>
+      </div>
 
-      <Card bodyClassName="p-4">
+      <Card bodyClassName="p-4 sm:p-5">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
           <div className="lg:col-span-2">
             <Input
