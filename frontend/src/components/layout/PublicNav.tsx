@@ -32,15 +32,9 @@ export function PublicNav() {
           </Link>
           <Link
             href="/register"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
-            {t('register')}
-          </Link>
-          <Link
-            href="/centers/register"
             className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
-            {t('registerCenter')}
+            {t('register')}
           </Link>
           <LangToggle />
           <ThemeToggle />
