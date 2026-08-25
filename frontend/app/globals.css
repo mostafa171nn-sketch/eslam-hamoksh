@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.15s ease-out;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+/* Reserve the scrollbar gutter so toggling body overflow (modals/loaders)
+   never causes a layout shift or a brief "double scrollbar". */
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* ===== Pencil Loader (global ECMS loading indicator) ===== */
+
+/* The pencil graphic. Size is fixed at 60em exactly; the rendered size is
+   controlled by the font-size of an ancestor (em-based), never by editing
+   this rule. The loading overlay / inline wrappers set that font-size. */
+.pencil {
+  display: block;
+  width: 60em;
+  height: 60em;
+}
+
+.pencil svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Full-viewport page/route/data loading overlay. */
+.pencil-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: #f8fafc; /* slate-50, matches the app background */
+  /* Sizes the em-based .pencil so 60em fits comfortably inside the viewport. */
+  font-size: min(1.4vw, 1.4vh);
+}
+
+.pencil-overlay__label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+/* Inline (in-container) usage, e.g. inside a modal or button. */
+.pencil-inline {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: #64748b;
+}
+
+.pencil-inline__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.ecms-pencil-track {
+  stroke: #e2e8f0;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.ecms-pencil-ink {
+  stroke: #4f46e5; /* brand-600 */
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 170;
+  stroke-dashoffset: 170;
+  animation: ecms-pencil-draw 1.6s ease-in-out infinite alternate;
+}
+
+.ecms-pencil-body {
+  fill: #4f46e5; /* brand-600 */
+}
+
+.ecms-pencil-lead {
+  fill: #0f172a; /* slate-900 */
+}
+
+.ecms-pencil-ferrule {
+  fill: #cbd5e1; /* slate-300 */
+}
+
+.ecms-pencil-eraser {
+  fill: #fda4af; /* rose-300 */
+}
+
+.ecms-pencil-move {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation: ecms-pencil-move 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes ecms-pencil-move {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(170px);
+  }
+}
+
+@keyframes ecms-pencil-draw {
+  from {
+    stroke-dashoffset: 170;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 2.4s linear infinite;
+}
+
+@keyframes pencil-float {
+  0%,
+  100% {
+    transform: translateY(-2px) rotate(-8deg);
+  }
+  50% {
+    transform: translateY(2px) rotate(8deg);
+  }
+}
+
+.pencil-float {
+  animation: pencil-float 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ecms-pencil-ink,
+  .ecms-pencil-move {
+    animation-duration: 2.4s;
+  }
+  .animate-spin-slow,
+  .pencil-float {
+    animation: none;
+  }
+}
+
+/* Dark mode base so the app stays readable. */
+.dark body {
+  @apply bg-slate-900 text-slate-100;
+}
+
+.dark .pencil-overlay {
+  background: #0f172a;
+}
+
+.dark .pencil-overlay__label,
+.dark .pencil-inline,
+.dark .pencil-inline__label {
+  color: #94a3b8;
+}
