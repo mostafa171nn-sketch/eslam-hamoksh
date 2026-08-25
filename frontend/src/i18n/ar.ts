@@ -54,7 +54,7 @@
   // --- Auth ---
   login: 'Sign in',
   loginSubtitle: 'Enter your credentials to continue.',
-  register: 'Register',
+  register: 'تسجيل',
   email: 'Email',
   username: 'Username',
   enterYourUsername: 'Enter your username',
