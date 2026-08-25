@@ -152,25 +152,23 @@ export default function RegisterPage() {
       if (validRole === 'student') {
         Object.assign(base, { subjects, gradeId });
       }
-      const purposeMap: Record<string, string> = {
-        teacher: 'REGISTER_TEACHER',
-        student: 'REGISTER_STUDENT',
-        parent: 'REGISTER_PARENT',
+      const ROLE_TO_API: Record<string, 'TEACHER' | 'STUDENT' | 'PARENT'> = {
+        teacher: 'TEACHER',
+        student: 'STUDENT',
+        parent: 'PARENT',
       };
-      const purpose = purposeMap[validRole as string] as 'REGISTER_TEACHER' | 'REGISTER_STUDENT' | 'REGISTER_PARENT';
-      const payload = { ...base, phone: normalizedPhone };
-      const otpRes = await api.requestOtp({ phone: normalizedPhone, purpose, payload });
-      const { verificationId, maskedPhone, expiresAt } = otpRes.data as { verificationId: string; maskedPhone: string; expiresAt: string };
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem(
-          'otp_verification',
-          JSON.stringify({ verificationId, maskedPhone, expiresAt, phone: normalizedPhone, purpose }),
-        );
+      const roleForApi = ROLE_TO_API[validRole as string];
+      const res = await api.register({ role: roleForApi, ...(base as any) });
+      const data: any = res.data;
+      if (validRole === 'student' && data?.studentNumber) {
+        // Show student number before redirect – keep existing UI pattern
+        // For now, redirect to login with success; RegisterPage already handles studentNumber state if needed
+        router.push('/login?registered=1&studentNumber=' + encodeURIComponent(data.studentNumber));
+      } else {
+        router.push('/login?registered=1');
       }
-      router.push('/verify-phone?vid=' + encodeURIComponent(verificationId));
     } catch (err: unknown) {
       const raw = errorMessage(err, t('registrationFailed'));
-      // Surface duplicate phone / username with exact backend messages
       if (raw.toLowerCase().includes('phone') && raw.toLowerCase().includes('already')) {
         setErrors((prev) => ({ ...prev, phone: 'This phone number is already registered.' }));
       }
@@ -181,10 +179,6 @@ export default function RegisterPage() {
       const details = (err as { details?: Array<{ path?: string; message?: string }> })?.details;
       if (Array.isArray(details)) {
         setServerDetails(details.map((d) => (d?.path ? `${d.path}: ${d.message}` : d?.message)).filter(Boolean) as string[]);
-      }
-      // cooldown message
-      if (raw.toLowerCase().includes('please wait')) {
-        setServerError(raw);
       }
     } finally {
       setLoading(false);

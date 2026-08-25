@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import { PublicNav } from '../../../src/components/layout/PublicNav';
 import { Input } from '../../../src/components/ui/Input';
@@ -20,7 +19,6 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_RE = /^[a-zA-Z0-9_.-]+$/;
 
 export default function CenterRegisterPage() {
-  const router = useRouter();
   const { t } = useT();
 
   const [form, setForm] = useState({
@@ -105,16 +103,8 @@ export default function CenterRegisterPage() {
         adminEmail: form.adminEmail.trim(),
         adminPassword: form.adminPassword,
       };
-      // Center verification uses the center phone as the OTP destination
-      const otpRes = await api.requestOtp({ phone: normalizedCenterPhone, purpose: 'REGISTER_CENTER', payload });
-      const { verificationId, maskedPhone, expiresAt } = otpRes.data as { verificationId: string; maskedPhone: string; expiresAt: string };
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem(
-          'otp_verification',
-          JSON.stringify({ verificationId, maskedPhone, expiresAt, phone: normalizedCenterPhone, purpose: 'REGISTER_CENTER' }),
-        );
-      }
-      router.push('/verify-phone?vid=' + encodeURIComponent(verificationId));
+      const res = await api.registerCenter(payload);
+      setResult(res.data);
       return;
     } catch (err) {
       const raw = errorMessage(err, t('registrationFailed'));
@@ -238,9 +228,6 @@ export default function CenterRegisterPage() {
           <Button type="submit" loading={loading} className="w-full" size="lg">
             {t('submit')}
           </Button>
-          <p className="text-center text-xs text-slate-500 dark:text-slate-400">
-            You&apos;ll receive an SMS code to verify your center phone before registration completes.
-          </p>
         </form>
       </main>
     </div>

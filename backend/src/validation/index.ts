@@ -80,7 +80,7 @@ export const registerStudentSchema = z.object({
   password,
   confirmPassword: z.string(),
   phone,
-  gradeId: z.string().uuid('Please select a grade.'),
+  gradeId: z.string({ required_error: 'Please select a grade.' }).uuid('Please select a valid grade.'),
   subjects: z.array(z.string().min(1)).min(1, 'Select at least one subject.').max(30),
 }).refine((d) => d.password === d.confirmPassword, {
   message: 'Passwords do not match.',
