@@ -67,7 +67,7 @@ export interface RegisterStudentInput {
   phone: string;
   centerId: string;
   email?: string;
-  gradeId?: string;
+  gradeId: string;
   subjects: string[];
 }
 
@@ -217,6 +217,15 @@ export async function registerStudent(input: RegisterStudentInput) {
   await assertCenterAcceptsRegistrations(input.centerId);
   await assertWithinPlanLimit(input.centerId, 'students');
 
+  if (!input.gradeId) {
+    throw ApiError.badRequest('Please select a grade.', 'GRADE_REQUIRED');
+  }
+  // Validate grade exists
+  const grade = await prisma.grade.findUnique({ where: { id: input.gradeId } });
+  if (!grade) {
+    throw ApiError.badRequest('Selected grade is invalid. Please select a valid grade.', 'INVALID_GRADE');
+  }
+
   const user = await createUserRecord('STUDENT', {
     username: input.username,
     password: input.password,
@@ -233,7 +242,7 @@ export async function registerStudent(input: RegisterStudentInput) {
     user: { connect: { id: user.id } },
     center: { connect: { id: input.centerId } },
     studentNumber,
-    grade: input.gradeId ? { connect: { id: input.gradeId } } : undefined,
+    grade: { connect: { id: input.gradeId } },
     studentSubjects: { create: subjectIds.map((subjectId) => ({ subjectId })) },
   });
 

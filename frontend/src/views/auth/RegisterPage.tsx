@@ -119,7 +119,10 @@ export default function RegisterPage() {
       if (yearsExperience === '' || Number(yearsExperience) < 0) errs.yearsExperience = t('enterYearsExperience');
       if (hourlyRate === '' || Number(hourlyRate) < 0) errs.hourlyRate = t('enterHourlyRate');
     }
-    if (validRole === 'student' && subjects.length === 0) errs.subjects = t('selectAtLeastOneSubject');
+    if (validRole === 'student') {
+      if (subjects.length === 0) errs.subjects = t('selectAtLeastOneSubject');
+      if (!gradeId) errs.gradeId = t('gradeRequired');
+    }
     setErrors(errs);
     setServerDetails([]);
     if (Object.keys(errs).length) return;
@@ -147,7 +150,7 @@ export default function RegisterPage() {
         });
       }
       if (validRole === 'student') {
-        Object.assign(base, { subjects, ...(gradeId ? { gradeId } : {}) });
+        Object.assign(base, { subjects, gradeId });
       }
       const purposeMap: Record<string, string> = {
         teacher: 'REGISTER_TEACHER',
@@ -353,10 +356,12 @@ export default function RegisterPage() {
           <>
             <MultiSelect label={t('subjects')} options={subjectOptions} selected={subjects} onChange={setSubjects} error={errors.subjects} />
             <Select
-              label={t('gradeOptional')}
-              options={[{ value: '', label: t('selectAGrade') }, ...gradeOptions]}
+              label={`${t('grade')} *`}
+              options={[{ value: '', label: t('selectGrade') }, ...gradeOptions]}
               value={gradeId}
               onChange={(e) => setGradeId(e.target.value)}
+              error={errors.gradeId}
+              required
             />
           </>
         )}

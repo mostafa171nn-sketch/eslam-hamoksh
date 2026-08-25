@@ -93,6 +93,8 @@
   subjects: 'Subjects',
   grades: 'Grades',
   selectAGrade: 'Select a gradeâ€¦',
+  selectGrade: 'Select grade...',
+  gradeRequired: 'الرجاء اختيار الصف.',
   usernameMinChars: 'Username must be at least 3 characters.',
   usernameAllowedChars: 'Only letters, numbers, dot, dash and underscore are allowed.',
   validEmailOptional: 'Enter a valid email (optional).',

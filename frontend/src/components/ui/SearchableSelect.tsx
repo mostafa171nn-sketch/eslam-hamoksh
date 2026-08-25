@@ -113,22 +113,22 @@ export function SearchableSelect({
   return (
     <div className={`relative w-full ${className}`} ref={rootRef}>
       {label && (
-        <label className="mb-1 block text-sm font-medium text-slate-700">{label}</label>
+        <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
       )}
       <button
         type="button"
         disabled={disabled}
         onClick={() => (open ? setOpen(false) : openDropdown())}
         onKeyDown={handleKeyDown}
-        className={`flex w-full items-center justify-between gap-2 rounded-lg border bg-white px-3 py-2 text-sm text-left focus:outline-none focus:ring-2 ${
+        className={`flex w-full items-center justify-between gap-2 rounded-lg border bg-white px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 dark:bg-slate-900 dark:text-slate-100 ${
           error
-            ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+            ? 'border-red-300 focus:border-red-500 focus:ring-red-100 dark:border-red-500/60 dark:focus:ring-red-900/40'
             : open
-              ? 'border-brand-500 ring-2 ring-brand-100'
-              : 'border-slate-300 focus:border-brand-500 focus:ring-brand-100'
+              ? 'border-brand-500 ring-2 ring-brand-100 dark:border-brand-400 dark:ring-brand-900/40'
+              : 'border-slate-300 focus:border-brand-500 focus:ring-brand-100 dark:border-slate-600 dark:focus:border-brand-400 dark:focus:ring-brand-900/40'
         } ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
       >
-        <span className={selected ? 'text-slate-900 dark:text-white' : 'text-slate-400'}>
+        <span className={selected ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-400'}>
           {selected ? selected.label : placeholder}
         </span>
         <span className="pointer-events-none ml-auto flex items-center gap-1">
@@ -168,12 +168,12 @@ export function SearchableSelect({
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search…"
-              className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+              className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400"
             />
           </div>
           <ul ref={listRef} className="max-h-48 overflow-y-auto pb-1" role="listbox">
             {filtered.length === 0 && (
-              <li className="px-3 py-2 text-center text-sm text-slate-400">{emptyText}</li>
+              <li className="px-3 py-2 text-center text-sm text-slate-400 dark:text-slate-400">{emptyText}</li>
             )}
             {filtered.map((o, i) => (
               <li
@@ -189,8 +189,8 @@ export function SearchableSelect({
                   o.value === value
                     ? 'bg-brand-50 font-medium text-brand-700 dark:bg-brand-900/30 dark:text-brand-300'
                     : i === highlight
-                      ? 'bg-slate-100 dark:bg-slate-700'
-                      : 'text-slate-700 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/50'
+                      ? 'bg-slate-100 text-slate-900 dark:bg-slate-700 dark:text-slate-100'
+                      : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700'
                 }`}
               >
                 {o.label}
@@ -200,7 +200,7 @@ export function SearchableSelect({
         </div>
       )}
 
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }
