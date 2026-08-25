@@ -236,7 +236,7 @@ async function rawRequest<T>(path: string, options: RequestInit): Promise<ApiRes
     throw new ApiClientError(
       body?.message ?? `Request failed (${res.status})`,
       res.status,
-      body?.code,
+      body?.error?.code ?? body?.code,
       body?.error?.details,
     );
   }

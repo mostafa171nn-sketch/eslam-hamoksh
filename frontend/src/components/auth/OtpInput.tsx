@@ -5,11 +5,6 @@ export function OtpInput({ length = 6, value, onChange, disabled }: { length?: n
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   const handleChange = (idx: number, val: string) => {
     if (!/^\d*$/.test(val)) return;
-    const chars = value.split('');
-    chars[idx] = val.slice(-1);
-    const next = chars.join('').slice(0, length);
-    // pad to length
-    // keep existing chars
     const arr = value.split('');
     arr[idx] = val.slice(-1);
     const joined = arr.join('');

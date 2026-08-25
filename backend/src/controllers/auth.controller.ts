@@ -43,47 +43,23 @@ function clearAuthCookies(res: Response) {
   res.clearCookie('refreshToken', COOKIE_OPTS);
 }
 
-export const register = asyncHandler(async (req: Request, res: Response) => {
-  const role = (req.params.role as string).toUpperCase();
-  const body = req.validatedBody as any;
-
-  if (role === 'TEACHER') {
-    const result = await registerTeacher(body);
-    return created(res, { userId: result.user.id, teacherId: result.teacherId, role: 'TEACHER' }, 'Account created successfully.');
-  }
-  if (role === 'STUDENT') {
-    const result = await registerStudent(body);
-    return created(
-      res,
-      {
-        userId: result.user.id,
-        studentId: result.studentId,
-        studentNumber: result.studentNumber,
-        role: 'STUDENT',
-      },
-      'Account created successfully.',
-    );
-  }
-  if (role === 'PARENT') {
-    const result = await registerParent(body);
-    return created(res, { userId: result.user.id, parentId: result.parentId, role: 'PARENT' }, 'Account created successfully.');
-  }
-  throw ApiError.badRequest('Account type not allowed.', 'INVALID_ROLE');
+/**
+ * Direct registration is disabled — all phone-based registrations must go
+ * through the OTP flow (POST /api/auth/otp/request → POST /api/auth/otp/verify).
+ * The underlying service functions (registerTeacher etc.) are still used
+ * internally by otp.service after successful phone verification.
+ */
+export const register = asyncHandler(async (_req: Request, _res: Response) => {
+  throw ApiError.forbidden(
+    'Phone verification required. Please request a verification code via POST /api/auth/otp/request and complete verification via POST /api/auth/otp/verify before registration can complete.',
+    'PHONE_VERIFICATION_REQUIRED',
+  );
 });
 
-export const registerCenterHandler = asyncHandler(async (req: Request, res: Response) => {
-  const body = req.validatedBody as any;
-  const result = await registerCenter(body);
-  return created(
-    res,
-    {
-      centerId: result.center.id,
-      centerName: result.center.name,
-      status: result.center.status,
-      subscriptionStatus: result.center.subscriptionStatus,
-      requiresApproval: result.center.requiresApproval,
-    },
-    'Your center has been registered and is awaiting approval from the platform administrator.',
+export const registerCenterHandler = asyncHandler(async (_req: Request, _res: Response) => {
+  throw ApiError.forbidden(
+    'Phone verification required. Please request a verification code via POST /api/auth/otp/request (purpose REGISTER_CENTER) and verify it before center registration can complete.',
+    'PHONE_VERIFICATION_REQUIRED',
   );
 });
 

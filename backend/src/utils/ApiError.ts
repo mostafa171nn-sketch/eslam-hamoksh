@@ -47,7 +47,7 @@ export class ApiError extends Error {
     return new ApiError(429, message, 'RATE_LIMITED');
   }
 
-  static internal(message = 'Something went wrong.') {
-    return new ApiError(500, message, 'INTERNAL_ERROR');
+  static internal(message = 'Something went wrong.', code = 'INTERNAL_ERROR') {
+    return new ApiError(500, message, code);
   }
 }

@@ -292,6 +292,24 @@ export async function registerCenter(input: RegisterCenterInput) {
 
   const passwordHash = await hashPassword(input.adminPassword);
 
+  // Normalize phones to E.164 so OTP verification can mark them verified
+  let centerPhoneE164: string | null = null;
+  let adminPhoneE164: string | null = null;
+  let adminPhoneVerified = false;
+  try {
+    const { normalizePhone: np } = await import('../utils/phone.js');
+    if (input.phone) {
+      try {
+        centerPhoneE164 = np(input.phone).e164;
+      } catch {}
+    }
+    if (input.adminPhone) {
+      const norm = np(input.adminPhone);
+      adminPhoneE164 = norm.e164;
+      adminPhoneVerified = true;
+    }
+  } catch {}
+
   const result = await prisma.$transaction(async (tx) => {
     const center = await tx.center.create({
       data: {
@@ -299,7 +317,7 @@ export async function registerCenter(input: RegisterCenterInput) {
         slug,
         address: input.address,
         city: input.city,
-        phone: input.phone,
+        phone: centerPhoneE164 ?? input.phone,
         email: input.email,
         website: input.website,
         description: input.description,
@@ -316,6 +334,9 @@ export async function registerCenter(input: RegisterCenterInput) {
         passwordHash,
         fullName: input.adminFullName,
         phone: input.adminPhone,
+        phoneE164: adminPhoneE164,
+        phoneVerified: adminPhoneVerified,
+        phoneVerifiedAt: adminPhoneVerified ? new Date() : null,
         email: input.adminEmail,
         role: 'CENTER_ADMIN',
         status: 'PENDING',

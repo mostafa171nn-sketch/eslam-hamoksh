@@ -26,6 +26,15 @@ const envSchema = z.object({
   EMAIL_FROM: z.string().default('Educational Center <no-reply@example.com>'),
   APP_URL: z.string().optional().default(''),
   EXAM_SWEEPER_INTERVAL_MS: z.coerce.number().default(30000),
+  OTP_DEV_MODE: z.preprocess((v) => String(v).toLowerCase() === 'true', z.boolean().default(false)),
+  SMS_PROVIDER: z.enum(['log', 'twilio']).default('log'),
+  OTP_TTL_SECONDS: z.coerce.number().int().min(30).max(3600).default(300),
+  OTP_MAX_ATTEMPTS: z.coerce.number().int().min(3).max(10).default(5),
+  OTP_RESEND_COOLDOWN: z.coerce.number().int().min(15).max(600).default(45),
+  OTP_RESEND_LIMIT: z.coerce.number().int().min(1).max(20).default(5),
+  TWILIO_ACCOUNT_SID: z.string().optional().default(''),
+  TWILIO_AUTH_TOKEN: z.string().optional().default(''),
+  TWILIO_FROM: z.string().optional().default(''),
 });
 
 const parsed = envSchema.safeParse(process.env);

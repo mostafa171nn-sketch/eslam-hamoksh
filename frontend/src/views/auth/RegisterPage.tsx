@@ -10,6 +10,7 @@ import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { Button } from '../../components/ui/Button';
 import { MultiSelect } from '../../components/ui/MultiSelect';
 import { InlineError } from '../../components/ui/ErrorAlert';
+import { PhoneInput } from '../../components/ui/PhoneInput';
 import { api, type PublicCenter } from '../../lib/api';
 import type { Subject, Grade } from '../../lib/types';
 import { errorMessage } from '../../hooks/useApi';
@@ -17,13 +18,6 @@ import { useT } from '../../i18n';
 import { normalizePhone } from '../../lib/phone';
 
 type RegisterRole = 'teacher' | 'student' | 'parent';
-
-const ROLE_TO_API
-  void ROLE_TO_API;: Record<RegisterRole, 'TEACHER' | 'STUDENT' | 'PARENT'> = {
-  teacher: 'TEACHER',
-  student: 'STUDENT',
-  parent: 'PARENT',
-};
 
 const USERNAME_RE = /^[a-zA-Z0-9_.-]+$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -41,8 +35,6 @@ export default function RegisterPage() {
   const [centers, setCenters] = useState<PublicCenter[]>([]);
   const [centersLoading, setCentersLoading] = useState(false);
   const [centersError, setCentersError] = useState(false);
-  // Deep link support: /register/student?center=<id> preselects the center
-  // (used by the "Register" CTA on the public center detail page).
   const searchParams = useSearchParams();
   const preselectedCenterId = searchParams?.get('center') ?? '';
   const [centerId, setCenterId] = useState(preselectedCenterId);
@@ -56,6 +48,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('+20');
 
   const [subjects, setSubjects] = useState<string[]>([]);
   const [grades, setGrades] = useState<string[]>([]);
@@ -65,13 +58,10 @@ export default function RegisterPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState('');
+  const [serverDetails, setServerDetails] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [studentNumber, setStudentNumber] = useState<string | null>(null);
-  void setStudentNumber; void studentNumber;
 
   const loadCenters = useCallback(() => {
-    // Same real Learning Centers dataset as the public centers page
-    // (GET /centers/search) — never a static list.
     setCentersLoading(true);
     setCentersError(false);
     api
@@ -100,7 +90,6 @@ export default function RegisterPage() {
     if (validRole === 'teacher' || validRole === 'student') loadCatalog();
   }, [validRole, loadCenters, loadCatalog]);
 
-  // Sync deep-linked center once search params are available after hydration.
   useEffect(() => {
     if (preselectedCenterId) {
       setCenterId((prev) => prev || preselectedCenterId);
@@ -110,15 +99,20 @@ export default function RegisterPage() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
+    if (!centerId) errs.centerId = t('selectCenter') ?? 'Please select a center.';
     if (username.trim().length < 3) errs.username = t('usernameMinChars');
-    else if (!USERNAME_RE.test(username.trim()))
-      errs.username = t('usernameAllowedChars');
+    else if (!USERNAME_RE.test(username.trim())) errs.username = t('usernameAllowedChars');
     if (fullName.trim().length < 2) errs.fullName = t('fullName') + ' ' + t('required');
     if (email.trim() && !EMAIL_RE.test(email.trim())) errs.email = t('validEmailOptional');
-    if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password))
-      errs.password = t('passwordRule');
+    if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) errs.password = t('passwordRule');
     if (password !== confirmPassword) errs.confirmPassword = t('passwordsNoMatch');
-    if (phone.trim().length < 8) errs.phone = t('validPhone');
+    // phone: require at least 8 digits after normalization
+    try {
+      const normalizedForCheck = normalizePhone(phone.trim(), countryCode);
+      if (!/^\+\d{8,15}$/.test(normalizedForCheck)) errs.phone = t('validPhone');
+    } catch {
+      errs.phone = t('validPhone');
+    }
     if (validRole === 'teacher') {
       if (subjects.length === 0) errs.subjects = t('selectAtLeastOneSubject');
       if (grades.length === 0) errs.grades = t('selectAtLeastOneGrade');
@@ -127,17 +121,20 @@ export default function RegisterPage() {
     }
     if (validRole === 'student' && subjects.length === 0) errs.subjects = t('selectAtLeastOneSubject');
     setErrors(errs);
+    setServerDetails([]);
     if (Object.keys(errs).length) return;
 
     setLoading(true);
     setServerError('');
+    setServerDetails([]);
     try {
+      const normalizedPhone = normalizePhone(phone.trim(), countryCode);
       const base: Record<string, unknown> = {
         username: username.trim(),
         fullName: fullName.trim(),
         password,
         confirmPassword,
-        phone: phone.trim() || undefined,
+        phone: normalizedPhone,
         centerId,
         ...(email.trim() ? { email: email.trim() } : {}),
       };
@@ -152,20 +149,40 @@ export default function RegisterPage() {
       if (validRole === 'student') {
         Object.assign(base, { subjects, ...(gradeId ? { gradeId } : {}) });
       }
-      const purposeMap: Record<string, string> = { teacher: 'REGISTER_TEACHER', student: 'REGISTER_STUDENT', parent: 'REGISTER_PARENT' };
-      const purpose = purposeMap[validRole as string] as any;
-      // build normalized phone
-      let normalizedPhone = phone.trim();
-      try { normalizedPhone = normalizePhone(phone.trim()); } catch {}
+      const purposeMap: Record<string, string> = {
+        teacher: 'REGISTER_TEACHER',
+        student: 'REGISTER_STUDENT',
+        parent: 'REGISTER_PARENT',
+      };
+      const purpose = purposeMap[validRole as string] as 'REGISTER_TEACHER' | 'REGISTER_STUDENT' | 'REGISTER_PARENT';
       const payload = { ...base, phone: normalizedPhone };
       const otpRes = await api.requestOtp({ phone: normalizedPhone, purpose, payload });
-      const { verificationId, maskedPhone, expiresAt } = otpRes.data as any;
+      const { verificationId, maskedPhone, expiresAt } = otpRes.data as { verificationId: string; maskedPhone: string; expiresAt: string };
       if (typeof window !== 'undefined') {
-        sessionStorage.setItem('otp_verification', JSON.stringify({ verificationId, maskedPhone, expiresAt, phone: normalizedPhone }));
+        sessionStorage.setItem(
+          'otp_verification',
+          JSON.stringify({ verificationId, maskedPhone, expiresAt, phone: normalizedPhone, purpose }),
+        );
       }
       router.push('/verify-phone?vid=' + encodeURIComponent(verificationId));
-    } catch (err) {
-      setServerError(errorMessage(err, t('registrationFailed')));
+    } catch (err: unknown) {
+      const raw = errorMessage(err, t('registrationFailed'));
+      // Surface duplicate phone / username with exact backend messages
+      if (raw.toLowerCase().includes('phone') && raw.toLowerCase().includes('already')) {
+        setErrors((prev) => ({ ...prev, phone: 'This phone number is already registered.' }));
+      }
+      if (raw.toLowerCase().includes('username') && raw.toLowerCase().includes('taken')) {
+        setErrors((prev) => ({ ...prev, username: 'This username is already taken.' }));
+      }
+      setServerError(raw);
+      const details = (err as { details?: Array<{ path?: string; message?: string }> })?.details;
+      if (Array.isArray(details)) {
+        setServerDetails(details.map((d) => (d?.path ? `${d.path}: ${d.message}` : d?.message)).filter(Boolean) as string[]);
+      }
+      // cooldown message
+      if (raw.toLowerCase().includes('please wait')) {
+        setServerError(raw);
+      }
     } finally {
       setLoading(false);
     }
@@ -175,9 +192,7 @@ export default function RegisterPage() {
     return (
       <AuthLayout title={t('registerCenter')} subtitle={t('registerCenterSubtitle')}>
         <div className="space-y-4 text-center">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('centerOwnersNote')}
-          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('centerOwnersNote')}</p>
           <Link
             href="/centers/register"
             className="block rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white hover:bg-brand-700"
@@ -223,33 +238,21 @@ export default function RegisterPage() {
     );
   }
 
-  if (studentNumber) {
-    return (
-      <AuthLayout title={t('register')} subtitle={t('student')}>
-        <div className="space-y-4 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-center dark:border-emerald-700 dark:bg-emerald-900/30">
-          <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
-            {t('registrationSucceeded')}
-          </p>
-          <p className="text-xs text-emerald-700 dark:text-emerald-300">{t('studentNumberLabel')}</p>
-          <p className="text-2xl font-bold tracking-wide text-emerald-900 dark:text-emerald-100">{studentNumber}</p>
-          <p className="text-xs text-emerald-700 dark:text-emerald-300">{t('keepStudentNumber')}</p>
-        </div>
-        <Link href="/login" className="mt-4 block text-center text-sm font-medium text-brand-600 hover:text-brand-700">
-          {t('login')} ?
-        </Link>
-      </AuthLayout>
-    );
-  }
-
   const subjectOptions = subjectsList.map((s) => ({ value: s.id, label: s.name }));
   const gradeOptions = gradesList.map((g) => ({ value: g.id, label: g.name }));
-
   const centerOptions = centers.map((c) => ({ value: c.id, label: c.name }));
 
   return (
     <AuthLayout title={`${t('register')} – ${t(validRole)}`} subtitle={t('registerSubtitle')}>
       <form onSubmit={submit} className="space-y-4">
         {serverError && <InlineError message={serverError} />}
+        {serverDetails.length > 0 && (
+          <ul className="list-inside list-disc space-y-1 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
+            {serverDetails.map((d, i) => (
+              <li key={i}>{d}</li>
+            ))}
+          </ul>
+        )}
 
         {centersLoading ? (
           <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400">
@@ -313,12 +316,14 @@ export default function RegisterPage() {
           error={errors.confirmPassword}
           autoComplete="new-password"
         />
-        <Input
+        <PhoneInput
           label={t('phone')}
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          countryCode={countryCode}
+          onValueChange={setPhone}
+          onCountryChange={setCountryCode}
           error={errors.phone}
-          placeholder="+20..."
+          placeholder="10 1234 5678"
         />
 
         {validRole === 'teacher' && (

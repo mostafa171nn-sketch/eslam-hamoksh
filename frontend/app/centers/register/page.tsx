@@ -9,6 +9,7 @@ import { Input } from '../../../src/components/ui/Input';
 import { Textarea } from '../../../src/components/ui/Textarea';
 import { Button } from '../../../src/components/ui/Button';
 import { InlineError } from '../../../src/components/ui/ErrorAlert';
+import { PhoneInput } from '../../../src/components/ui/PhoneInput';
 import { api, ApiClientError, type RegisterCenterResult } from '../../../src/lib/api';
 import { errorMessage } from '../../../src/hooks/useApi';
 import { useT } from '../../../src/i18n';
@@ -17,11 +18,11 @@ import { PageBackButton } from '@/src/components/layout/PageBackButton';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_RE = /^[a-zA-Z0-9_.-]+$/;
-const PHONE_RE = /^[+0-9()\s-]+$/;
 
 export default function CenterRegisterPage() {
   const router = useRouter();
   const { t } = useT();
+
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -35,12 +36,14 @@ export default function CenterRegisterPage() {
     adminEmail: '',
     adminPassword: '',
   });
+  const [centerCountryCode, setCenterCountryCode] = useState('+20');
+  const [adminCountryCode, setAdminCountryCode] = useState('+20');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState('');
   const [serverDetails, setServerDetails] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RegisterCenterResult | null>(null);
-  void setResult; void result;
+  void setResult;
 
   const set =
     (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -50,26 +53,30 @@ export default function CenterRegisterPage() {
     e.preventDefault();
     const errs: Record<string, string> = {};
 
-    // --- Center fields ---
     if (form.name.trim().length < 2) errs.name = `${t('centerName')} ${t('required')}`;
-    if (!form.phone.trim()) errs.phone = `${t('centerPhone')} ${t('required')}`;
-    else if (form.phone.trim().length < 8 || !PHONE_RE.test(form.phone.trim()))
+    // Center phone validation with country code
+    try {
+      const n = normalizePhone(form.phone.trim(), centerCountryCode);
+      if (!/^\+\d{8,15}$/.test(n)) errs.phone = t('validPhoneDigits');
+    } catch {
       errs.phone = t('validPhoneDigits');
+    }
     if (!form.city.trim()) errs.city = `${t('city')} ${t('required')}`;
     if (!form.address.trim()) errs.address = `${t('address')} ${t('required')}`;
     if (form.email.trim() && !EMAIL_RE.test(form.email.trim())) errs.email = t('validEmailOptional');
 
-    // --- Administrator fields ---
     if (form.adminFullName.trim().length < 2) errs.adminFullName = `${t('adminFullName')} ${t('required')}`;
 
     const username = form.adminUsername.trim();
     if (!username) errs.adminUsername = `${t('adminUsername')} ${t('required')}`;
-    else if (username.length < 3 || !USERNAME_RE.test(username))
-      errs.adminUsername = t('usernameCenterRule');
+    else if (username.length < 3 || !USERNAME_RE.test(username)) errs.adminUsername = t('usernameCenterRule');
 
-    const phone = form.adminPhone.trim();
-    if (!phone) errs.adminPhone = `${t('adminPhone')} ${t('required')}`;
-    else if (phone.length < 8 || !PHONE_RE.test(phone)) errs.adminPhone = t('validPhoneDigits');
+    try {
+      const n = normalizePhone(form.adminPhone.trim(), adminCountryCode);
+      if (!/^\+\d{8,15}$/.test(n)) errs.adminPhone = t('validPhoneDigits');
+    } catch {
+      errs.adminPhone = t('validPhoneDigits');
+    }
 
     if (!form.adminEmail.trim()) errs.adminEmail = `${t('adminEmail')} ${t('required')}`;
     else if (!EMAIL_RE.test(form.adminEmail.trim())) errs.adminEmail = t('validEmailOptional');
@@ -83,32 +90,43 @@ export default function CenterRegisterPage() {
     setServerError('');
     setServerDetails([]);
     try {
-      let normalizedPhone = form.phone.trim();
-      try { normalizedPhone = normalizePhone(form.phone.trim()); } catch {}
+      const normalizedCenterPhone = normalizePhone(form.phone.trim(), centerCountryCode);
+      const normalizedAdminPhone = normalizePhone(form.adminPhone.trim(), adminCountryCode);
       const payload = {
         name: form.name.trim(),
         email: form.email.trim() || undefined,
-        phone: normalizedPhone,
+        phone: normalizedCenterPhone,
         city: form.city.trim(),
         address: form.address.trim(),
         description: form.description.trim() || undefined,
         adminFullName: form.adminFullName.trim(),
         adminUsername: form.adminUsername.trim(),
-        adminPhone: form.adminPhone.trim(),
+        adminPhone: normalizedAdminPhone,
         adminEmail: form.adminEmail.trim(),
         adminPassword: form.adminPassword,
       };
-      const otpRes = await api.requestOtp({ phone: normalizedPhone, purpose: 'REGISTER_CENTER', payload });
-      const { verificationId, maskedPhone, expiresAt } = otpRes.data as any;
+      // Center verification uses the center phone as the OTP destination
+      const otpRes = await api.requestOtp({ phone: normalizedCenterPhone, purpose: 'REGISTER_CENTER', payload });
+      const { verificationId, maskedPhone, expiresAt } = otpRes.data as { verificationId: string; maskedPhone: string; expiresAt: string };
       if (typeof window !== 'undefined') {
-        sessionStorage.setItem('otp_verification', JSON.stringify({ verificationId, maskedPhone, expiresAt, phone: normalizedPhone }));
+        sessionStorage.setItem(
+          'otp_verification',
+          JSON.stringify({ verificationId, maskedPhone, expiresAt, phone: normalizedCenterPhone, purpose: 'REGISTER_CENTER' }),
+        );
       }
       router.push('/verify-phone?vid=' + encodeURIComponent(verificationId));
       return;
     } catch (err) {
-      setServerError(errorMessage(err, t('registrationFailed')));
+      const raw = errorMessage(err, t('registrationFailed'));
+      if (raw.toLowerCase().includes('phone') && raw.toLowerCase().includes('already')) {
+        setErrors((prev) => ({ ...prev, phone: 'This phone number is already registered.', adminPhone: 'This phone number is already registered.' }));
+      }
+      if (raw.toLowerCase().includes('username') && raw.toLowerCase().includes('taken')) {
+        setErrors((prev) => ({ ...prev, adminUsername: 'This username is already taken.' }));
+      }
+      setServerError(raw);
       if (err instanceof ApiClientError && Array.isArray(err.details)) {
-        setServerDetails(err.details.map((d: any) => (d?.path ? `${d.path}: ${d.message}` : d?.message)).filter(Boolean));
+        setServerDetails((err.details as Array<{ path?: string; message?: string }>).map((d) => (d?.path ? `${d.path}: ${d.message}` : d?.message)).filter(Boolean) as string[]);
       }
     } finally {
       setLoading(false);
@@ -127,11 +145,8 @@ export default function CenterRegisterPage() {
             <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-700/40 dark:text-slate-300">
               <p>{t('centerIdLabel')}: {result.centerId}</p>
             </div>
-            <Link
-              href="/login"
-              className="mt-6 inline-block text-sm font-medium text-brand-600 hover:text-brand-700"
-            >
-              {t('login')} â†’
+            <Link href="/login" className="mt-6 inline-block text-sm font-medium text-brand-600 hover:text-brand-700">
+              {t('login')} →
             </Link>
           </div>
         </main>
@@ -163,12 +178,14 @@ export default function CenterRegisterPage() {
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">{t('center')}</h2>
           <Input label={`${t('centerName')} *`} value={form.name} onChange={set('name')} error={errors.name} />
           <Input label={t('centerEmail')} type="email" value={form.email} onChange={set('email')} error={errors.email} />
-          <Input
+          <PhoneInput
             label={`${t('centerPhone')} *`}
             value={form.phone}
-            onChange={set('phone')}
+            countryCode={centerCountryCode}
+            onValueChange={(v) => setForm((f) => ({ ...f, phone: v }))}
+            onCountryChange={setCenterCountryCode}
             error={errors.phone}
-            inputMode="tel"
+            placeholder="10 1234 5678"
           />
           <Input label={`${t('city')} *`} value={form.city} onChange={set('city')} error={errors.city} />
           <Input label={`${t('address')} *`} value={form.address} onChange={set('address')} error={errors.address} />
@@ -194,12 +211,14 @@ export default function CenterRegisterPage() {
             onChange={set('adminUsername')}
             error={errors.adminUsername}
           />
-          <Input
+          <PhoneInput
             label={`${t('adminPhone')} *`}
             value={form.adminPhone}
-            onChange={set('adminPhone')}
+            countryCode={adminCountryCode}
+            onValueChange={(v) => setForm((f) => ({ ...f, adminPhone: v }))}
+            onCountryChange={setAdminCountryCode}
             error={errors.adminPhone}
-            inputMode="tel"
+            placeholder="10 1234 5678"
           />
           <Input
             label={`${t('adminEmail')} *`}
@@ -219,6 +238,9 @@ export default function CenterRegisterPage() {
           <Button type="submit" loading={loading} className="w-full" size="lg">
             {t('submit')}
           </Button>
+          <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+            You&apos;ll receive an SMS code to verify your center phone before registration completes.
+          </p>
         </form>
       </main>
     </div>
