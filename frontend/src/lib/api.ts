@@ -367,4 +367,17 @@ export const api = {
   },  registerCenter(payload: RegisterCenterPayload) {
     return request<RegisterCenterResult>('/centers/register', jsonOptions('POST', payload));
   },
+  // Student center follow (multi-center model)
+  followCenter(centerId: string) {
+    return request(`/students/follows/${encodeURIComponent(centerId)}`, jsonOptions('POST', {}));
+  },
+  unfollowCenter(centerId: string) {
+    return request(`/students/follows/${encodeURIComponent(centerId)}`, { method: 'DELETE' });
+  },
+  getFollowedCenters() {
+    return request<PublicCenter[]>('/students/follows', { method: 'GET' });
+  },
+  checkFollow(centerId: string) {
+    return request<{ isFollowing: boolean }>(`/students/follows/${encodeURIComponent(centerId)}`, { method: 'GET' });
+  },
 };

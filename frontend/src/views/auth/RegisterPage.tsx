@@ -86,7 +86,7 @@ export default function RegisterPage() {
   }, []);
 
   useEffect(() => {
-    if (validRole) loadCenters();
+    if (validRole === 'teacher' || validRole === 'parent') loadCenters();
     if (validRole === 'teacher' || validRole === 'student') loadCatalog();
   }, [validRole, loadCenters, loadCatalog]);
 
@@ -99,7 +99,7 @@ export default function RegisterPage() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
-    if (!centerId) errs.centerId = t('selectCenter') ?? 'Please select a center.';
+    if (validRole !== 'student' && !centerId) errs.centerId = t('selectCenter') ?? 'Please select a center.';
     if (username.trim().length < 3) errs.username = t('usernameMinChars');
     else if (!USERNAME_RE.test(username.trim())) errs.username = t('usernameAllowedChars');
     if (fullName.trim().length < 2) errs.fullName = t('fullName') + ' ' + t('required');
@@ -138,7 +138,7 @@ export default function RegisterPage() {
         password,
         confirmPassword,
         phone: normalizedPhone,
-        centerId,
+        ...(validRole !== 'student' && centerId ? { centerId } : {}),
         ...(email.trim() ? { email: email.trim() } : {}),
       };
       if (validRole === 'teacher') {
@@ -251,27 +251,31 @@ export default function RegisterPage() {
           </ul>
         )}
 
-        {centersLoading ? (
-          <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400">
-            {t('centersLoading')}
-          </p>
-        ) : centersError ? (
-          <div className="space-y-1">
-            <p className="text-xs text-red-600 dark:text-red-400">{t('centersLoadFailed')}</p>
-            <Button type="button" variant="outline" size="sm" onClick={loadCenters}>
-              {t('retry')}
-            </Button>
-          </div>
-        ) : (
-          <SearchableSelect
-            label={t('centerLabel')}
-            options={centerOptions}
-            value={centerId}
-            onChange={setCenterId}
-            placeholder={t('selectCenter')}
-            emptyText={t('noCentersFound')}
-            error={errors.centerId}
-          />
+        {validRole !== 'student' && (
+          <>
+            {centersLoading ? (
+              <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400">
+                {t('centersLoading')}
+              </p>
+            ) : centersError ? (
+              <div className="space-y-1">
+                <p className="text-xs text-red-600 dark:text-red-400">{t('centersLoadFailed')}</p>
+                <Button type="button" variant="outline" size="sm" onClick={loadCenters}>
+                  {t('retry')}
+                </Button>
+              </div>
+            ) : (
+              <SearchableSelect
+                label={t('centerLabel')}
+                options={centerOptions}
+                value={centerId}
+                onChange={setCenterId}
+                placeholder={t('selectCenter')}
+                emptyText={t('noCentersFound')}
+                error={errors.centerId}
+              />
+            )}
+          </>
         )}
 
         <Input

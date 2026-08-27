@@ -73,7 +73,7 @@ export const registerTeacherSchema = z.object({
 });
 
 export const registerStudentSchema = z.object({
-  centerId: z.string().uuid('Select a center to register with.'),
+  centerId: z.string().uuid().optional(),
   fullName: z.string().min(2).max(100),
   username,
   email: emailOptional,
@@ -216,6 +216,7 @@ export const bookLessonSchema = z.object({
   startTime: time,
   endTime: time.optional(),
   locationId: z.string().uuid().optional(),
+  centerId: z.string().uuid().optional(),
 });
 
 // Query params for the public available-slots lookup. Both are optional; when

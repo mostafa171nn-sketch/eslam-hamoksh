@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BookOpen, CalendarDays, ClipboardList, FileQuestion, TrendingUp, ArrowRight, GraduationCap } from 'lucide-react';
+import { BookOpen, CalendarDays, ClipboardList, FileQuestion, TrendingUp, ArrowRight, GraduationCap, Building2, Bell, Search } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { StatCard } from '../../components/ui/StatCard';
 import { Badge, StatusBadge } from '../../components/ui/Badge';
@@ -15,6 +15,7 @@ import { formatDateTime, formatDate, formatTime } from '../../lib/format';
 export default function StudentDashboardPage() {
   const { data, initialLoading, error } = useApi(() => api.get<StudentDashboard>('/students/dashboard'), []);
   const { data: teachers } = useApi(() => api.getMyTeachers<MyTeacher[]>(), []);
+  const { data: followed } = useApi(() => api.getFollowedCenters() as Promise<import('../../lib/api').ApiResponse<import('../../lib/api').PublicCenter[]>>, []);
 
   if (initialLoading) return <PencilLoader label="Loading your dashboard…" />;
   if (error || !data) return <Alert message={error || 'Failed to load dashboard.'} />;
@@ -23,6 +24,31 @@ export default function StudentDashboardPage() {
 
   return (
     <div className="space-y-6">
+      <Card title="Discover">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Link href="/centers" className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 p-4 text-center hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:hover:bg-slate-800">
+            <Building2 className="h-6 w-6 text-brand-600" />
+            <span className="text-sm font-medium">Search Centers</span>
+          </Link>
+          <Link href="/teachers" className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 p-4 text-center hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:hover:bg-slate-800">
+            <Search className="h-6 w-6 text-brand-600" />
+            <span className="text-sm font-medium">Search Teachers</span>
+          </Link>
+          <Link href="/student/lessons" className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 p-4 text-center hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:hover:bg-slate-800">
+            <CalendarDays className="h-6 w-6 text-brand-600" />
+            <span className="text-sm font-medium">My Bookings</span>
+          </Link>
+          <Link href="/student/followed" className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 p-4 text-center hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:hover:bg-slate-800">
+            <Building2 className="h-6 w-6 text-brand-600" />
+            <span className="text-sm font-medium">Followed Centers {followed ? `(${followed.length})` : ''}</span>
+          </Link>
+          <Link href="/notifications" className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 p-4 text-center hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:hover:bg-slate-800">
+            <Bell className="h-6 w-6 text-brand-600" />
+            <span className="text-sm font-medium">Notifications</span>
+          </Link>
+        </div>
+      </Card>
+
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label="Today's lessons" value={data.todayLessons.length} icon={CalendarDays} />
         <StatCard label="Upcoming exams" value={data.upcomingExams.length} icon={FileQuestion} />

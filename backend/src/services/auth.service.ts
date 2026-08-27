@@ -65,7 +65,7 @@ export interface RegisterStudentInput {
   username: string;
   password: string;
   phone: string;
-  centerId: string;
+  centerId?: string;
   email?: string;
   gradeId: string;
   subjects: string[];
@@ -121,7 +121,7 @@ const SUBJECT_IDS = async (subjectIds: string[]) => {
 
 async function createUserRecord(
   role: Exclude<Role, 'SUPER_ADMIN' | 'CENTER_ADMIN'>,
-  data: { username: string; password: string; fullName: string; phone: string; centerId: string; email?: string },
+  data: { username: string; password: string; fullName: string; phone: string; centerId?: string; email?: string },
 ) {
   const existing = await userRepository.findByUsername(data.username);
   if (existing) {
@@ -146,7 +146,7 @@ async function createUserRecord(
     phoneVerifiedAt: phoneVerified ? new Date() : null,
     email: data.email ?? null,
     role,
-    center: { connect: { id: data.centerId } },
+    ...(data.centerId ? { center: { connect: { id: data.centerId } } } : {}),
   });
 }
 
@@ -214,8 +214,10 @@ export async function registerTeacher(input: RegisterTeacherInput) {
 }
 
 export async function registerStudent(input: RegisterStudentInput) {
-  await assertCenterAcceptsRegistrations(input.centerId);
-  await assertWithinPlanLimit(input.centerId, 'students');
+  if (input.centerId) {
+    await assertCenterAcceptsRegistrations(input.centerId);
+    await assertWithinPlanLimit(input.centerId, 'students');
+  }
 
   if (!input.gradeId) {
     throw ApiError.badRequest('Please select a grade.', 'GRADE_REQUIRED');
@@ -240,7 +242,7 @@ export async function registerStudent(input: RegisterStudentInput) {
 
   const student = await studentRepository.create({
     user: { connect: { id: user.id } },
-    center: { connect: { id: input.centerId } },
+    ...(input.centerId ? { center: { connect: { id: input.centerId } } } : {}),
     studentNumber,
     grade: { connect: { id: input.gradeId } },
     studentSubjects: { create: subjectIds.map((subjectId) => ({ subjectId })) },

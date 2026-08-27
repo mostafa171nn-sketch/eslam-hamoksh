@@ -436,6 +436,7 @@ export interface BookLessonInput {
   startTime: string;
   endTime?: string;
   locationId?: string;
+  centerId?: string;
 }
 
 export interface MyTeacher {

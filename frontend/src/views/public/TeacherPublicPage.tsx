@@ -171,6 +171,7 @@ export default function TeacherPublicPage() {
       startTime: selectedSlot.startTime,
       endTime: selectedSlot.endTime,
       locationId: selectedSlot.locationId ?? undefined,
+      centerId: (selectedSlot as any).centerId ?? undefined,
     };
     try {
       await api.bookLesson(payload);
@@ -430,6 +431,8 @@ export default function TeacherPublicPage() {
                       <p className="text-xs text-slate-400">
                         {durationLabel(s.startTime, s.endTime)}
                         {s.booked ? `  ${t('booked')}` : ''}
+                        {(s as any).centerId ? ` · Center` : ''}
+                        {s.location?.name ? ` · ${s.location.name}` : ''}
                       </p>
                     </button>
                   );
@@ -448,6 +451,7 @@ export default function TeacherPublicPage() {
                 <li><span className="text-slate-400">{t('time')}:</span> {formatTime(selectedSlot.startTime)}  {formatTime(selectedSlot.endTime)}</li>
                 <li><span className="text-slate-400">{t('duration')}:</span> {durationLabel(selectedSlot.startTime, selectedSlot.endTime)}</li>
                 <li><span className="text-slate-400">{t('location')}:</span> {selectedSlot.location?.name ?? t('online')}</li>
+                {(selectedSlot as any).centerId && <li><span className="text-slate-400">Center:</span> {(selectedSlot as any).centerId.slice(0,8)}…</li>}
                 <li><span className="text-slate-400">{t('price')}:</span> {formatCurrency(data.hourlyRate)} {t('perHour')}</li>
               </ul>
             </div>

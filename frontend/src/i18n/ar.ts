@@ -144,6 +144,7 @@
   dashboard: 'Dashboard',
   users: 'Users',
   manageCenters: 'Manage Centers',
+  followedCenters: 'Followed Centers',
   teachersNav: 'Teachers',
   gradesNav: 'Grades',
   branches: 'Branches',

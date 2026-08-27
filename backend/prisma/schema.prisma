@@ -126,6 +126,7 @@ model Student {
   user                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   studentSubjects      StudentSubject[]
   teachers             TeacherStudent[]
+  centerFollows        StudentCenterFollow[]
 
   @@index([gradeId])
   @@index([centerId])
@@ -765,6 +766,7 @@ model Center {
   teacherAssistants     TeacherAssistant[]
   users                 User[]
   wallets               Wallet[]
+  studentCenterFollows  StudentCenterFollow[]
 
   @@index([status])
   @@index([subscriptionStatus])
@@ -984,6 +986,19 @@ model Document {
   @@index([centerId])
   @@index([status])
   @@index([type])
+}
+
+model StudentCenterFollow {
+  id        String   @id @default(uuid())
+  studentId String
+  centerId  String
+  createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  center    Center   @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, centerId])
+  @@index([studentId])
+  @@index([centerId])
 }
 
 model NotificationTemplate {

@@ -95,6 +95,7 @@ export interface CreateLessonInput {
   roomId?: string;
   capacity?: number;
   notes?: string;
+  centerId?: string;
 }
 
 export async function createLesson(
@@ -140,13 +141,26 @@ export async function createLesson(
     }
   }
 
+  // Determine center for the lesson: explicit centerId > location's center > teacher's center
+  let lessonCenterId: string | null = input.centerId ?? null;
+  if (!lessonCenterId && input.locationId) {
+    const loc = await prisma.location.findUnique({ where: { id: input.locationId }, select: { centerId: true } });
+    if (loc?.centerId) lessonCenterId = loc.centerId;
+  }
+  if (!lessonCenterId && input.roomId) {
+    const { roomRepository } = await import('../repositories/room.repository.js');
+    const roomForCenter = await roomRepository.findById(input.roomId);
+    if (roomForCenter?.centerId) lessonCenterId = roomForCenter.centerId;
+  }
+  if (!lessonCenterId) lessonCenterId = teacher.centerId ?? null;
+
   // Room conflict check
   if (input.roomId) {
     const { roomRepository } = await import('../repositories/room.repository.js');
     const room = await roomRepository.findById(input.roomId);
     if (!room) throw ApiError.notFound('Room not found.');
     const bookedInRoom = await roomRepository.findAvailableForLesson(
-      teacher.centerId ?? '', input.date, input.startTime, input.endTime,
+      lessonCenterId ?? teacher.centerId ?? '', input.date, input.startTime, input.endTime,
     );
     if (bookedInRoom.some((r) => r.id === input.roomId)) {
       throw ApiError.conflict('This room is already booked for this time slot.', 'ROOM_CONFLICT');
@@ -206,6 +220,7 @@ export async function createLesson(
         roomId: input.roomId ?? null,
         capacity: input.capacity ?? null,
         notes: input.notes,
+        centerId: lessonCenterId,
       },
     });
   });
@@ -225,13 +240,40 @@ export async function createLesson(
   if (input.studentId) {
     const student = await studentRepository.findById(input.studentId);
     if (student) {
-      const studentUser = await prisma.user.findUnique({ where: { id: student.userId } });
       await sendNotification({
         userId: student.userId,
         type: 'LESSON_CHANGE',
         title: 'New lesson scheduled',
         message: `New lesson with ${teacherUser?.fullName} on ${dayName} ${input.date.toISOString().slice(0, 10)} at ${input.startTime}.`,
       });
+    }
+  }
+
+  // Notify followers of the center when a teacher publishes a new available schedule
+  // Only for teacher-initiated lessons (group or available) and when lesson has a center
+  if (lessonCenterId && actor.role === 'TEACHER') {
+    try {
+      const follows = await prisma.studentCenterFollow.findMany({
+        where: { centerId: lessonCenterId },
+        select: { student: { select: { userId: true } } },
+      });
+      const followerUserIds = follows.map((f) => f.student.userId).filter((id) => id !== actor.userId && id !== input.studentId);
+      // Deduplicate
+      const uniqueIds = [...new Set(followerUserIds)];
+      if (uniqueIds.length > 0) {
+        const center = await prisma.center.findUnique({ where: { id: lessonCenterId }, select: { name: true } });
+        const centerName = center?.name ?? 'a center you follow';
+        await sendNotification(
+          uniqueIds.map((userId) => ({
+            userId,
+            type: 'LESSON_CHANGE' as const,
+            title: 'New schedule available',
+            message: `New schedule available at ${centerName} with ${teacherUser?.fullName} on ${dayName} ${input.date.toISOString().slice(0, 10)} at ${input.startTime}.`,
+          }))
+        );
+      }
+    } catch {
+      // Non-critical: don't fail lesson creation if notification fails
     }
   }
 
@@ -262,6 +304,7 @@ export async function bookLesson(
     startTime: string;
     endTime?: string;
     locationId?: string;
+    centerId?: string;
   },
 ) {
   if (actor.role !== 'STUDENT') {
@@ -343,6 +386,17 @@ export async function bookLesson(
     throw ApiError.badRequest('You cannot book a lesson in the past.', 'PAST_TIME');
   }
 
+  // Determine center for the booking: explicit centerId > slot location's center > teacher's center
+  let bookingCenterId: string | undefined = input.centerId;
+  if (!bookingCenterId && slot.locationId) {
+    const loc = await prisma.location.findUnique({ where: { id: slot.locationId }, select: { centerId: true } });
+    if (loc?.centerId) bookingCenterId = loc.centerId;
+  }
+  if (!bookingCenterId) {
+    const teacherWithCenter = await prisma.teacher.findUnique({ where: { id: teacher.id }, select: { centerId: true } });
+    bookingCenterId = teacherWithCenter?.centerId ?? undefined;
+  }
+
   try {
     return await createLesson(actor, {
       teacherId: teacher.id,
@@ -351,7 +405,8 @@ export async function bookLesson(
       date,
       startTime: input.startTime,
       endTime,
-      locationId: input.locationId,
+      locationId: input.locationId ?? slot.locationId ?? undefined,
+      centerId: bookingCenterId,
     });
   } catch (err) {
     if (err instanceof ApiError && err.code === 'SCHEDULE_CONFLICT') {
@@ -413,6 +468,8 @@ export async function getAvailableSlots(
     endTime: string;
     locationId: string | null;
     location: { id: string; name: string } | null;
+    centerId: string | null;
+    center: { id: string; name: string } | null;
     booked: boolean;
     bookedByMe: boolean;
   }[] = [];
@@ -426,6 +483,18 @@ export async function getAvailableSlots(
       const conflict = lessons.find(
         (l) => localDateStr(new Date(l.date)) === dateStr && timesOverlap(a.startTime, a.endTime, l.startTime, l.endTime),
       );
+      const locCenterId = (a.location as any)?.centerId ?? null;
+      const teacherCenterId = (teacher as any).centerId ?? null;
+      const slotCenterId = locCenterId ?? teacherCenterId;
+      let slotCenter: { id: string; name: string } | null = null;
+      if (slotCenterId) {
+        // Try to get center name from location's center or teacher's center
+        // For now, we will fetch center name lazily if needed, but we can include it here
+        // location already has centerId, but not center name; we can fetch via prisma
+        // To avoid N+1, we will just set centerId and let frontend fetch center details separately
+        // However, we can try to include center name via a quick lookup
+        slotCenter = null;
+      }
       slots.push({
         date: dateStr,
         day,
@@ -433,6 +502,8 @@ export async function getAvailableSlots(
         endTime: a.endTime,
         locationId: a.locationId,
         location: a.location ? { id: a.location.id, name: a.location.name } : null,
+        centerId: slotCenterId,
+        center: slotCenter,
         booked: !!conflict,
         bookedByMe: !!conflict && conflict.studentId === viewerStudentId,
       });

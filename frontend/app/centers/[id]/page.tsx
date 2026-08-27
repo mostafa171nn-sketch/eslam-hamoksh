@@ -72,6 +72,38 @@ export default function CenterDetailPage() {
   const canRate =
     !!user && ['STUDENT', 'PARENT', 'TEACHER'].includes(user.role);
 
+  const isStudent = user?.role === 'STUDENT';
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isStudent || !id) return;
+    api
+      .checkFollow(id)
+      .then((res) => setIsFollowing(res.data.isFollowing))
+      .catch(() => setIsFollowing(false));
+  }, [isStudent, id]);
+
+  const toggleFollow = async () => {
+    if (!isStudent) return;
+    setFollowLoading(true);
+    try {
+      if (isFollowing) {
+        await api.unfollowCenter(id);
+        setIsFollowing(false);
+        toast.success('Unfollowed center');
+      } else {
+        await api.followCenter(id);
+        setIsFollowing(true);
+        toast.success('Following center - you will be notified of new schedules');
+      }
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
   const requireAuth = (action: () => void) => {
     if (!user) {
       router.push(`/login?next=${encodeURIComponent(path)}`);
@@ -365,6 +397,17 @@ export default function CenterDetailPage() {
               </div>
             </Card>
 
+            {isStudent && (
+              <Button
+                variant={isFollowing ? 'outline' : 'primary'}
+                className="w-full"
+                loading={followLoading}
+                onClick={toggleFollow}
+              >
+                {isFollowing ? 'Following' : 'Follow Center'}
+              </Button>
+            )}
+
             {!user ? (
               <AuthPrompt next={path} title={t('loginRequired')} />
             ) : (
@@ -380,10 +423,10 @@ export default function CenterDetailPage() {
             )}
 
             <Link
-              href={`/register/student?center=${encodeURIComponent(center.id)}`}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
+              href="/register/student"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200"
             >
-              {t('registerCta')}
+              Register as Student (no center required)
               <ArrowRight className={`h-4 w-4 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
             </Link>
           </div>

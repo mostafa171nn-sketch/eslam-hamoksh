@@ -73,6 +73,7 @@ export const teacherRepository = {
   findAvailabilityByDay(teacherId: string, day: number) {
     return prisma.teacherAvailability.findMany({
       where: { teacherId, day },
+      include: { location: true },
       orderBy: { startTime: 'asc' },
     });
   },
