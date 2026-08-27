@@ -15,10 +15,21 @@ async function getPermissionsForRole(role: string): Promise<Set<string>> {
     return cached.permissions;
   }
 
-  const rows = await prisma.rolePermission.findMany({
+  let rows = await prisma.rolePermission.findMany({
     where: { role: role as Role },
     select: { permission: { select: { name: true } } },
   });
+
+  // Legacy ADMIN role has no explicit RolePermission rows in older seeds.
+  // Fall back to CENTER_ADMIN permissions so legacy Center accounts retain
+  // access without requiring a data migration. If ADMIN later gets explicit
+  // rows, those will be used instead.
+  if (rows.length === 0 && role === 'ADMIN') {
+    rows = await prisma.rolePermission.findMany({
+      where: { role: 'CENTER_ADMIN' as Role },
+      select: { permission: { select: { name: true } } },
+    });
+  }
 
   const permissions = new Set(rows.map((r) => r.permission.name));
   permissionCache.set(role, { permissions, expiresAt: Date.now() + CACHE_TTL_MS });
