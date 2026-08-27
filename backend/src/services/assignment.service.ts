@@ -24,11 +24,11 @@ export interface CreateAssignmentInput {
 }
 
 export async function createAssignment(
-  actor: { userId: string; role: 'TEACHER' | 'CENTER_ADMIN' | 'SUPER_ADMIN' },
+  actor: { userId: string; role: 'TEACHER' | 'CENTER_ADMIN' | 'ADMIN' | 'SUPER_ADMIN' },
   input: CreateAssignmentInput,
 ) {
   let teacherId: string;
-  if (actor.role === 'CENTER_ADMIN' || actor.role === 'SUPER_ADMIN') {
+  if (actor.role === 'CENTER_ADMIN' || actor.role === 'ADMIN' || actor.role === 'SUPER_ADMIN') {
     throw ApiError.forbidden('Only teachers can create assignments.');
   } else {
     const t = await prisma.teacher.findUnique({ where: { userId: actor.userId }, select: { id: true } });

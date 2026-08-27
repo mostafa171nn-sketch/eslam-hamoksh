@@ -130,7 +130,7 @@ export async function getSettlement(actor: Actor, id: string) {
   const settlement = await settlementRepository.findById(id);
   if (!settlement) throw ApiError.notFound('Settlement not found.');
 
-  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'CENTER_ADMIN') {
+  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'CENTER_ADMIN' && actor.role !== 'ADMIN') {
     throw ApiError.forbidden('Access denied.');
   }
 
@@ -218,7 +218,7 @@ export async function getSettlementSummary(actor: Actor, centerId?: string) {
 // ---- Status transitions ----
 
 export async function approveSettlement(actor: Actor, id: string) {
-  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'CENTER_ADMIN') {
+  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'CENTER_ADMIN' && actor.role !== 'ADMIN') {
     throw ApiError.forbidden('Only admins can approve settlements.');
   }
 
@@ -243,7 +243,7 @@ export async function approveSettlement(actor: Actor, id: string) {
 }
 
 export async function markSettlementPaid(actor: Actor, id: string) {
-  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'CENTER_ADMIN') {
+  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'CENTER_ADMIN' && actor.role !== 'ADMIN') {
     throw ApiError.forbidden('Only admins can mark settlements as paid.');
   }
 

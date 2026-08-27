@@ -33,7 +33,7 @@ export async function getWalletById(actor: Actor, walletId: string) {
   const wallet = await walletRepository.findById(walletId);
   if (!wallet) throw ApiError.notFound('Wallet not found.');
 
-  if (actor.role === 'CENTER_ADMIN') {
+  if (actor.role === 'CENTER_ADMIN' || actor.role === 'ADMIN') {
     const user = await userRepository.findById(actor.userId);
     if (user?.centerId && wallet.centerId && user.centerId !== wallet.centerId) {
       throw ApiError.forbidden('Access denied.');
@@ -367,7 +367,7 @@ export async function refundToWallet(actor: Actor, input: RefundInput) {
 // ---- Admin wallet management ----
 
 export async function freezeWallet(actor: Actor, walletId: string) {
-  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'CENTER_ADMIN') {
+  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'CENTER_ADMIN' && actor.role !== 'ADMIN') {
     throw ApiError.forbidden('Only admins can freeze wallets.');
   }
   const wallet = await walletRepository.findById(walletId);
@@ -388,7 +388,7 @@ export async function freezeWallet(actor: Actor, walletId: string) {
 }
 
 export async function unfreezeWallet(actor: Actor, walletId: string) {
-  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'CENTER_ADMIN') {
+  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'CENTER_ADMIN' && actor.role !== 'ADMIN') {
     throw ApiError.forbidden('Only admins can unfreeze wallets.');
   }
   const wallet = await walletRepository.findById(walletId);

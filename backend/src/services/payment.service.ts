@@ -440,7 +440,7 @@ export async function getPayment(actor: { userId: string; role: Role }, id: stri
   const payment = await paymentRepository.findById(id);
   if (!payment) throw ApiError.notFound('Payment not found.');
 
-  if (actor.role === 'CENTER_ADMIN' || actor.role === 'SUPER_ADMIN') {
+  if (actor.role === 'CENTER_ADMIN' || actor.role === 'ADMIN' || actor.role === 'SUPER_ADMIN') {
     // full access
   } else if (actor.role === 'TEACHER') {
     const teacher = await teacherRepository.findByUserId(actor.userId);
@@ -597,7 +597,7 @@ export async function approvePayment(actor: { userId: string; role: Role }, id: 
   if (actor.role === 'TEACHER') {
     const teacher = await teacherRepository.findByUserId(actor.userId);
     if (!teacher || teacher.id !== payment.teacherId) throw ApiError.forbidden('You can only approve your own payments.');
-  } else if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'SUPER_ADMIN') {
+  } else if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
     throw ApiError.forbidden('You are not authorized to approve payments.');
   }
   if (payment.status !== 'PENDING') throw ApiError.badRequest('Only pending payments can be approved.', 'NOT_PENDING');
@@ -615,7 +615,7 @@ export async function rejectPayment(actor: { userId: string; role: Role }, id: s
   if (actor.role === 'TEACHER') {
     const teacher = await teacherRepository.findByUserId(actor.userId);
     if (!teacher || teacher.id !== payment.teacherId) throw ApiError.forbidden('You can only reject your own payments.');
-  } else if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'SUPER_ADMIN') {
+  } else if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
     throw ApiError.forbidden('You are not authorized to reject payments.');
   }
   if (payment.status !== 'PENDING') throw ApiError.badRequest('Only pending payments can be rejected.', 'NOT_PENDING');
@@ -627,7 +627,7 @@ export async function rejectPayment(actor: { userId: string; role: Role }, id: s
 }
 
 export async function refundPayment(actor: { userId: string; role: Role }, id: string, reason?: string, amount?: number) {
-  if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'SUPER_ADMIN') throw ApiError.forbidden('Only admins can refund payments.');
+  if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') throw ApiError.forbidden('Only admins can refund payments.');
   const payment = await paymentRepository.findById(id);
   if (!payment) throw ApiError.notFound('Payment not found.');
   if (payment.status !== 'PAID') throw ApiError.badRequest('Only paid payments can be refunded.', 'NOT_PAID');
@@ -648,7 +648,7 @@ export async function refundPayment(actor: { userId: string; role: Role }, id: s
 }
 
 export async function correctPayment(actor: { userId: string; role: Role }, id: string, status: PaymentStatus, note?: string) {
-  if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'SUPER_ADMIN') throw ApiError.forbidden('Only admins can manually correct payments.');
+  if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') throw ApiError.forbidden('Only admins can manually correct payments.');
   return applyStatusChange(id, status, actor.userId, 'Admin', {}, note);
 }
 
@@ -867,7 +867,7 @@ export async function cancelSubscription(actor: { userId: string; role: Role }, 
   } else if (actor.role === 'PARENT') {
     const parent = await parentRepository.findByUserId(actor.userId);
     if (!parent || parent.id !== sub.parentId) throw ApiError.forbidden('You can only cancel your own subscriptions.');
-  } else if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'SUPER_ADMIN') {
+  } else if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
     throw ApiError.forbidden('Not authorized.');
   }
   if (sub.status === 'CANCELLED') return sub;

@@ -460,7 +460,7 @@ async function assertLessonAccess(
   const lesson = await lessonRepository.findById(lessonId);
   if (!lesson) throw ApiError.notFound('Lesson not found.');
 
-  if (actor.role === 'CENTER_ADMIN' || actor.role === 'SUPER_ADMIN') return lesson;
+  if (actor.role === 'CENTER_ADMIN' || actor.role === 'ADMIN' || actor.role === 'SUPER_ADMIN') return lesson;
 
   const { teacherId, studentId, parentId } = await resolveRoleEntity(actor.userId, actor.role);
 
@@ -757,7 +757,7 @@ export async function getLessonForUser(lessonId: string, actor: { userId: string
     room: true,
   });
   if (!lesson) throw ApiError.notFound('Lesson not found.');
-  if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'SUPER_ADMIN') {
+  if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
     await assertLessonAccess(lessonId, actor, 'read');
   }
 

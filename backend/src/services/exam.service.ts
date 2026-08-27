@@ -41,7 +41,7 @@ function normalizeAnswer(answer: string | null | undefined): string {
 }
 
 export async function createExam(
-  actor: { userId: string; role: 'TEACHER' | 'CENTER_ADMIN' | 'SUPER_ADMIN' },
+  actor: { userId: string; role: 'TEACHER' | 'CENTER_ADMIN' | 'ADMIN' | 'SUPER_ADMIN' },
   input: CreateExamInput,
 ) {
   if (actor.role !== 'TEACHER') {
@@ -285,7 +285,7 @@ export async function getExamDetail(examId: string, actor: { userId: string; rol
   }
 
   const now = Date.now();
-  const includeAnswers = actor.role === 'TEACHER' || actor.role === 'CENTER_ADMIN' || actor.role === 'SUPER_ADMIN';
+  const includeAnswers = actor.role === 'TEACHER' || actor.role === 'CENTER_ADMIN' || actor.role === 'ADMIN' || actor.role === 'SUPER_ADMIN';
   const dto: any = toExamDto(exam, includeAnswers);
   dto.isUpcoming = new Date(exam.startTime).getTime() > now;
   dto.isActive = new Date(exam.startTime).getTime() <= now && new Date(exam.endTime).getTime() >= now;
@@ -540,7 +540,7 @@ export async function getAttemptWithResult(attemptId: string, actor: { userId: s
   if (!attempt) throw ApiError.notFound('Attempt not found.');
 
   const canView =
-    actor.role === 'CENTER_ADMIN' || actor.role === 'SUPER_ADMIN' ||
+    actor.role === 'CENTER_ADMIN' || actor.role === 'ADMIN' || actor.role === 'SUPER_ADMIN' ||
     (actor.role === 'STUDENT' && attempt.studentId === studentId) ||
     (actor.role === 'TEACHER' && attempt.exam.teacherId === teacherId);
 
@@ -556,7 +556,7 @@ export async function getAttemptWithResult(attemptId: string, actor: { userId: s
 
   const answerMap = new Map(attempt.answers.map((a) => [a.questionId, a]));
   const isOwner = actor.role === 'STUDENT' && attempt.studentId === studentId;
-  const showCorrect = actor.role === 'TEACHER' || actor.role === 'CENTER_ADMIN' || actor.role === 'SUPER_ADMIN' || attempt.status === 'SUBMITTED' || attempt.status === 'AUTO_SUBMITTED';
+  const showCorrect = actor.role === 'TEACHER' || actor.role === 'CENTER_ADMIN' || actor.role === 'ADMIN' || actor.role === 'SUPER_ADMIN' || attempt.status === 'SUBMITTED' || attempt.status === 'AUTO_SUBMITTED';
 
   return {
     id: attempt.id,

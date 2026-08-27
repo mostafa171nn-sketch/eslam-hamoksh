@@ -26,7 +26,7 @@ export async function listDocuments(actor: Actor, query: {
   if (query.ownerId) where.ownerId = query.ownerId;
 
   // Non-admin users can only see their own documents
-  const isAdmin = actor.role === 'SUPER_ADMIN' || actor.role === 'CENTER_ADMIN' || actor.role === 'CENTER_EMPLOYEE';
+  const isAdmin = actor.role === 'SUPER_ADMIN' || actor.role === 'CENTER_ADMIN' || actor.role === 'ADMIN' || actor.role === 'ADMIN' || actor.role === 'CENTER_EMPLOYEE';
   if (!isAdmin) {
     where.ownerId = actor.userId;
   }
@@ -60,7 +60,7 @@ export async function getDocument(actor: Actor, id: string) {
   if (!doc) throw ApiError.notFound('Document not found.');
 
   // Ownership check: non-admins can only view own documents
-  const isAdmin = actor.role === 'SUPER_ADMIN' || actor.role === 'CENTER_ADMIN' || actor.role === 'CENTER_EMPLOYEE';
+  const isAdmin = actor.role === 'SUPER_ADMIN' || actor.role === 'CENTER_ADMIN' || actor.role === 'ADMIN' || actor.role === 'ADMIN' || actor.role === 'CENTER_EMPLOYEE';
   if (!isAdmin && doc.ownerId !== actor.userId) {
     throw ApiError.forbidden('You can only view your own documents.');
   }
@@ -99,7 +99,7 @@ export async function updateDocument(actor: Actor, id: string, input: {
   const doc = await documentRepository.findById(id);
   if (!doc) throw ApiError.notFound('Document not found.');
 
-  const isAdmin = actor.role === 'SUPER_ADMIN' || actor.role === 'CENTER_ADMIN';
+  const isAdmin = actor.role === 'SUPER_ADMIN' || actor.role === 'CENTER_ADMIN' || actor.role === 'ADMIN' || actor.role === 'ADMIN';
   if (!isAdmin && doc.ownerId !== actor.userId) {
     throw ApiError.forbidden('You can only update your own documents.');
   }
@@ -120,7 +120,7 @@ export async function deleteDocument(actor: Actor, id: string) {
   const doc = await documentRepository.findById(id);
   if (!doc) throw ApiError.notFound('Document not found.');
 
-  const isAdmin = actor.role === 'SUPER_ADMIN' || actor.role === 'CENTER_ADMIN';
+  const isAdmin = actor.role === 'SUPER_ADMIN' || actor.role === 'CENTER_ADMIN' || actor.role === 'ADMIN' || actor.role === 'ADMIN';
   if (!isAdmin && doc.ownerId !== actor.userId) {
     throw ApiError.forbidden('You can only delete your own documents.');
   }

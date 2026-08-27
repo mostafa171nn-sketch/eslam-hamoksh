@@ -33,7 +33,7 @@ export const listExamsHandler = asyncHandler(async (req: Request, res: Response)
 
 export const createExamHandler = asyncHandler(async (req: Request, res: Response) => {
   const exam = await createExam(
-    { userId: req.user!.id, role: req.user!.role as 'TEACHER' | 'CENTER_ADMIN' | 'SUPER_ADMIN' },
+    { userId: req.user!.id, role: req.user!.role as 'TEACHER' | 'CENTER_ADMIN' | 'ADMIN' | 'SUPER_ADMIN' },
     {
       ...req.validatedBody,
       startTime: new Date(req.validatedBody.startTime),

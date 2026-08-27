@@ -91,7 +91,7 @@ export async function setUserStatus(userId: string, status: AccountStatus, actor
   const user = await userRepository.findById(userId);
   if (!user) throw ApiError.notFound('User not found.');
   if (
-    (user.role === 'CENTER_ADMIN' || user.role === 'SUPER_ADMIN') &&
+    (user.role === 'CENTER_ADMIN' || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') &&
     status !== 'ACTIVE'
   ) {
     throw ApiError.badRequest('Administrator accounts cannot be deactivated this way.', 'ADMIN_PROTECTED');

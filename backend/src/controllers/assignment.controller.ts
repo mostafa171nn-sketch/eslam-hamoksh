@@ -33,7 +33,7 @@ export const listAssignmentsHandler = asyncHandler(async (req: Request, res: Res
 
 export const createAssignmentHandler = asyncHandler(async (req: Request, res: Response) => {
   const assignment = await createAssignment(
-    { userId: req.user!.id, role: req.user!.role as 'TEACHER' | 'CENTER_ADMIN' | 'SUPER_ADMIN' },
+    { userId: req.user!.id, role: req.user!.role as 'TEACHER' | 'CENTER_ADMIN' | 'ADMIN' | 'SUPER_ADMIN' },
     {
       ...req.validatedBody,
       attachment: req.file?.filename ?? req.validatedBody.attachment,
@@ -92,7 +92,7 @@ export const gradeSubmissionHandler = asyncHandler(async (req: Request, res: Res
 export async function requireStudentOrAdminAccess(studentId: string, req: Request) {
   const { resolveRoleEntity } = await import('../services/lesson.service.js');
   const role = req.user!.role;
-  if (role === 'CENTER_ADMIN' || role === 'SUPER_ADMIN') return;
+  if (role === 'CENTER_ADMIN' || role === 'ADMIN' || role === 'SUPER_ADMIN') return;
   if (role === 'STUDENT') {
     const me = await resolveRoleEntity(req.user!.id, role);
     if (me.studentId !== studentId) throw ApiError.forbidden('You cannot access another student\'s data.');

@@ -188,7 +188,7 @@ export async function generateAttendanceQr(actor: Actor, input: GenerateQrInput)
 // ---------------------------------------------------------------------------
 
 export async function scanAttendance(actor: Actor, token: string, lessonId: string) {
-  if (actor.role !== 'TEACHER' && actor.role !== 'CENTER_ADMIN' && actor.role !== 'SUPER_ADMIN' && actor.role !== 'TEACHER_ASSISTANT') {
+  if (actor.role !== 'TEACHER' && actor.role !== 'CENTER_ADMIN' && actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN' && actor.role !== 'TEACHER_ASSISTANT') {
     throw ApiError.forbidden('Only teachers can scan attendance.');
   }
 
@@ -425,7 +425,7 @@ export async function finalizeLessonAttendance(actor: Actor, lessonId: string) {
   }
 
   const end = combineDateTime(lesson.date, lesson.endTime);
-  if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'SUPER_ADMIN' && new Date() < end) {
+  if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN' && new Date() < end) {
     throw ApiError.badRequest('Attendance can only be finalized after the lesson ends.', 'LESSON_NOT_ENDED');
   }
 
@@ -673,7 +673,7 @@ export async function getParentAttendanceOverview(actor: Actor): Promise<ParentC
 }
 
 export async function updateAttendanceRecord(actor: Actor, id: string, status: AttendanceStatus, note?: string) {
-  if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'TEACHER' && actor.role !== 'SUPER_ADMIN' && actor.role !== 'TEACHER_ASSISTANT') {
+  if (actor.role !== 'CENTER_ADMIN' && actor.role !== 'ADMIN' && actor.role !== 'TEACHER' && actor.role !== 'SUPER_ADMIN' && actor.role !== 'TEACHER_ASSISTANT') {
     throw ApiError.forbidden('You are not authorized to correct attendance.');
   }
   const record = await attendanceRepository.findById(id);
