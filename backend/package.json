@@ -12,6 +12,7 @@
     "prisma:migrate": "node node_modules/prisma/build/index.js migrate dev",
     "prisma:deploy": "node node_modules/prisma/build/index.js migrate deploy",
     "prisma:seed": "node node_modules/tsx/dist/cli.mjs prisma/seed.ts",
+    "seed:demo": "node node_modules/tsx/dist/cli.mjs prisma/seed-demo.ts",
     "geocode:centers": "node node_modules/tsx/dist/cli.mjs scripts/geocode-centers.ts",
     "db:setup": "node node_modules/prisma/build/index.js migrate dev && node node_modules/tsx/dist/cli.mjs prisma/seed.ts",
     "test": "node node_modules/tsx/dist/cli.mjs --test tests/**/*.test.ts"
