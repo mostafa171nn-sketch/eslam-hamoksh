@@ -42,6 +42,60 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     });
   }
 
+  // Body-parser (express.json / express.urlencoded) errors. These surface as
+  // plain SyntaxError objects with a `type` of "entity.parse.failed" (malformed
+  // JSON) or "entity.too.large" (body over the configured limit). They carry a
+  // numeric `status` (400 / 413). If unhandled they would otherwise fall through
+  // to the generic 500 below and mask a perfectly client-fixable problem as an
+  // opaque "Something went wrong." - exactly what made production auth debugging
+  // impossible.
+  if (err && typeof err === 'object' && 'type' in err && typeof (err as { type: string }).type === 'string') {
+    const bodyErr = err as { type: string; status?: number; message?: string };
+    if (bodyErr.type === 'entity.parse.failed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Malformed request body. Please check your input and try again.',
+        data: null,
+        error: { code: 'BAD_JSON' },
+      });
+    }
+    if (bodyErr.type === 'entity.too.large') {
+      return res.status(413).json({
+        success: false,
+        message: `Request body is too large. Maximum allowed size is ${env.MAX_UPLOAD_SIZE_MB * 1024} KB.`,
+        data: null,
+        error: { code: 'BODY_TOO_LARGE' },
+      });
+    }
+    if (bodyErr.type === 'entity.verify.failed' || bodyErr.type === 'request.aborted') {
+      return res.status(400).json({
+        success: false,
+        message: 'Could not read the request body.',
+        data: null,
+        error: { code: 'BODY_UNREADABLE' },
+      });
+    }
+    // Reuse body-parser's own status (e.g. 413) for any other entity.* error.
+    if (typeof bodyErr.status === 'number' && bodyErr.status >= 400 && bodyErr.status < 500) {
+      return res.status(bodyErr.status).json({
+        success: false,
+        message: 'Malformed request body. Please check your input and try again.',
+        data: null,
+        error: { code: 'BAD_JSON' },
+      });
+    }
+  }
+
+  // Pre-flight 413 from a known PayloadTooLargeError shape.
+  if (err && typeof err === 'object' && (err as { status?: number }).status === 413) {
+    return res.status(413).json({
+      success: false,
+      message: `Request body is too large. Maximum allowed size is ${env.MAX_UPLOAD_SIZE_MB * 1024} KB.`,
+      data: null,
+      error: { code: 'BODY_TOO_LARGE' },
+    });
+  }
+
   // Multer errors
   if (err && typeof err === 'object' && 'code' in err && typeof (err as { code: string }).code === 'string') {
     const code = (err as { code: string }).code;

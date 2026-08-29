@@ -261,6 +261,19 @@ async function request<T>(path: string, options: RequestInit, retried = false): 
   try {
     return await rawRequest<T>(path, options);
   } catch (err) {
+    // Debug aid: log the resolved API error (status/code/message) so the real
+    // backend response is visible in the browser console instead of a generic
+    // "Something went wrong." Only client-safe fields are logged - never any
+    // server secret or internal detail.
+    if (err instanceof ApiClientError) {
+      if (typeof console !== 'undefined') {
+        console.error(`[api] ${options.method ?? 'GET'} ${path} -> ${err.status}`, {
+          code: err.code,
+          message: err.message,
+          details: err.details,
+        });
+      }
+    }
     const needsAuth =
       err instanceof ApiClientError &&
       err.status === 401 &&

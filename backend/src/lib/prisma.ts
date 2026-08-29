@@ -49,21 +49,40 @@ const extended = basePrisma.$extends({
  * applied; the caller is responsible for passing an explicit `where.centerId`
  * when they mean to target a single tenant.
  */
-  query: {
-    $allModels: {
-      async $allOperations({ model, operation, args, query }: any) {
-        const ctx = getTenantContext();
+    query: {
+      $allModels: {
+        async $allOperations({ model, operation, args, query }: any) {
+          const ctx = getTenantContext();
+          let nextArgs = args;
 
-        if (!ctx || ctx.scope !== 'center' || !ctx.centerId) {
-          return query(args);
-        }
+          // Small helper used below to retry transient connection failures.
+          const execute = async () => {
+            try {
+              return await query(nextArgs);
+            } catch (err: any) {
+              // Neon (serverless) scales the compute down when idle. The first
+              // query after idle can fail with P1001 ("Can't reach database
+              // server") because connection establishment is slower than
+              // Prisma's default timeout while the compute spins back up.
+              // Retrying once after a short delay lets the compute finish waking.
+              if (err && err.code === 'P1001') {
+                await new Promise((r) => setTimeout(r, 1500));
+                return query(nextArgs);
+              }
+              throw err;
+            }
+          };
 
-        if (!model || !TENANT_MODELS.has(model)) {
-          return query(args);
-        }
+          if (!ctx || ctx.scope !== 'center' || !ctx.centerId) {
+            return execute();
+          }
 
-        const centerId = ctx.centerId;
-        const nextArgs = { ...args };
+          if (!model || !TENANT_MODELS.has(model)) {
+            return execute();
+          }
+
+          const centerId = ctx.centerId;
+          nextArgs = { ...args };
 
         if (operation === 'create') {
           const data = nextArgs.data ?? {};
@@ -109,7 +128,7 @@ const extended = basePrisma.$extends({
           nextArgs.where = { ...where, centerId };
         }
 
-        return query(nextArgs);
+        return execute();
       },
     },
   },

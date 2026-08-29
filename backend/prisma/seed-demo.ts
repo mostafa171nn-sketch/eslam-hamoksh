@@ -545,6 +545,33 @@ async function ensureSuperAdmin() {
 }
 
 /**
+ * The RBAC permission catalog shipped with the app has no `notifications.*`
+ * permissions, so `/api/notifications/` (which guards on `notifications.view`)
+ * returns 403 for every non-super-admin role. This idempotently creates the
+ * two permission records and grants them to the roles that must see their own
+ * notifications. It only ever ADDS missing rows — never modifies/deletes.
+ */
+async function ensureNotificationPermissions() {
+  const permNames = ['notifications.view', 'notifications.update'];
+  const roleNames: Role[] = ['CENTER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT', 'PARENT'];
+
+  for (const name of permNames) {
+    const perm = await prisma.permission.upsert({
+      where: { name },
+      create: { name, description: `Grants access to ${name}`, domain: 'notifications' },
+      update: {},
+    });
+    for (const role of roleNames) {
+      await prisma.rolePermission.upsert({
+        where: { role_permissionId: { role, permissionId: perm.id } },
+        create: { role, permissionId: perm.id },
+        update: {},
+      });
+    }
+  }
+}
+
+/**
  * CENTER subscription plans referenced by the demo centers. These mirror the
  * platform plan catalog (see seed.ts) so demo centers have a real, active plan.
  * Without a plan, feature-lock guards (assignments, exams, ...) return 402 `FEATURE_LOCKED`
@@ -1165,6 +1192,7 @@ async function main() {
   await ensureSubjectsAndGrades();
   await ensureSuperAdmin();
   await ensurePlans();
+  await ensureNotificationPermissions();
   await ensureCenters();
   await ensureCenterAdmins();
   await ensureParents();
