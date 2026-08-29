@@ -137,6 +137,18 @@ async function createUserRecord(
     phoneE164 = norm.e164;
     phoneVerified = true; // OTP-verified path normalizes; direct registration will be via OTP only
   } catch { /* keep raw */ }
+  // `phoneE164` carries a UNIQUE constraint in the schema. Reject duplicates with
+  // a clear conflict instead of letting the (unhandled) P2002 surface as a bare
+  // 500 "Something went wrong." when a phone is already registered.
+  if (phoneE164) {
+    const withPhone = await userRepository.findByPhoneE164(phoneE164);
+    if (withPhone) {
+      throw ApiError.conflict(
+        'This phone number is already registered.',
+        'PHONE_TAKEN',
+      );
+    }
+  }
   return userRepository.create({
     username: data.username,
     passwordHash,

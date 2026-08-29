@@ -10,6 +10,10 @@ export const userRepository = {
     return prisma.user.findUnique({ where: { username } });
   },
 
+  findByPhoneE164(phoneE164: string) {
+    return prisma.user.findUnique({ where: { phoneE164 } });
+  },
+
   findFirst(where: Prisma.UserWhereInput) {
     return prisma.user.findFirst({ where });
   },
