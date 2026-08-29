@@ -26,7 +26,7 @@ export function AuthLayout({
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-white">
             <BookOpen className="h-5 w-5" />
           </div>
-          <span className="text-lg font-bold text-white">معارچ</span>
+          <span className="text-lg font-bold text-white">معارج</span>
         </Link>
         <div>
           <h1 className="max-w-md text-3xl font-bold leading-tight text-white">{t('authTaglineTitle')}</h1>
@@ -36,7 +36,7 @@ export function AuthLayout({
             {t('authTaglineBadge')}
           </div>
         </div>
-        <p className="text-xs text-slate-600 dark:text-slate-300">© {new Date().getFullYear()} معارچ</p>
+        <p className="text-xs text-slate-600 dark:text-slate-300">© {new Date().getFullYear()} معارج</p>
       </div>
       <div className="flex w-full items-center justify-center bg-slate-50 px-4 py-10 dark:bg-slate-900 lg:w-1/2">
         <div className="w-full max-w-md">
@@ -51,7 +51,7 @@ export function AuthLayout({
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-white">
               <BookOpen className="h-5 w-5" />
             </div>
-            <span className="text-lg font-bold text-slate-900 dark:text-white">معارچ</span>
+            <span className="text-lg font-bold text-slate-900 dark:text-white">معارج</span>
           </Link>
           <h2 className="text-center text-2xl font-bold text-slate-900 dark:text-white">{title}</h2>
           <p className="mt-1.5 text-center text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>

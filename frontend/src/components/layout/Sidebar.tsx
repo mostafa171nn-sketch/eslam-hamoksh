@@ -170,7 +170,7 @@ export function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose:
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white">
               <BookOpen className="h-[18px] w-[18px]" />
             </div>
-            <span className="text-base font-bold text-white">معارچ</span>
+            <span className="text-base font-bold text-white">معارج</span>
           </Link>
           <button onClick={onClose} className="text-slate-400 hover:text-white lg:hidden" aria-label={t('closeMenu')}>
             <X className="h-5 w-5" />

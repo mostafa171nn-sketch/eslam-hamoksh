@@ -178,7 +178,7 @@ export async function requestOtp(input: RequestOtpInput) {
   const payloadEnc = encryptPayload(validatedPayload);
 
   const provider = getSmsProvider();
-  const smsBody = `Your Maarech verification code is ${otp}. It expires in ${Math.floor(otpTtl() / 60)} minutes. Do not share this code.`;
+  const smsBody = `Your Maarej verification code is ${otp}. It expires in ${Math.floor(otpTtl() / 60)} minutes. Do not share this code.`;
 
   if (recent) {
     await phoneVerificationRepository.update(recent.id, {
@@ -345,7 +345,7 @@ export async function resendOtp(verificationId: string) {
   const provider = getSmsProvider();
   await provider.send(
     verification.phoneE164,
-    `Your Maarech verification code is ${otp}. It expires in ${Math.floor(otpTtl() / 60)} minutes. Do not share this code.`,
+    `Your Maarej verification code is ${otp}. It expires in ${Math.floor(otpTtl() / 60)} minutes. Do not share this code.`,
   );
 
   const isDev = env.OTP_DEV_MODE && !env.isProd;

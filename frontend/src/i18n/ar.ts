@@ -1,6 +1,6 @@
 ﻿export const ar = {
   // --- General / shared ---
-  appName: 'Maarech',
+  appName: 'Maarej',
   loading: 'Loadingâ€¦',
   save: 'Save',
   saveChanges: 'Save changes',
@@ -215,7 +215,7 @@
   address: 'Address',
   pendingApproval: 'Your request is pending approval. We will notify you once it is approved.',
   registerCenterTitle: 'Register a new center',
-  registerCenterSubtitle: 'Create your learning center on the Maarech platform',
+  registerCenterSubtitle: 'Create your learning center on the Maarej platform',
   centerEmail: 'Center email',
   centerPhone: 'Center phone',
   city: 'City',

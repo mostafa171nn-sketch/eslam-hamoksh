@@ -4,7 +4,7 @@ import './globals.css';
 import { AppProviders } from '../src/components/AppProviders';
 
 export const metadata: Metadata = {
-  title: 'معارچ | Maarech',
+  title: 'معارج | Maarej',
   description: 'A complete multi-tenant learning-center platform for teachers, students and parents.',
 };
 
