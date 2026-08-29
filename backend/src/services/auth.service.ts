@@ -10,6 +10,7 @@ import { recordActivity } from './activity.service';
 import { sendEmail } from './email.service';
 import { assertCenterUsable, assertWithinPlanLimit, getCenterById, getCenterBySlug } from './subscription.service';
 import { userRepository } from '../repositories/user.repository';
+import { geocodeAddress, buildGeocodeQuery } from './geocoding';
 import { studentRepository } from '../repositories/student.repository';
 import { parentRepository } from '../repositories/parent.repository';
 import { catalogRepository } from '../repositories/catalog.repository';
@@ -49,7 +50,7 @@ export interface RegisterTeacherInput {
   username: string;
   password: string;
   phone: string;
-  centerId: string;
+  centerId?: string;
   email?: string;
   bio?: string;
   subjects: string[];
@@ -76,7 +77,7 @@ export interface RegisterParentInput {
   username: string;
   password: string;
   phone: string;
-  centerId: string;
+  centerId?: string;
   email?: string;
 }
 
@@ -163,8 +164,10 @@ async function assertCenterAcceptsRegistrations(centerId: string) {
 }
 
 export async function registerTeacher(input: RegisterTeacherInput) {
-  await assertCenterAcceptsRegistrations(input.centerId);
-  await assertWithinPlanLimit(input.centerId, 'teachers');
+  if (input.centerId) {
+    await assertCenterAcceptsRegistrations(input.centerId);
+    await assertWithinPlanLimit(input.centerId, 'teachers');
+  }
 
   const user = await createUserRecord('TEACHER', {
     username: input.username,
@@ -182,7 +185,7 @@ export async function registerTeacher(input: RegisterTeacherInput) {
     const t = await tx.teacher.create({
       data: {
         userId: user.id,
-        centerId: input.centerId,
+        centerId: input.centerId ?? null,
         bio: input.bio,
         yearsExperience: input.yearsExperience,
         hourlyRate: input.hourlyRate,
@@ -260,7 +263,9 @@ export async function registerStudent(input: RegisterStudentInput) {
 }
 
 export async function registerParent(input: RegisterParentInput) {
-  await assertCenterAcceptsRegistrations(input.centerId);
+  if (input.centerId) {
+    await assertCenterAcceptsRegistrations(input.centerId);
+  }
 
   const user = await createUserRecord('PARENT', {
     username: input.username,
@@ -303,6 +308,32 @@ export async function registerCenter(input: RegisterCenterInput) {
 
   const passwordHash = await hashPassword(input.adminPassword);
 
+  // ── Automatic address geocoding ────────────────────────────────────────
+  // Coordinates are generated server-side from the physical address. Missing
+  // or failed geocoding never blocks registration; the center is still created
+  // with null coordinates and the caller is told location status.
+  const geocodeQuery = buildGeocodeQuery({
+    name: input.name,
+    address: input.address,
+    city: input.city,
+    country: 'Egypt',
+  });
+  const geocodeResult = await geocodeAddress(geocodeQuery);
+  let locationStatus: 'success' | 'not_found' | 'unavailable' | 'skipped' = 'skipped';
+  if (!geocodeQuery.trim()) {
+    locationStatus = 'skipped';
+  } else if (geocodeResult) {
+    locationStatus = 'success';
+  } else {
+    // Distinguish "no result found" from a temporary failure is not required
+    // for correctness; report a single graceful status and keep coordinates null.
+    locationStatus = 'not_found';
+  }
+  if (input.address || input.city) {
+    // eslint-disable-next-line no-console
+    console.log('[geocoding] center=', { name: input.name, query: geocodeQuery, result: geocodeResult, status: locationStatus });
+  }
+
   // Normalize phones to E.164 so OTP verification can mark them verified
   let centerPhoneE164: string | null = null;
   let adminPhoneE164: string | null = null;
@@ -332,6 +363,8 @@ export async function registerCenter(input: RegisterCenterInput) {
         email: input.email,
         website: input.website,
         description: input.description,
+        latitude: geocodeResult?.latitude ?? null,
+        longitude: geocodeResult?.longitude ?? null,
         status: 'PENDING',
         subscriptionStatus: 'PENDING',
         requiresApproval: true,
@@ -373,7 +406,7 @@ export async function registerCenter(input: RegisterCenterInput) {
       },
     });
 
-    return { center, userId: user.id };
+    return { center, userId: user.id, locationStatus };
   });
 
   await recordActivity({
@@ -384,7 +417,12 @@ export async function registerCenter(input: RegisterCenterInput) {
     entityId: result.center.id,
   });
 
-  return result;
+  return {
+    ...result,
+    latitude: result.center.latitude ?? null,
+    longitude: result.center.longitude ?? null,
+    locationStatus,
+  };
 }
 
 export interface LoginResult {

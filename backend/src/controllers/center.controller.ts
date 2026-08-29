@@ -27,6 +27,8 @@ function publicCenterView(center: any) {
     slug: center.slug,
     city: center.city,
     address: center.address,
+    latitude: center.latitude ?? null,
+    longitude: center.longitude ?? null,
     description: center.description,
     logoUrl: center.logoUrl,
     photoUrl: center.logoUrl ?? null,

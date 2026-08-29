@@ -725,6 +725,8 @@ model Center {
   slug                  String                      @unique
   address               String?
   city                  String?
+  latitude              Float?
+  longitude             Float?
   phone                 String?
   email                 String?
   website               String?

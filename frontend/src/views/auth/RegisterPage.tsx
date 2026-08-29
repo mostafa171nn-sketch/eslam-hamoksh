@@ -1,17 +1,16 @@
 ﻿'use client';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AuthLayout } from '../../layouts/AuthLayout';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
-import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { Button } from '../../components/ui/Button';
 import { MultiSelect } from '../../components/ui/MultiSelect';
 import { InlineError } from '../../components/ui/ErrorAlert';
 import { PhoneInput } from '../../components/ui/PhoneInput';
-import { api, type PublicCenter } from '../../lib/api';
+import { api } from '../../lib/api';
 import type { Subject, Grade } from '../../lib/types';
 import { errorMessage } from '../../hooks/useApi';
 import { useT } from '../../i18n';
@@ -25,19 +24,20 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function RegisterPage() {
   const params = useParams<{ role: string }>();
   const role = params?.role;
-  const validRole: RegisterRole | null =
-    role === 'teacher' || role === 'student' || role === 'parent' ? role : null;
+  // Center registration has its own dedicated route (/centers/register); show a
+  // redirect card when explicitly requested via /register/center.
   const isCenter = role === 'center';
+  // When no role is provided (generic /register), default to the parent form so
+  // the user lands directly on the normal registration flow instead of a
+  // "Choose an account type" chooser. Specific routes stay as-is.
+  const effectiveRole = role || 'parent';
+  const validRole: RegisterRole | null =
+    effectiveRole === 'teacher' || effectiveRole === 'student' || effectiveRole === 'parent'
+      ? effectiveRole
+      : null;
   const router = useRouter();
 
   const { t } = useT();
-
-  const [centers, setCenters] = useState<PublicCenter[]>([]);
-  const [centersLoading, setCentersLoading] = useState(false);
-  const [centersError, setCentersError] = useState(false);
-  const searchParams = useSearchParams();
-  const preselectedCenterId = searchParams?.get('center') ?? '';
-  const [centerId, setCenterId] = useState(preselectedCenterId);
 
   const [subjectsList, setSubjectsList] = useState<Subject[]>([]);
   const [gradesList, setGradesList] = useState<Grade[]>([]);
@@ -61,19 +61,6 @@ export default function RegisterPage() {
   const [serverDetails, setServerDetails] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const loadCenters = useCallback(() => {
-    setCentersLoading(true);
-    setCentersError(false);
-    api
-      .searchCenters({ limit: 100 })
-      .then((res) => setCenters(res.data.items ?? []))
-      .catch(() => {
-        setCenters([]);
-        setCentersError(true);
-      })
-      .finally(() => setCentersLoading(false));
-  }, []);
-
   const loadCatalog = useCallback(() => {
     api
       .get<Subject[]>('/catalog/subjects')
@@ -86,20 +73,13 @@ export default function RegisterPage() {
   }, []);
 
   useEffect(() => {
-    if (validRole === 'teacher' || validRole === 'parent') loadCenters();
     if (validRole === 'teacher' || validRole === 'student') loadCatalog();
-  }, [validRole, loadCenters, loadCatalog]);
-
-  useEffect(() => {
-    if (preselectedCenterId) {
-      setCenterId((prev) => prev || preselectedCenterId);
-    }
-  }, [preselectedCenterId]);
+  }, [validRole, loadCatalog]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!validRole) return;
     const errs: Record<string, string> = {};
-    if (validRole !== 'student' && !centerId) errs.centerId = t('selectCenter') ?? 'Please select a center.';
     if (username.trim().length < 3) errs.username = t('usernameMinChars');
     else if (!USERNAME_RE.test(username.trim())) errs.username = t('usernameAllowedChars');
     if (fullName.trim().length < 2) errs.fullName = t('fullName') + ' ' + t('required');
@@ -138,7 +118,6 @@ export default function RegisterPage() {
         password,
         confirmPassword,
         phone: normalizedPhone,
-        ...(validRole !== 'student' && centerId ? { centerId } : {}),
         ...(email.trim() ? { email: email.trim() } : {}),
       };
       if (validRole === 'teacher') {
@@ -157,12 +136,11 @@ export default function RegisterPage() {
         student: 'STUDENT',
         parent: 'PARENT',
       };
-      const roleForApi = ROLE_TO_API[validRole as string];
+      const roleForApi = ROLE_TO_API[validRole];
       const res = await api.register({ role: roleForApi, ...(base as any) });
       const data: any = res.data;
       if (validRole === 'student' && data?.studentNumber) {
         // Show student number before redirect – keep existing UI pattern
-        // For now, redirect to login with success; RegisterPage already handles studentNumber state if needed
         router.push('/login?registered=1&studentNumber=' + encodeURIComponent(data.studentNumber));
       } else {
         router.push('/login?registered=1');
@@ -204,43 +182,15 @@ export default function RegisterPage() {
     );
   }
 
-  if (!validRole) {
-    return (
-      <AuthLayout title={t('chooseAccountType')} subtitle={t('chooseAccountTypeSubtitle')}>
-        <div className="space-y-3">
-          {(['teacher', 'student', 'parent'] as RegisterRole[]).map((r) => (
-            <Link
-              key={r}
-              href={`/register/${r}`}
-              className="block rounded-xl border border-slate-200 bg-white p-4 text-start shadow-sm transition hover:border-brand-400 hover:shadow dark:border-slate-700 dark:bg-slate-800"
-            >
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                {t('registerAsRole').replace('{role}', t(r))}
-              </p>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                {r === 'teacher' && t('roleDescTeacher')}
-                {r === 'student' && t('roleDescStudent')}
-                {r === 'parent' && t('roleDescParent')}
-              </p>
-            </Link>
-          ))}
-          <Link
-            href="/centers/register"
-            className="block rounded-xl border border-dashed border-slate-300 bg-white p-4 text-center text-sm font-medium text-brand-600 hover:border-brand-400 dark:border-slate-700 dark:bg-slate-800"
-          >
-            {t('registerCenter')}
-          </Link>
-        </div>
-      </AuthLayout>
-    );
-  }
+  // Unknown/blank role: fall back to the parent registration form so the
+  // generic /register always shows a normal form and never a role chooser.
+  const renderRole: RegisterRole = validRole ?? 'parent';
 
   const subjectOptions = subjectsList.map((s) => ({ value: s.id, label: s.name }));
   const gradeOptions = gradesList.map((g) => ({ value: g.id, label: g.name }));
-  const centerOptions = centers.map((c) => ({ value: c.id, label: c.name }));
 
   return (
-    <AuthLayout title={`${t('register')} – ${t(validRole)}`} subtitle={t('registerSubtitle')}>
+    <AuthLayout title={`${t('register')} – ${t(renderRole)}`} subtitle={t('registerSubtitle')}>
       <form onSubmit={submit} className="space-y-4">
         {serverError && <InlineError message={serverError} />}
         {serverDetails.length > 0 && (
@@ -249,33 +199,6 @@ export default function RegisterPage() {
               <li key={i}>{d}</li>
             ))}
           </ul>
-        )}
-
-        {validRole !== 'student' && (
-          <>
-            {centersLoading ? (
-              <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-400">
-                {t('centersLoading')}
-              </p>
-            ) : centersError ? (
-              <div className="space-y-1">
-                <p className="text-xs text-red-600 dark:text-red-400">{t('centersLoadFailed')}</p>
-                <Button type="button" variant="outline" size="sm" onClick={loadCenters}>
-                  {t('retry')}
-                </Button>
-              </div>
-            ) : (
-              <SearchableSelect
-                label={t('centerLabel')}
-                options={centerOptions}
-                value={centerId}
-                onChange={setCenterId}
-                placeholder={t('selectCenter')}
-                emptyText={t('noCentersFound')}
-                error={errors.centerId}
-              />
-            )}
-          </>
         )}
 
         <Input
@@ -327,7 +250,7 @@ export default function RegisterPage() {
           placeholder="10 1234 5678"
         />
 
-        {validRole === 'teacher' && (
+        {renderRole === 'teacher' && (
           <>
             <MultiSelect label={t('subjects')} options={subjectOptions} selected={subjects} onChange={setSubjects} error={errors.subjects} />
             <MultiSelect label={t('grades')} options={gradeOptions} selected={grades} onChange={setGrades} error={errors.grades} />
@@ -350,7 +273,7 @@ export default function RegisterPage() {
           </>
         )}
 
-        {validRole === 'student' && (
+        {renderRole === 'student' && (
           <>
             <MultiSelect label={t('subjects')} options={subjectOptions} selected={subjects} onChange={setSubjects} error={errors.subjects} />
             <Select

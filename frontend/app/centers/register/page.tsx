@@ -41,7 +41,20 @@ export default function CenterRegisterPage() {
   const [serverDetails, setServerDetails] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RegisterCenterResult | null>(null);
-  void setResult;
+
+  const locationStatusMessage = (() => {
+    if (!result?.locationStatus || result.locationStatus === 'success') return null;
+    switch (result.locationStatus) {
+      case 'not_found':
+        return t('locationNotFound');
+      case 'unavailable':
+        return t('locationUnavailable');
+      case 'skipped':
+        return t('locationSkipped');
+      default:
+        return null;
+    }
+  })();
 
   const set =
     (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -132,9 +145,25 @@ export default function CenterRegisterPage() {
             <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" />
             <h1 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">{t('registerCenter')}</h1>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t('pendingApproval')}</p>
+            {locationStatusMessage && (
+              <div
+                className={`mt-4 rounded-lg p-3 text-sm ${
+                  result?.locationStatus === 'not_found' || result?.locationStatus === 'unavailable'
+                    ? 'bg-amber-50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-200'
+                    : 'bg-slate-50 text-slate-600 dark:bg-slate-700/40 dark:text-slate-300'
+                }`}
+              >
+                {locationStatusMessage}
+              </div>
+            )}
             <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm text-slate-500 dark:bg-slate-700/40 dark:text-slate-300">
               <p>{t('centerIdLabel')}: {result.centerId}</p>
             </div>
+            {result?.locationStatus === 'success' && (
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 className="h-4 w-4" /> {t('locationDetected')}
+              </p>
+            )}
             <Link href="/login" className="mt-6 inline-block text-sm font-medium text-brand-600 hover:text-brand-700">
               {t('login')} →
             </Link>

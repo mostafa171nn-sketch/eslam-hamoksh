@@ -76,6 +76,8 @@ export interface PublicCenter {
   slug: string;
   city?: string | null;
   address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   description?: string | null;
   photoUrl?: string | null;
   teacherCount: number;
@@ -140,6 +142,9 @@ export interface RegisterCenterResult {
   status: string;
   subscriptionStatus: string;
   requiresApproval: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  locationStatus?: 'success' | 'not_found' | 'unavailable' | 'skipped';
 }
 
 /** Public CENTER package (subscription plan) as exposed by the packages API. */

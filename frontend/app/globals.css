@@ -198,3 +198,195 @@ body {
 .dark .pencil-inline__label {
   color: #94a3b8;
 }
+
+/* ===== Interactive map (Leaflet) ===== */
+
+/* Constrain the Leaflet root so it fills its parent and never escapes the grid. */
+.ecms-map-box .leaflet-container {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  font-family: inherit;
+}
+
+.ecms-map-box .leaflet-control-attribution {
+  font-size: 10px;
+}
+
+/* Custom single-pin marker (DivIcon) */
+.ecms-pin-wrap {
+  background: transparent !important;
+  border: none !important;
+  transition: transform 0.2s ease;
+}
+.ecms-pin {
+  position: relative;
+  width: 30px;
+  height: 38px;
+  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.3));
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+.ecms-pin-wrap:hover .ecms-pin {
+  transform: scale(1.15) translateY(-2px);
+  filter: drop-shadow(0 4px 8px rgba(79, 70, 229, 0.4));
+}
+.ecms-pin::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 26px;
+  height: 34px;
+  transform: translateX(-50%);
+  background: #4f46e5; /* brand-600 */
+  clip-path: polygon(50% 0%, 100% 38%, 100% 100%, 0% 100%, 0% 38%);
+  transition: background 0.2s ease;
+}
+.ecms-pin::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  transform: translateX(-50%);
+  border-radius: 9999px;
+  background: #ffffff;
+}
+.ecms-pin--active {
+  transform: scale(1.2) translateY(-3px);
+  filter: drop-shadow(0 4px 12px rgba(225, 29, 72, 0.5));
+}
+.ecms-pin--active::before {
+  background: #e11d48; /* rose-600 highlight for the focused center */
+}
+.dark .ecms-pin::before {
+  background: #6366f1; /* brand-500 in dark mode */
+}
+.dark .ecms-pin--active::before {
+  background: #fb7185;
+}
+.dark .ecms-pin-wrap:hover .ecms-pin {
+  filter: drop-shadow(0 4px 8px rgba(99, 102, 241, 0.4));
+}
+
+/* Center name label rendered below the pin */
+.ecms-pin-wrap {
+  position: relative;
+  z-index: 10;
+}
+.ecms-marker-label {
+  position: absolute;
+  top: 40px; /* just below the 38px pin */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  max-width: 200px;
+  padding: 4px 10px 5px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.18);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  transform-origin: top center;
+}
+/* Small pointer connecting the label to the pin */
+.ecms-marker-label::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid rgba(15, 23, 42, 0.14);
+}
+.ecms-marker-label::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid #ffffff;
+}
+.ecms-pin-wrap:hover .ecms-marker-label {
+  border-color: rgba(79, 70, 229, 0.4);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.24);
+}
+.ecms-marker-label--active {
+  border-color: #e11d48;
+  box-shadow: 0 4px 16px rgba(225, 29, 72, 0.35);
+  transform: translateX(-50%) scale(1.06);
+  background: #fff5f5;
+}
+.ecms-marker-label--active::before {
+  border-bottom-color: #e11d48;
+}
+.ecms-marker-label--active::after {
+  border-bottom-color: #fff5f5;
+}
+.dark .ecms-marker-label--active {
+  border-color: #fb7185;
+  box-shadow: 0 4px 16px rgba(251, 113, 133, 0.35);
+}
+
+/* Leaflet popups */
+.ecms-map-box .leaflet-popup-content-wrapper {
+  border-radius: 0.75rem;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);
+  overflow: hidden;
+}
+.ecms-map-box .leaflet-popup-content {
+  margin: 12px;
+  line-height: 1.4;
+}
+.ecms-map-box .leaflet-popup-tip {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+/* Popup card styles */
+.ecms-popup-card {
+  font-family: inherit;
+}
+
+/* Center list custom scrollbar */
+.ecms-centers-list::-webkit-scrollbar {
+  width: 6px;
+}
+.ecms-centers-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ecms-centers-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.ecms-centers-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.dark .ecms-centers-list::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+.dark .ecms-centers-list::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Center card hover animation */
+.ecms-center-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.ecms-center-card:hover {
+  transform: translateY(-2px);
+}
+

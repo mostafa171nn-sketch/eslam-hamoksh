@@ -22,7 +22,7 @@ export function AuthPrompt({
 }) {
   const { t } = useT();
   const loginHref = `/login?next=${encodeURIComponent(next)}`;
-  const registerHref = `/register?next=${encodeURIComponent(next)}`;
+  const registerHref = `/login?next=${encodeURIComponent(next)}`;
 
   return (
     <div

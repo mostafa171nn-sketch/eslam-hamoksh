@@ -82,6 +82,9 @@ export const registerCenterHandler = asyncHandler(async (req: Request, res: Resp
       status: result.center.status,
       subscriptionStatus: result.center.subscriptionStatus,
       requiresApproval: result.center.requiresApproval,
+      latitude: result.latitude ?? null,
+      longitude: result.longitude ?? null,
+      locationStatus: result.locationStatus,
     },
     'Your center has been registered and is awaiting approval from the platform administrator.',
   );

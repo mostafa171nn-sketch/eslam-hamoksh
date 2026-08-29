@@ -1,0 +1,26 @@
+const app_1 = require('./dist/app');
+const { env } = require('./dist/config/env');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+async function start() {
+  try {
+    console.log('Connecting to database...');
+    await prisma.$connect();
+    console.log('Database connected.');
+    
+    console.log('Starting server on port', env.PORT);
+    const server = app_1.app.listen(env.PORT, () => {
+      console.log('API running on http://localhost:' + env.PORT);
+    });
+    
+    server.on('error', (err) => console.error('Server error:', err));
+    server.on('listening', () => console.log('Server is listening on port', env.PORT));
+    
+    // Keep process alive
+    setInterval(() => {}, 1000);
+  } catch (err) {
+    console.error('Error:', err);
+  }
+}
+start();

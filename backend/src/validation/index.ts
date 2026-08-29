@@ -53,7 +53,7 @@ const grades = z.array(z.string().min(1)).min(1, 'Select at least one grade.').m
 const subjectIds = z.array(z.string().uuid()).min(1, 'Select at least one subject.').max(30);
 
 export const registerTeacherSchema = z.object({
-  centerId: z.string().uuid('Select a center to register with.'),
+  centerId: z.string().uuid().optional(),
   fullName: z.string().min(2, 'Full name is required.').max(100),
   username,
   email: emailOptional,
@@ -88,7 +88,7 @@ export const registerStudentSchema = z.object({
 });
 
 export const registerParentSchema = z.object({
-  centerId: z.string().uuid('Select a center to register with.'),
+  centerId: z.string().uuid().optional(),
   fullName: z.string().min(2).max(100),
   username,
   email: emailOptional,

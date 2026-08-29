@@ -31,7 +31,7 @@ export function PublicNav() {
             {t('packagesNav')}
           </Link>
           <Link
-            href="/register"
+            href="/login"
             className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
             {t('register')}
