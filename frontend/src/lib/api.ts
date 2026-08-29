@@ -248,13 +248,24 @@ async function rawRequest<T>(path: string, options: RequestInit): Promise<ApiRes
   return body as ApiResponse<T>;
 }
 
-async function tryRefresh(): Promise<boolean> {
-  try {
-    await rawRequest('/auth/refresh', { method: 'POST' });
-    return true;
-  } catch {
-    return false;
+// Single-flight refresh guard. The backend rotates (single-use) the refresh
+// token on every successful refresh, so firing several concurrent refresh
+// calls with the same cookie would race: the first one revokes the token and
+// the others fail as "Session has been revoked", force-logging the user out.
+// Sharing one in-flight refresh promise ensures only a single refresh ever
+// runs at a time while simultaneous 401 handlers await the same result.
+let refreshInFlight: Promise<boolean> | null = null;
+
+function tryRefresh(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = rawRequest('/auth/refresh', { method: 'POST' })
+      .then(() => true)
+      .catch(() => false)
+      .finally(() => {
+        refreshInFlight = null;
+      });
   }
+  return refreshInFlight;
 }
 
 async function request<T>(path: string, options: RequestInit, retried = false): Promise<ApiResponse<T>> {
