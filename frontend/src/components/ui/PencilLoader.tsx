@@ -6,36 +6,21 @@ import { useT } from '../../i18n';
 
 type Size = 'sm' | 'md' | 'lg';
 
-// Rendered size for inline (non-overlay) usage is controlled via the .pencil
-// element's font-size (em-based). 60em * fontSize = rendered pixels.
-const INLINE_FONT: Record<Size, number> = {
-  sm: 0.35,
-  md: 0.7,
-  lg: 1.1,
+const FONT_SIZE: Record<Size, string> = {
+  sm: '3em',
+  md: '5em',
+  lg: '7.5em',
 };
 
 export interface PencilLoaderProps {
   size?: Size;
   label?: string;
-  /** Full-viewport overlay loader (page/route/data loading). */
   overlay?: boolean;
-  /** Alias for `overlay` kept for backward compatibility. */
   center?: boolean;
-  /** Lock body scroll while an overlay is visible (default true). */
   lock?: boolean;
   className?: string;
 }
 
-/**
- * Global ECMS loading indicator.
- *
- * Renders a pencil that draws a line while a real operation is pending.
- * The pencil animation itself is defined once in globals.css (.pencil + the
- * ecms-pencil-* classes) and is never altered here.
- *
- * Each instance gets a unique SVG id so multiple loaders can safely exist
- * on the same page without clipPath collisions.
- */
 export function PencilLoader({
   size = 'lg',
   label,
@@ -50,50 +35,103 @@ export function PencilLoader({
   const uid = rawId.replace(/[^a-zA-Z0-9]/g, '');
   const clipId = `pencil-eraser-${uid}`;
 
-  // Prevent background scroll while the full-screen loader is visible.
   useEffect(() => {
     if (!showOverlay || !lock) return;
     lockScroll();
     return () => unlockScroll();
   }, [showOverlay, lock]);
 
-  const pencil = (
-    <span className="pencil" style={showOverlay ? undefined : { fontSize: `${INLINE_FONT[size]}px` }}>
-      <svg viewBox="0 0 220 100" width="100%" height="100%" aria-hidden="true">
-        <line x1="20" y1="70" x2="190" y2="70" className="ecms-pencil-track" />
+  const svg = (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 200 200"
+      className="pencil"
+      role="img"
+      aria-label={label || t('loading')}
+      style={{ fontSize: FONT_SIZE[size] }}
+    >
+      <defs>
         <clipPath id={clipId}>
-          <rect x="20" y="60" width="170" height="20" />
+          <rect height="30" width="30" ry="5" rx="5" />
         </clipPath>
-        <g clipPath={`url(#${clipId})`}>
-          <line x1="20" y1="70" x2="190" y2="70" className="ecms-pencil-ink" />
+      </defs>
+
+      <circle
+        transform="rotate(-113,100,100)"
+        strokeLinecap="round"
+        strokeDashoffset="439.82"
+        strokeDasharray="439.82 439.82"
+        strokeWidth="2"
+        stroke="currentColor"
+        fill="none"
+        r="70"
+        className="pencil__stroke"
+      />
+
+      <g transform="translate(100,100)" className="pencil__rotate">
+        <g fill="none">
+          <circle
+            transform="rotate(-90)"
+            strokeDashoffset="402"
+            strokeDasharray="402.12 402.12"
+            strokeWidth="30"
+            stroke="hsl(223,90%,50%)"
+            r="64"
+            className="pencil__body1"
+          />
+          <circle
+            transform="rotate(-90)"
+            strokeDashoffset="465"
+            strokeDasharray="464.96 464.96"
+            strokeWidth="10"
+            stroke="hsl(223,90%,60%)"
+            r="74"
+            className="pencil__body2"
+          />
+          <circle
+            transform="rotate(-90)"
+            strokeDashoffset="339"
+            strokeDasharray="339.29 339.29"
+            strokeWidth="10"
+            stroke="hsl(223,90%,40%)"
+            r="54"
+            className="pencil__body3"
+          />
         </g>
-        <g className="ecms-pencil-move">
-          <g transform="translate(20 70) rotate(18)">
-            <rect x="-5" y="-64" width="10" height="9" rx="2" className="ecms-pencil-eraser" />
-            <rect x="-5" y="-55" width="10" height="8" className="ecms-pencil-ferrule" />
-            <rect x="-5" y="-47" width="10" height="37" className="ecms-pencil-body" />
-            <polygon points="0,0 -5,-10 5,-10" className="ecms-pencil-lead" />
+
+        <g transform="rotate(-90) translate(49,0)" className="pencil__eraser">
+          <g className="pencil__eraser-skew">
+            <rect height="30" width="30" ry="5" rx="5" fill="hsl(223,90%,70%)" />
+            <rect clipPath={`url(#${clipId})`} height="30" width="5" fill="hsl(223,90%,60%)" />
+            <rect height="20" width="30" fill="hsl(223,10%,90%)" />
+            <rect height="20" width="15" fill="hsl(223,10%,70%)" />
+            <rect height="20" width="5" fill="hsl(223,10%,80%)" />
+            <rect height="2" width="30" y="6" fill="hsla(223,10%,10%,0.2)" />
+            <rect height="2" width="30" y="13" fill="hsla(223,10%,10%,0.2)" />
           </g>
         </g>
-      </svg>
-    </span>
+
+        <g transform="rotate(-90) translate(49,-30)" className="pencil__point">
+          <polygon points="15 0,30 30,0 30" fill="hsl(33,90%,70%)" />
+          <polygon points="15 0,6 30,0 30" fill="hsl(33,90%,50%)" />
+          <polygon points="15 0,20 10,10 10" fill="hsl(223,10%,10%)" />
+        </g>
+      </g>
+    </svg>
   );
 
   if (showOverlay) {
     return (
-      <div
-        className={`pencil-overlay${className ? ` ${className}` : ''}`}
-        role="status"
-        aria-live="polite"
-        aria-busy="true"
-      >
-        {pencil}
-        {label ? (
-          <span className="pencil-overlay__label">{label}</span>
-        ) : (
-          <span className="sr-only">{t('loading')}</span>
-        )}
-      </div>
+        <div role="status" aria-live="polite" aria-busy="true" className={`pencil-overlay${className ? ` ${className}` : ''}`}>
+          <span className="pencil" style={{ fontSize: FONT_SIZE[size] }} aria-label={label || t('loading')}>
+            {svg}
+          </span>
+          {label ? (
+            <span className="pencil-overlay__label">{label}</span>
+          ) : (
+            <span className="sr-only">{t('loading')}</span>
+          )}
+        </div>
     );
   }
 
@@ -104,7 +142,9 @@ export function PencilLoader({
       aria-live="polite"
       aria-busy="true"
     >
-      {pencil}
+      <div className="pencil" style={{ fontSize: FONT_SIZE[size] }}>
+        {svg}
+      </div>
       {label ? (
         <span className="pencil-inline__label">{label}</span>
       ) : (
