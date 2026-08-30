@@ -26,8 +26,7 @@ export function StudentLoginShell({
   const { t, dir } = useT();
   return (
     <div
-      className={`relative flex h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-[#060f22] text-slate-900 dark:text-white lg:flex-row ${dir === 'rtl' ? 'rtl' : 'ltr'}`}
-      style={{ overflowY: 'hidden' }}
+      className={`relative flex min-h-[100dvh] w-full overflow-x-hidden bg-[#060f22] text-slate-900 dark:text-white lg:flex-row ${dir === 'rtl' ? 'rtl' : 'ltr'}`}
     >
       {/* LEFT — subtle abstract scientific identity */}
       <aside
@@ -77,7 +76,7 @@ export function StudentLoginShell({
 
       {/* RIGHT — clean premium form */}
       <main
-        className="relative z-10 flex w-full flex-col justify-center overflow-y-auto bg-[#f8f7f0] px-6 py-10 lg:w-[55%] lg:px-14 lg:py-12 dark:bg-[#0b1122]"
+        className="relative z-10 flex w-full flex-col items-start justify-start overflow-y-auto bg-[#f8f7f0] px-6 py-10 lg:w-[45%] lg:items-start lg:justify-start lg:px-10 lg:py-10 dark:bg-[#0b1122]"
         style={{ overscrollBehavior: 'contain' }}
       >
         <div aria-hidden className="pointer-events-none absolute -start-10 -top-10 h-56 w-56 rounded-full bg-brand-200/30 blur-3xl dark:bg-brand-900/20" />
