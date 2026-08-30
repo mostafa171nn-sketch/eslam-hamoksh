@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+﻿import { useState, type ReactNode } from 'react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -77,8 +77,8 @@ export default function AdminReportsPage() {
     [type, appliedFrom, appliedTo],
   );
 
-  const th = 'pb-2 pr-4 text-start text-xs font-medium uppercase tracking-wide text-slate-400';
-  const td = 'py-2.5 pr-4 text-slate-700';
+  const th = 'pb-2 pe-4 text-start text-xs font-medium uppercase tracking-wide text-slate-400';
+  const td = 'py-2.5 pe-4 text-slate-700';
 
   const renderData = (): ReactNode => {
     if (!data) return null;

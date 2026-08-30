@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScanLine, TrendingDown } from 'lucide-react';
@@ -177,32 +177,32 @@ export default function AdminAttendancePage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">
-                    <th className="pb-2 pr-4 font-medium">{t('student')}</th>
-                    <th className="pb-2 pr-4 font-medium">{t('lessonCol')}</th>
-                    <th className="pb-2 pr-4 font-medium">{t('statusCol')}</th>
-                    <th className="pb-2 pr-4 font-medium">{t('methodCol')}</th>
-                    <th className="pb-2 pr-4 font-medium">{t('markedCol')}</th>
+                    <th className="pb-2 pe-4 font-medium">{t('student')}</th>
+                    <th className="pb-2 pe-4 font-medium">{t('lessonCol')}</th>
+                    <th className="pb-2 pe-4 font-medium">{t('statusCol')}</th>
+                    <th className="pb-2 pe-4 font-medium">{t('methodCol')}</th>
+                    <th className="pb-2 pe-4 font-medium">{t('markedCol')}</th>
                     <th className="pb-2 font-medium">{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                   {data.map((row) => (
                     <tr key={row.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 dark:bg-slate-800/60">
-                      <td className="py-3 pr-4 font-medium text-slate-800 dark:text-slate-100">{row.student.fullName}</td>
-                      <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
+                      <td className="py-3 pe-4 font-medium text-slate-800 dark:text-slate-100">{row.student.fullName}</td>
+                      <td className="py-3 pe-4 text-slate-600 dark:text-slate-300">
                         {row.lesson.subject} · {row.lesson.teacher}
                         <span className="block text-xs text-slate-400">
                           {formatDate(row.lesson.date)} {formatTime(row.lesson.startTime)}
                         </span>
                       </td>
-                      <td className="py-3 pr-4">
+                      <td className="py-3 pe-4">
                         <Badge tone={STATUS_TONE[row.status]}>{row.status}</Badge>
                       </td>
-                      <td className="py-3 pr-4 text-slate-500">{row.method}</td>
-                      <td className="py-3 pr-4 text-slate-500">
+                      <td className="py-3 pe-4 text-slate-500">{row.method}</td>
+                      <td className="py-3 pe-4 text-slate-500">
                         {row.markedAt ? `${formatDate(row.markedAt)} ${formatTime(row.markedAt.slice(11, 16))}` : '—'}
                       </td>
-                      <td className="py-3 pr-4">
+                      <td className="py-3 pe-4">
                         <button onClick={() => openEdit(row)} className="text-brand-600 hover:underline">
                           {t('edit')}
                         </button>

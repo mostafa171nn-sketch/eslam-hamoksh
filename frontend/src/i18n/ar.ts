@@ -1039,6 +1039,38 @@
   // --- Admin additions ---
   gradeOrderLabel: 'المستوى (الترتيب)',
   create: 'إنشاء',
+
+  // --- Landing story ---
+  homeWhyTitle: 'لماذا يختار الأهالي معارج؟',
+  homeWhySub: 'منصة واحدة لاكتشاف المعلمين وحجز الحصص ومتابعة التقدم — للطلاب وأولياء الأمور والمعلمين.',
+  homeWhyVerifiedTitle: 'معلّمون موثوقون',
+  homeWhyVerifiedSub: 'كل معلم تتم مراجعته والموافقة عليه قبل ظهوره على المنصة.',
+  homeWhyFlexibleTitle: 'مرونة في المواعيد',
+  homeWhyFlexibleSub: 'تصفّح الأوقات المتاحة واحجز ما يناسبك.',
+  homeWhyProgressTitle: 'تقدم ملموس',
+  homeWhyProgressSub: 'الحضور والواجبات والامتحانات والنتائج في مسار واحد واضح.',
+  homeWhyAllInOneTitle: 'كل شيء في مكان واحد',
+  homeWhyAllInOneSub: 'الرسائل والمدفوعات والتقارير بلا أوراق وبلا تعقيد.',
+  homeTeachersTitle: 'تعلّم مع معلّمين ملتزمين',
+  homeTeachersSub: 'معلّمون متميزون ومعتمدون في كل المواد والصفوف.',
+  homeBrowseTeachers: 'تصفّح المعلّمين',
+  homeCentersTitle: 'مراكز موثوقة قريبة منك',
+  homeCentersSub: 'قارن أفضل المراكز التعليمية في مدينتك وتابع ما يعجبك منها.',
+  homeExploreCenters: 'استكشف المراكز',
+  homeSubjectsTitle: 'مواد تناسب كل متعلّم',
+  homeSubjectsSub: 'من أساسيات المدرسة إلى الدورات المتقدمة — اختر طريقك وارتقِ.',
+  homeProgressTitle: 'ارتقِ خطوة بخطوة',
+  homeProgressSub: 'الحصص والواجبات والامتحانات تبني طريقًا يجعل تقدّمك مرئيًا.',
+  homeCtaTitle: 'مستعد للخطوة التالية؟',
+  homeCtaSub: 'أنشئ حسابك وابدأ التعلّم اليوم.',
+  homeCtaPrimary: 'ابدأ التعلّم الآن',
+  homeCtaSecondary: 'ابحث عن مركزك',
+  heroChipLessons: 'حصص وواجبات',
+  heroChipLive: 'متابعة الحضور',
+  heroChipResults: 'نتائج وتقارير',
+  homeFooterTagline: 'طريق أذكى للعائلات والمعلمين ليتعلّموا معًا.',
+  rightsReserved: 'جميع الحقوق محفوظة.',
+  mainNavigation: 'التنقل الرئيسي',
 } as const;
 
 export type Dict = Record<keyof typeof ar, string>;

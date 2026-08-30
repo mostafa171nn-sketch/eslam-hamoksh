@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
@@ -117,18 +117,18 @@ export default function AdminUsersPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">
-                    <th className="pb-2 pr-4 font-medium">{t('userCol')}</th>
-                    <th className="pb-2 pr-4 font-medium">{t('role')}</th>
-                    <th className="hidden pb-2 pr-4 font-medium sm:table-cell">{t('phone')}</th>
-                    <th className="hidden pb-2 pr-4 font-medium md:table-cell">{t('joined')}</th>
-                    <th className="pb-2 pr-4 font-medium">{t('status')}</th>
+                    <th className="pb-2 pe-4 font-medium">{t('userCol')}</th>
+                    <th className="pb-2 pe-4 font-medium">{t('role')}</th>
+                    <th className="hidden pb-2 pe-4 font-medium sm:table-cell">{t('phone')}</th>
+                    <th className="hidden pb-2 pe-4 font-medium md:table-cell">{t('joined')}</th>
+                    <th className="pb-2 pe-4 font-medium">{t('status')}</th>
                     <th className="pb-2 font-medium text-start">{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                   {data.map((u) => (
                     <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 dark:bg-slate-800/60">
-                      <td className="py-3 pr-4">
+                      <td className="py-3 pe-4">
                         <div className="flex items-center gap-3">
                           <Avatar name={u.fullName} src={u.photo} size="sm" />
                           <div className="min-w-0">
@@ -137,14 +137,14 @@ export default function AdminUsersPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="py-3 pr-4">
+                      <td className="py-3 pe-4">
                         <Badge tone={u.role === 'ADMIN' || u.role === 'CENTER_ADMIN' ? 'violet' : u.role === 'TEACHER' ? 'blue' : 'slate'}>
                           {t(roleKey(u.role))}
                         </Badge>
                       </td>
-                      <td className="hidden py-3 pr-4 text-slate-500 sm:table-cell">{u.phone ?? '—'}</td>
-                      <td className="hidden py-3 pr-4 text-slate-500 md:table-cell">{formatDate(u.createdAt)}</td>
-                      <td className="py-3 pr-4">
+                      <td className="hidden py-3 pe-4 text-slate-500 sm:table-cell">{u.phone ?? '—'}</td>
+                      <td className="hidden py-3 pe-4 text-slate-500 md:table-cell">{formatDate(u.createdAt)}</td>
+                      <td className="py-3 pe-4">
                         <Badge tone={u.status === 'ACTIVE' ? 'green' : 'red'}>{t(userStatusKey(u.status))}</Badge>
                       </td>
                       <td className="py-3 text-start">

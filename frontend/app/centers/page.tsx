@@ -268,7 +268,7 @@ export default function CentersPage() {
             {/* ── DESKTOP: split layout — map permanently visible on the right ── */}
             <div className="hidden lg:grid lg:grid-cols-[1fr_1.2fr] lg:gap-6">
               {/* Left: scrollable center list */}
-              <div ref={listRef} className="ecms-centers-list lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto lg:pr-2">
+              <div ref={listRef} className="ecms-centers-list lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto lg:pe-2">
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">{results.map(renderCard)}</div>
                 <Pagination />
               </div>

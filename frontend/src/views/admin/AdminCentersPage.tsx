@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
@@ -218,13 +218,13 @@ export default function AdminCentersPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">
-                  <th className="pb-2 pr-4 font-medium">{t('centerCol')}</th>
-                  <th className="hidden pb-2 pr-4 font-medium md:table-cell">{t('email')}</th>
-                  <th className="hidden pb-2 pr-4 font-medium lg:table-cell">{t('city')}</th>
-                  <th className="hidden pb-2 pr-4 font-medium md:table-cell">{t('centerAdminCol')}</th>
-                  <th className="hidden pb-2 pr-4 font-medium lg:table-cell">{t('registeredCol')}</th>
-                  <th className="pb-2 pr-4 font-medium">{t('status')}</th>
-                  <th className="pb-2 pr-4 font-medium">{t('accountCol')}</th>
+                  <th className="pb-2 pe-4 font-medium">{t('centerCol')}</th>
+                  <th className="hidden pb-2 pe-4 font-medium md:table-cell">{t('email')}</th>
+                  <th className="hidden pb-2 pe-4 font-medium lg:table-cell">{t('city')}</th>
+                  <th className="hidden pb-2 pe-4 font-medium md:table-cell">{t('centerAdminCol')}</th>
+                  <th className="hidden pb-2 pe-4 font-medium lg:table-cell">{t('registeredCol')}</th>
+                  <th className="pb-2 pe-4 font-medium">{t('status')}</th>
+                  <th className="pb-2 pe-4 font-medium">{t('accountCol')}</th>
                   <th className="pb-2 font-medium text-start">{t('actions')}</th>
                 </tr>
               </thead>
@@ -238,14 +238,14 @@ export default function AdminCentersPage() {
                 )}
                 {items.map((c) => (
                   <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 dark:bg-slate-800/60">
-                    <td className="py-3 pr-4">
+                    <td className="py-3 pe-4">
                       <p className="font-medium text-slate-900 dark:text-white">{c.name}</p>
                       {c.nameEn && <p className="text-xs text-slate-400">{c.nameEn}</p>}
                       {c.address && <p className="text-xs text-slate-400">{c.address}</p>}
                     </td>
-                    <td className="hidden py-3 pr-4 text-slate-500 md:table-cell">{c.email ?? '—'}</td>
-                    <td className="hidden py-3 pr-4 text-slate-500 lg:table-cell">{c.city ?? '—'}</td>
-                    <td className="hidden py-3 pr-4 md:table-cell">
+                    <td className="hidden py-3 pe-4 text-slate-500 md:table-cell">{c.email ?? '—'}</td>
+                    <td className="hidden py-3 pe-4 text-slate-500 lg:table-cell">{c.city ?? '—'}</td>
+                    <td className="hidden py-3 pe-4 md:table-cell">
                       {c.admin ? (
                         <div className="min-w-0">
                           <p className="truncate font-medium text-slate-700">{c.admin.fullName ?? c.admin.username}</p>
@@ -255,11 +255,11 @@ export default function AdminCentersPage() {
                         <span className="text-xs text-slate-300">—</span>
                       )}
                     </td>
-                    <td className="hidden py-3 pr-4 text-slate-500 lg:table-cell">{formatDate(c.createdAt)}</td>
-                    <td className="py-3 pr-4">
+                    <td className="hidden py-3 pe-4 text-slate-500 lg:table-cell">{formatDate(c.createdAt)}</td>
+                    <td className="py-3 pe-4">
                       <StatusBadge status={c.status} />
                     </td>
-                    <td className="py-3 pr-4">
+                    <td className="py-3 pe-4">
                       {c.admin ? <StatusBadge status={c.admin.status} /> : <Badge tone="slate">—</Badge>}
                     </td>
                     <td className="py-3 text-start">

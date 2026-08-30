@@ -164,7 +164,7 @@ export function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose:
       )}
       <aside
         className={`fixed inset-y-0 start-0 z-50 flex w-64 flex-col bg-slate-900 transition-transform duration-300 ease-out-expo lg:translate-x-0 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+          mobileOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'
         }`}
       >
         {/* Logo */}

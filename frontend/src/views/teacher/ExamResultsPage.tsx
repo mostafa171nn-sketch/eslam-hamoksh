@@ -1,4 +1,4 @@
-import { useParams } from 'next/navigation';
+﻿import { useParams } from 'next/navigation';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { StatCard } from '../../components/ui/StatCard';
@@ -57,30 +57,30 @@ export default function ExamResultsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">
-                <th className="pb-2 pr-4 font-medium">{t('studentCol')}</th>
-                <th className="pb-2 pr-4 font-medium">{t('status')}</th>
-                <th className="hidden pb-2 pr-4 font-medium sm:table-cell">{t('submittedStat')}</th>
-                <th className="pb-2 pr-4 font-medium">{t('score')}</th>
+                <th className="pb-2 pe-4 font-medium">{t('studentCol')}</th>
+                <th className="pb-2 pe-4 font-medium">{t('status')}</th>
+                <th className="hidden pb-2 pe-4 font-medium sm:table-cell">{t('submittedStat')}</th>
+                <th className="pb-2 pe-4 font-medium">{t('score')}</th>
                 <th className="pb-2 font-medium">{t('resultCol')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {data.results.map((r) => (
                 <tr key={r.student.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 dark:bg-slate-800/60">
-                  <td className="py-3 pr-4">
+                  <td className="py-3 pe-4">
                     <div className="flex items-center gap-3">
                       <Avatar name={r.student.fullName} src={r.student.photo} size="sm" />
                       <span className="font-medium text-slate-900 dark:text-white">{r.student.fullName}</span>
                     </div>
                   </td>
-                  <td className="py-3 pr-4">
+                  <td className="py-3 pe-4">
                     <Badge tone={statusTone(r.status)}>{t(examResultStatusKey(r.status))}</Badge>
                     {r.writtenPending && <Badge tone="amber" className="ms-1">{t('writtenPending')}</Badge>}
                   </td>
-                  <td className="hidden py-3 pr-4 text-slate-500 sm:table-cell">
+                  <td className="hidden py-3 pe-4 text-slate-500 sm:table-cell">
                     {r.submittedAt ? formatDateTime(r.submittedAt) : '—'}
                   </td>
-                  <td className="py-3 pr-4 font-medium text-slate-700">
+                  <td className="py-3 pe-4 font-medium text-slate-700">
                     {r.score !== null ? `${r.score}/${r.maxScore}` : '—'}
                   </td>
                   <td className="py-3">

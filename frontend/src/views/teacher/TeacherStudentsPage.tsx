@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import Link from 'next/link';
 import { CalendarPlus } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
@@ -47,10 +47,10 @@ export default function TeacherStudentsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">
-                    <th className="pb-2 pr-4 font-medium">{t('studentCol')}</th>
-                    <th className="hidden pb-2 pr-4 font-medium sm:table-cell">{t('grade')}</th>
-                    <th className="hidden pb-2 pr-4 font-medium md:table-cell">{t('subjects')}</th>
-                    <th className="hidden pb-2 pr-4 font-medium lg:table-cell">{t('nextLesson')}</th>
+                    <th className="pb-2 pe-4 font-medium">{t('studentCol')}</th>
+                    <th className="hidden pb-2 pe-4 font-medium sm:table-cell">{t('grade')}</th>
+                    <th className="hidden pb-2 pe-4 font-medium md:table-cell">{t('subjects')}</th>
+                    <th className="hidden pb-2 pe-4 font-medium lg:table-cell">{t('nextLesson')}</th>
                     <th className="pb-2 font-medium">{t('attendance')}</th>
                   </tr>
                 </thead>
@@ -60,7 +60,7 @@ export default function TeacherStudentsPage() {
                     const absent = s.attendance.find((a) => a.status === 'ABSENT')?._count._all ?? 0;
                     return (
                       <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 dark:bg-slate-800/60">
-                        <td className="py-3 pr-4">
+                        <td className="py-3 pe-4">
                           <div className="flex items-center gap-3">
                             <Avatar name={s.fullName} src={s.photo} size="sm" />
                             <div className="min-w-0">
@@ -69,8 +69,8 @@ export default function TeacherStudentsPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="hidden py-3 pr-4 text-slate-600 dark:text-slate-300 sm:table-cell">{s.grade?.name ?? '—'}</td>
-                        <td className="hidden py-3 pr-4 md:table-cell">
+                        <td className="hidden py-3 pe-4 text-slate-600 dark:text-slate-300 sm:table-cell">{s.grade?.name ?? '—'}</td>
+                        <td className="hidden py-3 pe-4 md:table-cell">
                           <div className="flex max-w-48 flex-wrap gap-1">
                             {s.subjects.slice(0, 3).map((sub) => (
                               <Badge key={sub.id} tone="blue">{sub.name}</Badge>
@@ -78,7 +78,7 @@ export default function TeacherStudentsPage() {
                             {s.subjects.length > 3 && <Badge tone="slate">+{s.subjects.length - 3}</Badge>}
                           </div>
                         </td>
-                        <td className="hidden py-3 pr-4 text-slate-500 lg:table-cell">
+                        <td className="hidden py-3 pe-4 text-slate-500 lg:table-cell">
                           {s.upcomingLesson ? (
                             <span>
                               {formatDate(s.upcomingLesson.date)} · {s.upcomingLesson.startTime}

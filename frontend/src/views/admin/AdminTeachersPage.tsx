@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
@@ -77,20 +77,20 @@ export default function AdminTeachersPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">
-                    <th className="pb-2 pr-4 font-medium">{t('teacherLabel')}</th>
-                    <th className="hidden pb-2 pr-4 font-medium md:table-cell">{t('subjects')}</th>
-                    <th className="hidden pb-2 pr-4 font-medium lg:table-cell">{t('grades')}</th>
-                    <th className="pb-2 pr-4 font-medium">{t('rateCol')}</th>
-                    <th className="hidden pb-2 pr-4 font-medium sm:table-cell">{t('studentsLabel')}</th>
-                    <th className="hidden pb-2 pr-4 font-medium sm:table-cell">{t('lessons')}</th>
-                    <th className="pb-2 pr-4 font-medium">{t('status')}</th>
+                    <th className="pb-2 pe-4 font-medium">{t('teacherLabel')}</th>
+                    <th className="hidden pb-2 pe-4 font-medium md:table-cell">{t('subjects')}</th>
+                    <th className="hidden pb-2 pe-4 font-medium lg:table-cell">{t('grades')}</th>
+                    <th className="pb-2 pe-4 font-medium">{t('rateCol')}</th>
+                    <th className="hidden pb-2 pe-4 font-medium sm:table-cell">{t('studentsLabel')}</th>
+                    <th className="hidden pb-2 pe-4 font-medium sm:table-cell">{t('lessons')}</th>
+                    <th className="pb-2 pe-4 font-medium">{t('status')}</th>
                     <th className="pb-2 text-start font-medium">{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                   {data.map((teacher) => (
                     <tr key={teacher.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 dark:bg-slate-800/60">
-                      <td className="py-3 pr-4">
+                      <td className="py-3 pe-4">
                         <div className="flex items-center gap-3">
                           <Avatar name={teacher.fullName} src={teacher.photo} size="sm" />
                           <div className="min-w-0">
@@ -101,7 +101,7 @@ export default function AdminTeachersPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="hidden py-3 pr-4 md:table-cell">
+                      <td className="hidden py-3 pe-4 md:table-cell">
                         <div className="flex max-w-48 flex-wrap gap-1">
                           {teacher.subjects.slice(0, 3).map((s) => (
                             <Badge key={s} tone="blue">{s}</Badge>
@@ -109,11 +109,11 @@ export default function AdminTeachersPage() {
                           {teacher.subjects.length > 3 && <Badge tone="slate">+{teacher.subjects.length - 3}</Badge>}
                         </div>
                       </td>
-                      <td className="hidden py-3 pr-4 text-slate-500 lg:table-cell">{teacher.grades.join(', ') || '—'}</td>
-                      <td className="py-3 pr-4 font-medium text-slate-700">{formatCurrency(teacher.hourlyRate)}</td>
-                      <td className="hidden py-3 pr-4 text-slate-500 sm:table-cell">{teacher.students}</td>
-                      <td className="hidden py-3 pr-4 text-slate-500 sm:table-cell">{teacher.lessons}</td>
-                      <td className="py-3 pr-4">
+                      <td className="hidden py-3 pe-4 text-slate-500 lg:table-cell">{teacher.grades.join(', ') || '—'}</td>
+                      <td className="py-3 pe-4 font-medium text-slate-700">{formatCurrency(teacher.hourlyRate)}</td>
+                      <td className="hidden py-3 pe-4 text-slate-500 sm:table-cell">{teacher.students}</td>
+                      <td className="hidden py-3 pe-4 text-slate-500 sm:table-cell">{teacher.lessons}</td>
+                      <td className="py-3 pe-4">
                         <Badge tone={teacher.status === 'ACTIVE' ? 'green' : 'red'}>{t(teacherStatusKey(teacher.status))}</Badge>
                       </td>
                       <td className="py-3 text-start">

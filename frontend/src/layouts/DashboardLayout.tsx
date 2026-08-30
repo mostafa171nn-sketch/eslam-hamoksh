@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from '../../src/components/layout/Sidebar';
 import { Topbar } from '../../src/components/layout/Topbar';
+import { BottomNav } from '../../src/components/layout/BottomNav';
 import { PageBackButton } from '../../src/components/layout/PageBackButton';
 
 const NO_BACK = new Set([
@@ -39,16 +40,19 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       <Sidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="lg:ps-64">
         <Topbar onOpenSidebar={() => setSidebarOpen(true)} />
-        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-          {showBack && (
-            <div className="mb-4">
-              <PageBackButton fallback={fallbackFor(pathname ?? '/')} />
+        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:pb-8">
+          <div className="pb-24 lg:pb-0">
+            {showBack && (
+              <div className="mb-4">
+                <PageBackButton fallback={fallbackFor(pathname ?? '/')} />
+              </div>
+            )}
+            <div className="animate-fade-in">
+              {children}
             </div>
-          )}
-          <div className="animate-fade-in">
-            {children}
           </div>
         </main>
+        <BottomNav />
       </div>
     </div>
   );

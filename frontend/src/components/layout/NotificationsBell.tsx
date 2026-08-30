@@ -107,7 +107,7 @@ export function NotificationsBell() {
         )}
       </button>
       {open && (
-        <div className="animate-slide-in absolute end-0 top-full z-[60] mt-2 w-[min(22rem,calc(100vw-1rem))] origin-top-right overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5 dark:border-slate-700 dark:bg-slate-800 dark:ring-white/10">
+        <div className="animate-slide-in absolute end-0 top-full z-[60] mt-2 w-[min(22rem,calc(100vw-1rem))] origin-top overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5 dark:border-slate-700 dark:bg-slate-800 dark:ring-white/10">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-700">
             <p className="text-sm font-semibold text-slate-900 dark:text-white">{t('notifications')}</p>
             {unread > 0 && (

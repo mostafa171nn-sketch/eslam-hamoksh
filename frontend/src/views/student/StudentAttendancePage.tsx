@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { ClipboardCheck } from 'lucide-react';
@@ -82,24 +82,24 @@ export default function StudentAttendancePage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">
-                      <th className="pb-2 pr-4 font-medium">{t('date')}</th>
-                      <th className="hidden pb-2 pr-4 font-medium sm:table-cell">{t('time')}</th>
-                      <th className="hidden pb-2 pr-4 font-medium md:table-cell">{t('subject')}</th>
-                      <th className="pb-2 pr-4 font-medium">{t('status')}</th>
+                      <th className="pb-2 pe-4 font-medium">{t('date')}</th>
+                      <th className="hidden pb-2 pe-4 font-medium sm:table-cell">{t('time')}</th>
+                      <th className="hidden pb-2 pe-4 font-medium md:table-cell">{t('subject')}</th>
+                      <th className="pb-2 pe-4 font-medium">{t('status')}</th>
                       <th className="pb-2 font-medium">{t('note')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                     {data.map((r) => (
                       <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 dark:bg-slate-800/60">
-                        <td className="py-3 pr-4 font-medium text-slate-800 dark:text-slate-100">{formatDate(r.lesson.date)}</td>
-                        <td className="hidden py-3 pr-4 text-slate-500 sm:table-cell">
+                        <td className="py-3 pe-4 font-medium text-slate-800 dark:text-slate-100">{formatDate(r.lesson.date)}</td>
+                        <td className="hidden py-3 pe-4 text-slate-500 sm:table-cell">
                           {formatTime(r.lesson.startTime)} – {formatTime(r.lesson.endTime)}
                         </td>
-                        <td className="hidden py-3 pr-4 text-slate-600 dark:text-slate-300 md:table-cell">
+                        <td className="hidden py-3 pe-4 text-slate-600 dark:text-slate-300 md:table-cell">
                           {r.lesson.subject?.name ?? t('generalSubject')}
                         </td>
-                        <td className="py-3 pr-4">
+                        <td className="py-3 pe-4">
                           <Badge tone={statusTone(r.status)}>{t(attendanceStatusKey(r.status))}</Badge>
                         </td>
                         <td className="py-3 text-slate-500">{r.note ?? '—'}</td>
