@@ -314,9 +314,12 @@
   background: rgba(11,17,30,0.95);
 }
 
+.float-label-group {
+  position: relative;
+}
 .float-label-group .float-label {
   position: absolute;
-  start: 1rem;
+  inset-inline-start: 1rem;
   top: 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
@@ -325,6 +328,17 @@
   transition: transform 0.18s ease, font-size 0.18s ease, color 0.18s ease;
   transform-origin: left top;
   z-index: 10;
+  background: rgba(248,247,240,0.95);
+  padding-inline: 0.25rem;
+  border-radius: 0.25rem;
+}
+.dark .float-label-group .float-label {
+  color: #94a3b8;
+  background: rgba(11,17,30,0.95);
+}
+.float-label-group input {
+  padding-top: 1.75rem !important;
+  padding-bottom: 0.5rem !important;
 }
 .float-label-group input:focus + .float-label,
 .float-label-group input:not(:placeholder-shown) + .float-label {
