@@ -451,7 +451,7 @@ export default function TeacherPublicPage() {
                 <li><span className="text-slate-400">{t('time')}:</span> {formatTime(selectedSlot.startTime)}  {formatTime(selectedSlot.endTime)}</li>
                 <li><span className="text-slate-400">{t('duration')}:</span> {durationLabel(selectedSlot.startTime, selectedSlot.endTime)}</li>
                 <li><span className="text-slate-400">{t('location')}:</span> {selectedSlot.location?.name ?? t('online')}</li>
-                {(selectedSlot as any).centerId && <li><span className="text-slate-400">Center:</span> {(selectedSlot as any).centerId.slice(0,8)}…</li>}
+                {(selectedSlot as any).centerId && <li><span className="text-slate-400">{t('center')}:</span> {(selectedSlot as any).centerId.slice(0,8)}…</li>}
                 <li><span className="text-slate-400">{t('price')}:</span> {formatCurrency(data.hourlyRate)} {t('perHour')}</li>
               </ul>
             </div>

@@ -1,5 +1,6 @@
 'use client';
 import { COUNTRIES, normalizePhone } from '../../lib/phone';
+import { useT } from '../../i18n';
 
 interface Props {
   label?: string;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function PhoneInput({ label, value, countryCode, onValueChange, onCountryChange, error, hint, placeholder = '1234567890', disabled }: Props) {
+  const { t } = useT();
   const handlePhoneChange = (raw: string) => {
     // Keep input digits/spaces only, allow leading +
     // We store raw without country prefix; parent combines for submission
@@ -38,7 +40,7 @@ export function PhoneInput({ label, value, countryCode, onValueChange, onCountry
           onChange={(e) => onCountryChange(e.target.value)}
           disabled={disabled}
           className="w-36 rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
-          aria-label="Country code"
+          aria-label={t('countryCode')}
         >
           {COUNTRIES.map((c) => (
             <option key={c.code} value={c.code}>

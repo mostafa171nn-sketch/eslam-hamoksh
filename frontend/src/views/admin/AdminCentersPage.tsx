@@ -194,10 +194,10 @@ export default function AdminCentersPage() {
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
               placeholder={t('searchNameUsernamePhone')}
-              className="pl-9"
+              className="ps-9 pe-3"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => {
@@ -206,12 +206,12 @@ export default function AdminCentersPage() {
             />
           </div>
           <Button variant="secondary" onClick={submitSearch}>
-            Search
+            {t('search')}
           </Button>
         </div>
 
         {error && <Alert message={error} />}
-        {loading && (initialLoading ? <PencilLoader label="Loading centers…" /> : <PencilLoader size="sm" label="Loading centers…" />)}
+        {loading && (initialLoading ? <PencilLoader label={t('centersLoading')} /> : <PencilLoader size="sm" label={t('centersLoading')} />)}
 
         {!loading && (
           <div className="overflow-x-auto">
@@ -225,14 +225,14 @@ export default function AdminCentersPage() {
                   <th className="hidden pb-2 pr-4 font-medium lg:table-cell">{t('registeredCol')}</th>
                   <th className="pb-2 pr-4 font-medium">{t('status')}</th>
                   <th className="pb-2 pr-4 font-medium">{t('accountCol')}</th>
-                  <th className="pb-2 font-medium text-right">{t('actions')}</th>
+                  <th className="pb-2 font-medium text-start">{t('actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                 {items.length === 0 && (
                   <tr>
                     <td colSpan={8} className="py-10 text-center text-sm text-slate-400">
-                      No centers found.
+                      {t('noCentersFound')}
                     </td>
                   </tr>
                 )}
@@ -262,7 +262,7 @@ export default function AdminCentersPage() {
                     <td className="py-3 pr-4">
                       {c.admin ? <StatusBadge status={c.admin.status} /> : <Badge tone="slate">—</Badge>}
                     </td>
-                    <td className="py-3 text-right">
+                    <td className="py-3 text-start">
                       <div className="flex flex-wrap justify-end gap-1.5">
                         <Button size="sm" variant="outline" onClick={() => openDetails(c)} loading={detailLoading}>
                           View Details
@@ -334,9 +334,9 @@ export default function AdminCentersPage() {
                 <>
                   <Field label={t('fullName')} value={detail.admin.fullName} />
                   <Field label={t('username')} value={detail.admin.username} />
-                  <Field label="Email" value={detail.admin.email} />
-                  {detail.admin.phone && <Field label="Phone" value={detail.admin.phone} />}
-                  <Field label="Status" value={detail.admin.status} />
+                  <Field label={t('email')} value={detail.admin.email} />
+                  {detail.admin.phone && <Field label={t('phone')} value={detail.admin.phone} />}
+                  <Field label={t('status')} value={detail.admin.status} />
                 </>
               ) : (
                 <p className="text-slate-400">{t('noCenterAdminLinked')}</p>
@@ -345,19 +345,19 @@ export default function AdminCentersPage() {
 
             <Section title={t('statisticsSection')}>
               <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
-                <StatRow label="Teachers" value={detail.statistics.teachers} />
-                <StatRow label="Students" value={detail.statistics.students} />
-                <StatRow label="Parents" value={detail.statistics.parents} />
-                <StatRow label="Lessons" value={detail.statistics.lessons.total} />
-                <StatRow label="Lessons upcoming" value={detail.statistics.lessons.upcoming} />
-                <StatRow label="Lessons completed" value={detail.statistics.lessons.completed} />
-                <StatRow label="Attendance" value={detail.statistics.attendance.total} />
-                <StatRow label="Present" value={detail.statistics.attendance.present} />
-                <StatRow label="Absent" value={detail.statistics.attendance.absent} />
-                <StatRow label="Payments" value={detail.statistics.payments.total} />
-                <StatRow label="Payments paid" value={detail.statistics.payments.paid} />
-                <StatRow label="Payments pending" value={detail.statistics.payments.pending} />
-                <StatRow label="Revenue" value={detail.statistics.revenue} />
+                <StatRow label={t('teachers')} value={detail.statistics.teachers} />
+                <StatRow label={t('students')} value={detail.statistics.students} />
+                <StatRow label={t('parents')} value={detail.statistics.parents} />
+                <StatRow label={t('lessons')} value={detail.statistics.lessons.total} />
+                <StatRow label={t('lessonsUpcoming')} value={detail.statistics.lessons.upcoming} />
+                <StatRow label={t('lessonsCompleted')} value={detail.statistics.lessons.completed} />
+                <StatRow label={t('attendance')} value={detail.statistics.attendance.total} />
+                <StatRow label={t('present')} value={detail.statistics.attendance.present} />
+                <StatRow label={t('absent')} value={detail.statistics.attendance.absent} />
+                <StatRow label={t('payments')} value={detail.statistics.payments.total} />
+                <StatRow label={t('paymentsPaid')} value={detail.statistics.payments.paid} />
+                <StatRow label={t('paymentsPending')} value={detail.statistics.payments.pending} />
+                <StatRow label={t('revenue')} value={detail.statistics.revenue} />
               </div>
             </Section>
           </div>
@@ -373,7 +373,7 @@ export default function AdminCentersPage() {
         footer={
           <>
             <Button variant="ghost" onClick={() => setPending(null)} disabled={busy}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               variant={pending?.type === 'approve' || pending?.type === 'activate' ? 'primary' : 'danger'}
@@ -381,12 +381,12 @@ export default function AdminCentersPage() {
               loading={busy}
             >
               {pending?.type === 'approve'
-                ? 'Approve'
+                ? t('approve')
                 : pending?.type === 'reject'
-                  ? 'Reject'
+                  ? t('reject')
                   : pending?.type === 'suspend'
-                    ? 'Suspend'
-                    : 'Activate'}
+                    ? t('suspend')
+                    : t('activate')}
             </Button>
           </>
         }
@@ -396,26 +396,22 @@ export default function AdminCentersPage() {
             <p className="text-sm text-slate-600 dark:text-slate-300">
               {pending.type === 'approve' && (
                 <>
-                  Approve <span className="font-medium text-slate-900 dark:text-white">{pending.center.name}</span>? This will set the
-                  center to <span className="font-medium">ACTIVE</span> and activate its admin account so they can sign in.
+                  {t('approveCenterMsg', { name: pending.center.name })}
                 </>
               )}
               {pending.type === 'reject' && (
                 <>
-                  Reject <span className="font-medium text-slate-900 dark:text-white">{pending.center.name}</span>? The center admin
-                  account will remain blocked.
+                  {t('rejectCenterMsg', { name: pending.center.name })}
                 </>
               )}
               {pending.type === 'suspend' && (
                 <>
-                  Suspend <span className="font-medium text-slate-900 dark:text-white">{pending.center.name}</span>? This will set the
-                  center to <span className="font-medium">SUSPENDED</span>.
+                  {t('suspendCenterMsg', { name: pending.center.name })}
                 </>
               )}
               {pending.type === 'activate' && (
                 <>
-                  Activate <span className="font-medium text-slate-900 dark:text-white">{pending.center.name}</span>? This will set the
-                  center to <span className="font-medium">ACTIVE</span>.
+                  {t('activateCenterMsg', { name: pending.center.name })}
                 </>
               )}
             </p>

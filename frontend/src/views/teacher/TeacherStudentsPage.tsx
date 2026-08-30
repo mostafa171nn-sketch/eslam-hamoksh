@@ -9,12 +9,14 @@ import { Button } from '../../components/ui/Button';
 import { Pagination } from '../../components/ui/Pagination';
 import { PencilLoader } from '../../components/ui/PencilLoader';
 import { Alert } from '../../components/ui/ErrorAlert';
+import { useT } from '../../i18n';
 import { useApi } from '../../hooks/useApi';
 import { api } from '../../lib/api';
 import type { TeacherStudent } from '../../lib/types';
 import { formatDate } from '../../lib/format';
 
 export default function TeacherStudentsPage() {
+  const { t } = useT();
   const [page, setPage] = useState(1);
   const { data, meta, loading, initialLoading, error } = useApi(
     () => api.get<TeacherStudent[]>('/teachers/me/students', { page, limit: 20 }),
@@ -24,19 +26,19 @@ export default function TeacherStudentsPage() {
   return (
     <div>
       <PageHeader
-        title="My students"
-        subtitle="Students you have taught or scheduled lessons with."
+        title={t('myStudents')}
+        subtitle={t('myStudentsSub')}
         action={
           <Link href="/teacher/lessons">
             <Button size="sm">
-              <CalendarPlus className="h-4 w-4" /> Schedule lesson
+              <CalendarPlus className="h-4 w-4" /> {t('scheduleLesson')}
             </Button>
           </Link>
         }
       />
 
       {error && <Alert message={error} className="mb-4" />}
-      {loading && (initialLoading ? <PencilLoader label="Loading students…" /> : <PencilLoader size="sm" label="Loading students…" />)}
+      {loading && (initialLoading ? <PencilLoader label={t('loadingStudents')} /> : <PencilLoader size="sm" label={t('loadingStudents')} />)}
 
       {!loading && data && (
         <>
@@ -45,11 +47,11 @@ export default function TeacherStudentsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">
-                    <th className="pb-2 pr-4 font-medium">Student</th>
-                    <th className="hidden pb-2 pr-4 font-medium sm:table-cell">Grade</th>
-                    <th className="hidden pb-2 pr-4 font-medium md:table-cell">Subjects</th>
-                    <th className="hidden pb-2 pr-4 font-medium lg:table-cell">Next lesson</th>
-                    <th className="pb-2 font-medium">Attendance</th>
+                    <th className="pb-2 pr-4 font-medium">{t('studentCol')}</th>
+                    <th className="hidden pb-2 pr-4 font-medium sm:table-cell">{t('grade')}</th>
+                    <th className="hidden pb-2 pr-4 font-medium md:table-cell">{t('subjects')}</th>
+                    <th className="hidden pb-2 pr-4 font-medium lg:table-cell">{t('nextLesson')}</th>
+                    <th className="pb-2 font-medium">{t('attendance')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -63,7 +65,7 @@ export default function TeacherStudentsPage() {
                             <Avatar name={s.fullName} src={s.photo} size="sm" />
                             <div className="min-w-0">
                               <p className="truncate font-medium text-slate-900 dark:text-white">{s.fullName}</p>
-                              <p className="text-xs text-slate-400">ID: {s.id.slice(0, 8)}</p>
+                              <p className="text-xs text-slate-400">{t('idLabel')}: {s.id.slice(0, 8)}</p>
                             </div>
                           </div>
                         </td>
@@ -87,8 +89,8 @@ export default function TeacherStudentsPage() {
                         </td>
                         <td className="py-3">
                           <div className="flex items-center gap-2 text-xs">
-                            <Badge tone="green">{present} present</Badge>
-                            <Badge tone="red">{absent} absent</Badge>
+                            <Badge tone="green">{present} {t('present')}</Badge>
+                            <Badge tone="red">{absent} {t('absent')}</Badge>
                           </div>
                         </td>
                       </tr>

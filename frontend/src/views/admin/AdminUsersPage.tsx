@@ -15,24 +15,45 @@ import { api } from '../../lib/api';
 import type { AdminUser, UserStatus } from '../../lib/types';
 import { formatDate } from '../../lib/format';
 import { useToast } from '../../context/ToastContext';
+import { useT, type Dict } from '../../i18n';
 
-const ROLE_OPTIONS = [
-  { value: '', label: 'All roles' },
-  { value: 'TEACHER', label: 'Teacher' },
-  { value: 'STUDENT', label: 'Student' },
-  { value: 'PARENT', label: 'Parent' },
-  { value: 'CENTER_ADMIN', label: 'Center Admin' },
-  { value: 'ADMIN', label: 'Admin (legacy)' },
-];
+function roleKey(role: string): keyof Dict {
+  switch (role) {
+    case 'TEACHER':
+      return 'teacherRole';
+    case 'STUDENT':
+      return 'studentRole';
+    case 'PARENT':
+      return 'parentRole';
+    case 'CENTER_ADMIN':
+      return 'centerAdmin';
+    case 'ADMIN':
+      return 'adminLegacy';
+    default:
+      return 'role';
+  }
+}
 
-const STATUS_OPTIONS = [
-  { value: '', label: 'All statuses' },
-  { value: 'ACTIVE', label: 'Active' },
-  { value: 'SUSPENDED', label: 'Suspended' },
-];
+function userStatusKey(status: string): keyof Dict {
+  return status === 'ACTIVE' ? 'statusActive' : 'suspended';
+}
 
 export default function AdminUsersPage() {
+  const { t } = useT();
   const toast = useToast();
+  const ROLE_OPTIONS = [
+    { value: '', label: t('allRoles') },
+    { value: 'TEACHER', label: t('teacherRole') },
+    { value: 'STUDENT', label: t('studentRole') },
+    { value: 'PARENT', label: t('parentRole') },
+    { value: 'CENTER_ADMIN', label: t('centerAdmin') },
+    { value: 'ADMIN', label: t('adminLegacy') },
+  ];
+  const STATUS_OPTIONS = [
+    { value: '', label: t('allStatus') },
+    { value: 'ACTIVE', label: t('statusActive') },
+    { value: 'SUSPENDED', label: t('suspended') },
+  ];
   const [page, setPage] = useState(1);
   const [role, setRole] = useState('');
   const [status, setStatus] = useState('');
@@ -50,7 +71,7 @@ export default function AdminUsersPage() {
     try {
       const next: UserStatus = user.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
       await api.put(`/admin/users/${user.id}/status`, { status: next });
-      toast.success(`${user.fullName} ${next === 'ACTIVE' ? 'activated' : 'suspended'}.`);
+      toast.success(next === 'ACTIVE' ? t('userActivated', { name: user.fullName }) : t('userSuspended', { name: user.fullName }));
       reload();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -61,15 +82,15 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <PageHeader title="Users" subtitle="Search, filter and manage all accounts." />
+      <PageHeader title={t('users')} subtitle={t('usersSub')} />
 
       <Card bodyClassName="p-4 space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
-              placeholder="Search by name, username or phone…"
-              className="pl-9"
+              placeholder={t('searchNameUsernamePhone')}
+              className="ps-9 pe-3"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => {
@@ -83,12 +104,12 @@ export default function AdminUsersPage() {
           <Select options={ROLE_OPTIONS} value={role} onChange={(e) => { setPage(1); setRole(e.target.value); }} className="sm:w-44" />
           <Select options={STATUS_OPTIONS} value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }} className="sm:w-44" />
           <Button variant="secondary" onClick={() => { setPage(1); setSearch(searchInput); }}>
-            Search
+            {t('search')}
           </Button>
         </div>
 
         {error && <Alert message={error} />}
-        {loading && (initialLoading ? <PencilLoader label="Loading users…" /> : <PencilLoader size="sm" label="Loading users…" />)}
+        {loading && <PencilLoader label={t('loadingUsers')} size={initialLoading ? undefined : 'sm'} />}
 
         {!loading && data && (
           <>
@@ -96,12 +117,12 @@ export default function AdminUsersPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">
-                    <th className="pb-2 pr-4 font-medium">User</th>
-                    <th className="pb-2 pr-4 font-medium">Role</th>
-                    <th className="hidden pb-2 pr-4 font-medium sm:table-cell">Phone</th>
-                    <th className="hidden pb-2 pr-4 font-medium md:table-cell">Joined</th>
-                    <th className="pb-2 pr-4 font-medium">Status</th>
-                    <th className="pb-2 font-medium text-right">Actions</th>
+                    <th className="pb-2 pr-4 font-medium">{t('userCol')}</th>
+                    <th className="pb-2 pr-4 font-medium">{t('role')}</th>
+                    <th className="hidden pb-2 pr-4 font-medium sm:table-cell">{t('phone')}</th>
+                    <th className="hidden pb-2 pr-4 font-medium md:table-cell">{t('joined')}</th>
+                    <th className="pb-2 pr-4 font-medium">{t('status')}</th>
+                    <th className="pb-2 font-medium text-start">{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -118,15 +139,15 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="py-3 pr-4">
                         <Badge tone={u.role === 'ADMIN' || u.role === 'CENTER_ADMIN' ? 'violet' : u.role === 'TEACHER' ? 'blue' : 'slate'}>
-                          {u.role.toLowerCase()}
+                          {t(roleKey(u.role))}
                         </Badge>
                       </td>
                       <td className="hidden py-3 pr-4 text-slate-500 sm:table-cell">{u.phone ?? '—'}</td>
                       <td className="hidden py-3 pr-4 text-slate-500 md:table-cell">{formatDate(u.createdAt)}</td>
                       <td className="py-3 pr-4">
-                        <Badge tone={u.status === 'ACTIVE' ? 'green' : 'red'}>{u.status.toLowerCase()}</Badge>
+                        <Badge tone={u.status === 'ACTIVE' ? 'green' : 'red'}>{t(userStatusKey(u.status))}</Badge>
                       </td>
-                      <td className="py-3 text-right">
+                      <td className="py-3 text-start">
                         {u.role !== 'ADMIN' && u.role !== 'CENTER_ADMIN' ? (
                           <Button
                             size="sm"
@@ -134,10 +155,10 @@ export default function AdminUsersPage() {
                             loading={busyId === u.id}
                             onClick={() => toggleStatus(u)}
                           >
-                            {u.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+                            {u.status === 'ACTIVE' ? t('suspend') : t('activate')}
                           </Button>
                         ) : (
-                          <span className="text-xs text-slate-300">Protected</span>
+                          <span className="text-xs text-slate-300">{t('protectedLabel')}</span>
                         )}
                       </td>
                     </tr>

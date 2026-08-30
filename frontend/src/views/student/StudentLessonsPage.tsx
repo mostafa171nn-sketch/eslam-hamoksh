@@ -3,18 +3,37 @@ import { useSearchParams } from 'next/navigation';
 import { CalendarDays } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
-import { Badge, StatusBadge } from '../../components/ui/Badge';
+import { Badge, statusTone } from '../../components/ui/Badge';
 import { Pagination } from '../../components/ui/Pagination';
 import { PencilLoader } from '../../components/ui/PencilLoader';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Alert } from '../../components/ui/ErrorAlert';
 import { Select } from '../../components/ui/Select';
+import { useT, type Dict } from '../../i18n';
 import { useApi } from '../../hooks/useApi';
 import { api } from '../../lib/api';
 import type { Lesson } from '../../lib/types';
 import { formatDate, formatTime, isToday } from '../../lib/format';
 
+function lessonStatusKey(status: string): keyof Dict {
+  switch (status) {
+    case 'SCHEDULED':
+      return 'scheduled';
+    case 'RESCHEDULED':
+      return 'rescheduled';
+    case 'COMPLETED':
+      return 'completedStatus';
+    case 'CANCELLED':
+      return 'cancelled';
+    case 'NO_SHOW':
+      return 'noShowAction';
+    default:
+      return 'status';
+  }
+}
+
 export default function StudentLessonsPage() {
+  const { t } = useT();
   const searchParams = useSearchParams();
   const teacherIdParam = searchParams.get('teacherId') ?? undefined;
   const [page, setPage] = useState(1);
@@ -34,17 +53,17 @@ export default function StudentLessonsPage() {
   return (
     <div>
       <PageHeader
-        title="My lessons"
-        subtitle={teacherIdParam ? 'Lessons with the selected teacher.' : 'Your lesson schedule and history.'}
+        title={t('myLessons')}
+        subtitle={teacherIdParam ? t('lessonsWithSelectedTeacher') : t('myLessonSchedule')}
         action={
           <Select
             options={[
-              { value: '', label: 'All statuses' },
-              { value: 'SCHEDULED', label: 'Scheduled' },
-              { value: 'RESCHEDULED', label: 'Rescheduled' },
-              { value: 'COMPLETED', label: 'Completed' },
-              { value: 'CANCELLED', label: 'Cancelled' },
-              { value: 'NO_SHOW', label: 'No show' },
+              { value: '', label: t('allStatus') },
+              { value: 'SCHEDULED', label: t('scheduled') },
+              { value: 'RESCHEDULED', label: t('rescheduled') },
+              { value: 'COMPLETED', label: t('completedStatus') },
+              { value: 'CANCELLED', label: t('cancelled') },
+              { value: 'NO_SHOW', label: t('noShowAction') },
             ]}
             value={status}
             onChange={(e) => {
@@ -57,12 +76,12 @@ export default function StudentLessonsPage() {
       />
 
       {error && <Alert message={error} className="mb-4" />}
-      {loading && (initialLoading ? <PencilLoader label="Loading lessons…" /> : <PencilLoader size="sm" label="Loading lessons…" />)}
+      {loading && (initialLoading ? <PencilLoader label={t('loadingLessons')} /> : <PencilLoader size="sm" label={t('loadingLessons')} />)}
 
       {!loading && data && (
         <>
           {data.length === 0 ? (
-            <EmptyState icon={CalendarDays} title="No lessons" description="Lessons with your teachers will appear here." />
+            <EmptyState icon={CalendarDays} title={t('noLessons')} description={t('lessonsAppearHere')} />
           ) : (
             <div className="space-y-3">
               {data.map((l) => (
@@ -76,18 +95,18 @@ export default function StudentLessonsPage() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{l.subject?.name ?? 'General'}</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{l.subject?.name ?? t('generalSubject')}</p>
                         {l.location && <Badge tone="slate">{l.location.name}</Badge>}
-                        {isToday(l.date) && <Badge tone="blue">Today</Badge>}
+                        {isToday(l.date) && <Badge tone="blue">{t('today')}</Badge>}
                       </div>
                       <p className="mt-1 text-xs text-slate-500">
                         {formatDate(l.date)} · {formatTime(l.startTime)} – {formatTime(l.endTime)}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-400">with {l.teacher.fullName}</p>
+                      <p className="mt-0.5 text-xs text-slate-400">{t('with')} {l.teacher.fullName}</p>
                       {l.notes && <p className="mt-1 text-xs text-slate-500">{l.notes}</p>}
                     </div>
                   </div>
-                  <StatusBadge status={l.status} />
+                  <Badge tone={statusTone(l.status)}>{t(lessonStatusKey(l.status))}</Badge>
                 </Card>
               ))}
             </div>

@@ -3,36 +3,53 @@ import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { StatCard } from '../../components/ui/StatCard';
 import { Avatar } from '../../components/ui/Avatar';
-import { Badge, StatusBadge } from '../../components/ui/Badge';
+import { Badge, statusTone } from '../../components/ui/Badge';
 import { PencilLoader } from '../../components/ui/PencilLoader';
 import { Alert } from '../../components/ui/ErrorAlert';
+import { useT, type Dict } from '../../i18n';
 import { useApi } from '../../hooks/useApi';
 import { api } from '../../lib/api';
 import type { ExamResults } from '../../lib/types';
 import { formatDateTime } from '../../lib/format';
 
+function examResultStatusKey(status: string): keyof Dict {
+  switch (status) {
+    case 'SUBMITTED':
+      return 'submitted';
+    case 'GRADED':
+      return 'graded';
+    case 'NOT_SUBMITTED':
+      return 'notSubmitted';
+    case 'PENDING':
+      return 'pending';
+    default:
+      return 'status';
+  }
+}
+
 export default function ExamResultsPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id ?? '';
+  const { t } = useT();
   const { data, initialLoading, error } = useApi(() => api.get<ExamResults>(`/exams/${id}/results`), [id]);
 
-  if (initialLoading) return <PencilLoader label="Loading results…" />;
-  if (error || !data) return <Alert message={error || 'Failed to load results.'} />;
+  if (initialLoading) return <PencilLoader label={t('loadingResults')} />;
+  if (error || !data) return <Alert message={error || t('failedLoadResults')} />;
 
   return (
     <div>
       <PageHeader
         title={data.exam.name}
-        subtitle="Exam results overview"
+        subtitle={t('examResultsOverview')}
       />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        <StatCard label="Students" value={data.summary.totalStudents} />
-        <StatCard label="Submitted" value={data.summary.submitted} />
-        <StatCard label="Absent" value={data.summary.absent} />
-        <StatCard label="Average" value={`${data.summary.average}%`} />
-        <StatCard label="Highest" value={`${data.summary.highest}%`} />
-        <StatCard label="Pass rate" value={`${data.summary.passRate}%`} />
+        <StatCard label={t('studentsStat')} value={data.summary.totalStudents} />
+        <StatCard label={t('submittedStat')} value={data.summary.submitted} />
+        <StatCard label={t('absent')} value={data.summary.absent} />
+        <StatCard label={t('average')} value={`${data.summary.average}%`} />
+        <StatCard label={t('highest')} value={`${data.summary.highest}%`} />
+        <StatCard label={t('passRate')} value={`${data.summary.passRate}%`} />
       </div>
 
       <Card className="mt-6">
@@ -40,11 +57,11 @@ export default function ExamResultsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">
-                <th className="pb-2 pr-4 font-medium">Student</th>
-                <th className="pb-2 pr-4 font-medium">Status</th>
-                <th className="hidden pb-2 pr-4 font-medium sm:table-cell">Submitted</th>
-                <th className="pb-2 pr-4 font-medium">Score</th>
-                <th className="pb-2 font-medium">Result</th>
+                <th className="pb-2 pr-4 font-medium">{t('studentCol')}</th>
+                <th className="pb-2 pr-4 font-medium">{t('status')}</th>
+                <th className="hidden pb-2 pr-4 font-medium sm:table-cell">{t('submittedStat')}</th>
+                <th className="pb-2 pr-4 font-medium">{t('score')}</th>
+                <th className="pb-2 font-medium">{t('resultCol')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -57,8 +74,8 @@ export default function ExamResultsPage() {
                     </div>
                   </td>
                   <td className="py-3 pr-4">
-                    <StatusBadge status={r.status} />
-                    {r.writtenPending && <Badge tone="amber" className="ml-1">Written pending</Badge>}
+                    <Badge tone={statusTone(r.status)}>{t(examResultStatusKey(r.status))}</Badge>
+                    {r.writtenPending && <Badge tone="amber" className="ms-1">{t('writtenPending')}</Badge>}
                   </td>
                   <td className="hidden py-3 pr-4 text-slate-500 sm:table-cell">
                     {r.submittedAt ? formatDateTime(r.submittedAt) : '—'}
@@ -81,7 +98,7 @@ export default function ExamResultsPage() {
       </Card>
 
       <p className="mt-4 text-xs text-slate-400">
-        Written answers are auto-graded once every written question receives points.
+        {t('writtenAutoGradedNote')}
       </p>
     </div>
   );

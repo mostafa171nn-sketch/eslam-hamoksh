@@ -21,10 +21,15 @@ const CenterMap = dynamic(() => import('../../src/components/centers/CenterMap')
   ssr: false,
   loading: () => (
     <div className="flex h-full w-full items-center justify-center bg-slate-100 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-      Loading map…
+      <MapLoader />
     </div>
   ),
 });
+
+function MapLoader() {
+  const { t } = useT();
+  return <>{t('loadingMap')}</>;
+}
 
 interface CenterFilters {
   q: string;
@@ -220,12 +225,12 @@ export default function CentersPage() {
         {/* Filters */}
         <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="relative sm:col-span-2">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               value={filters.q}
               onChange={(e) => patch({ q: e.target.value })}
               placeholder={t('search')}
-              className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:ring-brand-900"
+              className="w-full rounded-lg border border-slate-300 bg-white py-2 ps-9 pe-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:ring-brand-900"
             />
           </div>
           <Input value={filters.city} onChange={(e) => patch({ city: e.target.value })} placeholder={t('city')} />

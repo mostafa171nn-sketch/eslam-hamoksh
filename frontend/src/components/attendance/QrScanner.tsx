@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { PencilLoader } from '../ui/PencilLoader';
+import { useT } from '../../i18n';
 
 interface Props {
   onResult: (token: string) => void;
@@ -15,6 +16,7 @@ export function QrScanner({ onResult, onError }: Props) {
   const [error, setError] = useState('');
   const [starting, setStarting] = useState(true);
   const handled = useRef(false);
+  const { t } = useT();
 
   useEffect(() => {
     let cancelled = false;
@@ -47,7 +49,7 @@ export function QrScanner({ onResult, onError }: Props) {
       })
       .catch((err) => {
         if (cancelled) return;
-        const msg = 'Could not access the camera. Please allow camera permission and use HTTPS/localhost.';
+        const msg = t('cameraAccessDenied');
         setError(msg);
         setStarting(false);
         onError?.(err?.message ?? msg);
@@ -72,7 +74,7 @@ export function QrScanner({ onResult, onError }: Props) {
       />
       {starting && !error && (
         <div className="mt-3 flex justify-center">
-          <PencilLoader label="Starting camera…" />
+          <PencilLoader label={t('startingCamera')} />
         </div>
       )}
       {error && (

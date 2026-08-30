@@ -4,17 +4,32 @@ import { useState } from 'react';
 import { ClipboardCheck } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
-import { Badge, StatusBadge } from '../../components/ui/Badge';
+import { Badge, statusTone } from '../../components/ui/Badge';
 import { Pagination } from '../../components/ui/Pagination';
 import { PencilLoader } from '../../components/ui/PencilLoader';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Alert } from '../../components/ui/ErrorAlert';
 import { useApi } from '../../hooks/useApi';
-import { useT } from '../../i18n';
+import { useT, type Dict } from '../../i18n';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import type { AttendanceRecord, AttendanceSummary } from '../../lib/types';
 import { formatDate, formatTime } from '../../lib/format';
+
+function attendanceStatusKey(status: string): keyof Dict {
+  switch (status) {
+    case 'PRESENT':
+      return 'present';
+    case 'LATE':
+      return 'late';
+    case 'ABSENT':
+      return 'absent';
+    case 'EXCUSED':
+      return 'excused';
+    default:
+      return 'status';
+  }
+}
 
 export default function StudentAttendancePage() {
   const { t } = useT();
@@ -51,7 +66,7 @@ export default function StudentAttendancePage() {
       />
 
       {error && <Alert message={error} className="mb-4" />}
-      {loading && (initialLoading ? <PencilLoader label="Loading attendance…" /> : <PencilLoader size="sm" label="Loading attendance…" />)}
+      {loading && (initialLoading ? <PencilLoader label={t('loadingAttendance')} /> : <PencilLoader size="sm" label={t('loadingAttendance')} />)}
 
       {!loading && data && (
         <>
@@ -82,10 +97,10 @@ export default function StudentAttendancePage() {
                           {formatTime(r.lesson.startTime)} – {formatTime(r.lesson.endTime)}
                         </td>
                         <td className="hidden py-3 pr-4 text-slate-600 dark:text-slate-300 md:table-cell">
-                          {r.lesson.subject?.name ?? 'General'}
+                          {r.lesson.subject?.name ?? t('generalSubject')}
                         </td>
                         <td className="py-3 pr-4">
-                          <StatusBadge status={r.status} />
+                          <Badge tone={statusTone(r.status)}>{t(attendanceStatusKey(r.status))}</Badge>
                         </td>
                         <td className="py-3 text-slate-500">{r.note ?? '—'}</td>
                       </tr>

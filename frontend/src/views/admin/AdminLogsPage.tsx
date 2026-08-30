@@ -24,7 +24,7 @@ export default function AdminLogsPage() {
       <PageHeader title={t('logsTitle')} subtitle={t('logsSub')} />
 
       {error && <Alert message={error} className="mb-4" />}
-      {loading && (initialLoading ? <PencilLoader label="Loading logs…" /> : <PencilLoader size="sm" label="Loading logs…" />)}
+      {loading && (initialLoading ? <PencilLoader label={t('loadingLogs')} /> : <PencilLoader size="sm" label={t('loadingLogs')} />)}
 
       {!loading && data && (
         <Card>
@@ -33,11 +33,11 @@ export default function AdminLogsPage() {
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">
                   <th className="pb-2 pr-4 font-medium">{t('when')}</th>
-                  <th className="pb-2 pr-4 font-medium">User</th>
-                  <th className="pb-2 pr-4 font-medium">Role</th>
+                  <th className="pb-2 pr-4 font-medium">{t('user')}</th>
+                  <th className="pb-2 pr-4 font-medium">{t('role')}</th>
                   <th className="pb-2 pr-4 font-medium">{t('action')}</th>
-                  <th className="hidden pb-2 pr-4 font-medium sm:table-cell">Entity</th>
-                  <th className="hidden pb-2 font-medium lg:table-cell">Details</th>
+                  <th className="hidden pb-2 pr-4 font-medium sm:table-cell">{t('entity')}</th>
+                  <th className="hidden pb-2 font-medium lg:table-cell">{t('details')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -45,7 +45,7 @@ export default function AdminLogsPage() {
                   <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 dark:bg-slate-800/60">
                     <td className="whitespace-nowrap py-2.5 pr-4 text-slate-500">{formatDateTime(log.createdAt)}</td>
                     <td className="py-2.5 pr-4 font-medium text-slate-900 dark:text-white">
-                      {log.user ? `${log.user.fullName} (@${log.user.username})` : 'System'}
+                      {log.user ? `${log.user.fullName} (@${log.user.username})` : t('system')}
                     </td>
                     <td className="py-2.5 pr-4">
                       {log.role && <Badge tone="slate">{log.role.toLowerCase()}</Badge>}

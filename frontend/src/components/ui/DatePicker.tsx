@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { Calendar } from './Calendar';
 import { Button } from './Button';
 import { ChevronDown, X } from 'lucide-react';
+import { useT } from '../../i18n';
 
 interface DatePickerProps {
   value?: string;
@@ -15,10 +16,10 @@ interface DatePickerProps {
   disabled?: boolean;
 }
 
-function formatDateDisplay(dateStr: string | null): string {
+function formatDateDisplay(dateStr: string | null, locale: string): string {
   if (!dateStr) return '';
   const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
     year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
@@ -33,10 +34,12 @@ export function DatePicker({
   value,
   onChange,
   minDate,
-  placeholder = 'Select date',
+  placeholder,
   className = '',
   disabled = false,
 }: DatePickerProps) {
+  const { t, lang } = useT();
+  const locale = lang === 'ar' ? 'ar-EG' : 'en-US';
   const [isOpen, setIsOpen] = useState(false);
   const [_tempDate, setTempDate] = useState<string | null>(value || null);
   const [mounted, setMounted] = useState(false);
@@ -145,7 +148,7 @@ export function DatePicker({
     setIsOpen(false);
   };
 
-  const displayValue = value ? formatDateDisplay(value) : placeholder;
+  const displayValue = value ? formatDateDisplay(value, locale) : (placeholder || t('selectDate'));
 
   return (
     <div className={`relative ${className}`}>
@@ -156,7 +159,7 @@ export function DatePicker({
         disabled={disabled}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        className={`w-full flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-left transition-colors
+        className={`w-full flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-start transition-colors
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-brand-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:focus:ring-brand-900/40'}
           ${value ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}
       >
@@ -168,7 +171,7 @@ export function DatePicker({
         <div
           ref={dropdownRef}
           role="dialog"
-          aria-label="Date picker"
+          aria-label={t('datePicker')}
           className="fixed z-[1000]"
           style={{
             top: coords.placement === 'down' ? coords.top : 'auto',
@@ -188,14 +191,14 @@ export function DatePicker({
             <div className="flex items-center justify-between py-3 px-5 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={handleToday}>
-                  Today
+                  {t('today')}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={handleClear} aria-label="Clear date">
+                <Button variant="ghost" size="sm" onClick={handleClear} aria-label={t('clearDate')}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
               <Button variant="outline" size="sm" onClick={handleDone}>
-                Done
+                {t('done')}
               </Button>
             </div>
           </div>

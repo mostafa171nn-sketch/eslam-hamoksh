@@ -54,7 +54,7 @@ export default function TeacherAvailabilityPage() {
   const save = async () => {
     for (const [i, r] of rows.entries()) {
       if (r.startTime >= r.endTime) {
-        setError(`Row ${i + 1}: start time must be before end time.`);
+        setError(t('rowTimeError', { row: i + 1 }));
         return;
       }
     }
@@ -70,7 +70,7 @@ export default function TeacherAvailabilityPage() {
         })),
       });
       await refreshUser();
-      toast.success('Availability saved.');
+      toast.success(t('availabilitySavedToast'));
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -85,7 +85,7 @@ export default function TeacherAvailabilityPage() {
         subtitle={t('availabilitySub')}
         action={
           <Button size="sm" onClick={() => setRows((p) => [...p, { day: '0', startTime: '09:00', endTime: '17:00', locationId: '' }])}>
-            + Add slot
+            {t('addSlot')}
           </Button>
         }
       />
@@ -94,11 +94,11 @@ export default function TeacherAvailabilityPage() {
         {rows.length === 0 ? (
           <EmptyState
             icon={Clock}
-            title="No availability set"
-            description="Add weekly slots so you appear in teacher search."
+            title={t('noAvailabilitySet')}
+            description={t('availabilitySub')}
             action={
               <Button size="sm" onClick={() => setRows([{ day: '0', startTime: '09:00', endTime: '17:00', locationId: '' }])}>
-                + Add first slot
+                {t('addFirstSlot')}
               </Button>
             }
           />
@@ -114,13 +114,13 @@ export default function TeacherAvailabilityPage() {
                   options={locations.map((l) => ({ value: l.id, label: l.name }))}
                   value={row.locationId}
                   onChange={(e) => setRow(i, { locationId: e.target.value })}
-                  placeholder="Any branch"
+                  placeholder={t('anyBranch')}
                 />
                 <button
                   onClick={() => setRows((p) => p.filter((_, j) => j !== i))}
                   className="rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50"
                 >
-                  Remove
+                  {t('remove')}
                 </button>
               </div>
             ))}
@@ -129,7 +129,7 @@ export default function TeacherAvailabilityPage() {
                 {rows.map((r) => `${dayName(Number(r.day))} ${r.startTime}–${r.endTime}`).join(' · ')}
               </p>
               <Button onClick={save} loading={saving}>
-                Save availability
+                {t('saveAvailability')}
               </Button>
             </div>
           </div>

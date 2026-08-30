@@ -10,8 +10,10 @@ import { Alert } from '../../../../src/components/ui/ErrorAlert';
 import { api, type PublicCenter } from '../../../../src/lib/api';
 import { errorMessage } from '../../../../src/hooks/useApi';
 import { useToast } from '../../../../src/context/ToastContext';
+import { useT } from '../../../../src/i18n';
 
 export default function FollowedCentersPage() {
+  const { t } = useT();
   const [centers, setCenters] = useState<PublicCenter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -37,29 +39,29 @@ export default function FollowedCentersPage() {
   const unfollow = async (centerId: string) => {
     try {
       await api.unfollowCenter(centerId);
-      toast.success('Unfollowed');
+      toast.success(t('unfollowed'));
       load();
     } catch (err) {
       toast.error(errorMessage(err));
     }
   };
 
-  if (loading) return <PencilLoader label="Loading followed centers…" />;
+  if (loading) return <PencilLoader label={t('loadingFollowedCenters')} />;
   if (error) return <Alert message={error} />;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-slate-900 dark:text-white">Followed Centers</h1>
-        <p className="text-sm text-slate-500">Centers you follow will notify you of new schedules.</p>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">{t('followedCenters')}</h1>
+        <p className="text-sm text-slate-500">{t('followedCentersSub')}</p>
       </div>
 
       {centers.length === 0 ? (
         <Card bodyClassName="p-8 text-center">
           <Building2 className="mx-auto h-10 w-10 text-slate-300" />
-          <p className="mt-3 text-sm text-slate-500">You are not following any centers yet.</p>
+          <p className="mt-3 text-sm text-slate-500">{t('noFollowedCenters')}</p>
           <Link href="/centers" className="mt-4 inline-block">
-            <Button>Browse Centers</Button>
+            <Button>{t('browseCenters')}</Button>
           </Link>
         </Card>
       ) : (
@@ -70,9 +72,9 @@ export default function FollowedCentersPage() {
               <p className="text-xs text-slate-500">{c.city} {c.address ? `· ${c.address}` : ''}</p>
               <div className="mt-3 flex gap-2">
                 <Link href={`/centers/${c.id}`} className="flex-1">
-                  <Button variant="outline" className="w-full">View</Button>
+                  <Button variant="outline" className="w-full">{t('view')}</Button>
                 </Link>
-                <Button variant="ghost" className="flex-1" onClick={() => unfollow(c.id)}>Unfollow</Button>
+                <Button variant="ghost" className="flex-1" onClick={() => unfollow(c.id)}>{t('unfollow')}</Button>
               </div>
             </Card>
           ))}

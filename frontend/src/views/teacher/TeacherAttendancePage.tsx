@@ -15,6 +15,7 @@ import { QrScanner } from '../../components/attendance/QrScanner';
 import { useApi, errorMessage } from '../../hooks/useApi';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
+import { useT, type Dict } from '../../i18n';
 import type { Lesson, LessonAttendanceLive, ScanResult } from '../../lib/types';
 import { formatTime } from '../../lib/format';
 
@@ -30,7 +31,23 @@ const STATUS_TONE: Record<string, 'green' | 'red' | 'amber' | 'blue' | 'slate' |
   SYSTEM: 'slate',
 };
 
+function attendanceStatusKey(status: string): keyof Dict {
+  switch (status) {
+    case 'PRESENT':
+      return 'present';
+    case 'LATE':
+      return 'late';
+    case 'ABSENT':
+      return 'absent';
+    case 'SYSTEM':
+      return 'system';
+    default:
+      return 'status';
+  }
+}
+
 export default function TeacherAttendancePage() {
+  const { t } = useT();
   const toast = useToast();
 
   const { data: lessons, loading, initialLoading, error } = useApi<Lesson[]>(
@@ -96,7 +113,7 @@ export default function TeacherAttendancePage() {
     setFinalizing(true);
     try {
       await api.post(`/attendance/lesson/${lesson.id}/finalize`);
-      toast.success('Attendance finalized. Missing students marked absent.');
+      toast.success(t('finalizeToast'));
       loadLive(lesson.id);
     } catch (err) {
       toast.error(errorMessage(err));
@@ -108,18 +125,18 @@ export default function TeacherAttendancePage() {
   return (
     <div>
       <PageHeader
-        title="Attendance"
-        subtitle="Open the scanner to check in students using their attendance QR codes."
+        title={t('attendance')}
+        subtitle={t('attendanceScannerSub')}
       />
 
       {error && <Alert message={error} className="mb-4" />}
-      {loading && (initialLoading ? <PencilLoader label="Loading today's lessons…" /> : <PencilLoader size="sm" label="Loading today's lessons…" />)}
+      {loading && (initialLoading ? <PencilLoader label={t('loadingTodaysLessons')} /> : <PencilLoader size="sm" label={t('loadingTodaysLessons')} />)}
 
       {!loading && lessons && lessons.length === 0 && (
         <EmptyState
           icon={QrCode}
-          title="No lessons today"
-          description="You don't have any lessons scheduled for today."
+          title={t('noLessonsTodayTitle')}
+          description={t('noLessonsTodayDesc')}
         />
       )}
 
@@ -131,7 +148,7 @@ export default function TeacherAttendancePage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                    {lesson.subject?.name ?? 'General Lesson'}
+                    {lesson.subject?.name ?? t('generalLesson')}
                   </h3>
                   <p className="mt-0.5 text-sm text-slate-500">
                     {formatTime(lesson.startTime)} – {formatTime(lesson.endTime)} · {lesson.student.fullName}
@@ -140,15 +157,15 @@ export default function TeacherAttendancePage() {
                 <div className="flex flex-wrap items-center gap-2">
                   {l && (
                     <>
-                      <Badge tone="green">{l.present} present</Badge>
-                      <Badge tone="amber">{l.late} late</Badge>
-                      <Badge tone="red">{l.absent} absent</Badge>
-                      {l.notMarked > 0 && <Badge tone="blue">{l.notMarked} not marked</Badge>}
+                      <Badge tone="green">{l.present} {t('present')}</Badge>
+                      <Badge tone="amber">{l.late} {t('late')}</Badge>
+                      <Badge tone="red">{l.absent} {t('absent')}</Badge>
+                      {l.notMarked > 0 && <Badge tone="blue">{l.notMarked} {t('notMarked')}</Badge>}
                     </>
                   )}
                   <Button size="sm" onClick={() => openScanner(lesson)}>
                     <ScanLine className="h-4 w-4" />
-                    Open Scanner
+                    {t('openScanner')}
                   </Button>
                   <Button
                     size="sm"
@@ -156,7 +173,7 @@ export default function TeacherAttendancePage() {
                     onClick={() => handleFinalize(lesson)}
                     loading={finalizing}
                   >
-                    Finalize
+                    {t('finalize')}
                   </Button>
                 </div>
               </div>
@@ -172,13 +189,13 @@ export default function TeacherAttendancePage() {
                       <div className="flex items-center gap-2">
                         {row.status ? (
                           <>
-                            <Badge tone={STATUS_TONE[row.status] ?? 'slate'}>{row.status}</Badge>
+                            <Badge tone={STATUS_TONE[row.status] ?? 'slate'}>{t(attendanceStatusKey(row.status))}</Badge>
                             {row.markedAt && (
                               <span className="text-xs text-slate-400">{formatTime(row.markedAt.slice(11, 16))}</span>
                             )}
                           </>
                         ) : (
-                          <Badge tone="slate">Not marked</Badge>
+                          <Badge tone="slate">{t('notMarked')}</Badge>
                         )}
                       </div>
                     </div>
@@ -196,7 +213,7 @@ export default function TeacherAttendancePage() {
           setScanLesson(null);
           setScanning(false);
         }}
-        title={`Scan Attendance — ${scanLesson?.subject?.name ?? ''}`}
+        title={t('scanAttendance', { subject: scanLesson?.subject?.name ?? '' })}
         size="md"
       >
         {scanLesson && (
@@ -206,7 +223,7 @@ export default function TeacherAttendancePage() {
             </p>
 
             {scanning && !scanResult && (
-              <QrScanner onResult={handleScan} onError={() => setScanError('Camera unavailable.')} />
+              <QrScanner onResult={handleScan} onError={() => setScanError(t('cameraUnavailable'))} />
             )}
 
             {scanError && <InlineError message={scanError} />}
@@ -225,17 +242,17 @@ export default function TeacherAttendancePage() {
                     <UserX className="h-5 w-5 text-red-600" />
                   )}
                   <span className="text-base font-semibold text-slate-800 dark:text-slate-100">
-                    {scanResult.attendance.status}
+                    {t(attendanceStatusKey(scanResult.attendance.status))}
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-slate-400">
-                  Method: {scanResult.attendance.method} ·{' '}
+                  {t('methodCol')}: {scanResult.attendance.method} ·{' '}
                   {new Date(scanResult.attendance.markedAt).toLocaleTimeString()}
                 </p>
 
                 <Button className="mt-4 w-full" onClick={() => { setScanResult(null); setScanError(''); setScanning(true); }}>
                   <ScanLine className="h-4 w-4" />
-                  Scan Next Student
+                  {t('scanNextStudent')}
                 </Button>
               </div>
             )}
@@ -244,7 +261,7 @@ export default function TeacherAttendancePage() {
               <div className="flex justify-center">
                 <Button onClick={() => { setScanError(''); setScanning(true); }}>
                   <ScanLine className="h-4 w-4" />
-                  Start Scanning
+                  {t('startScanning')}
                 </Button>
               </div>
             )}

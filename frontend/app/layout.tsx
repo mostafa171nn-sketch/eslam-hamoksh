@@ -1,12 +1,21 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { cookies } from 'next/headers';
 import './globals.css';
 import { AppProviders } from '../src/components/AppProviders';
 
-export const metadata: Metadata = {
-  title: 'معارج | Maarej',
-  description: 'A complete multi-tenant learning-center platform for teachers, students and parents.',
-};
+export function generateMetadata(): Metadata {
+  const lang = cookies().get('maarech-lang')?.value === 'en' ? 'en' : 'ar';
+  return lang === 'ar'
+    ? {
+        title: 'معارج | Maarej',
+        description: 'منصة متكاملة متعددة الأطراف لإدارة مراكز التعليم: للمعلمين والطلاب وأولياء الأمور.',
+      }
+    : {
+        title: 'Maarej | Education Platform',
+        description: 'A complete multi-tenant learning-center platform for teachers, students and parents.',
+      };
+}
 
 /**
  * Applied BEFORE first paint so the stored theme/direction never flashes.
@@ -21,6 +30,7 @@ if(t==='dark'){r.classList.add('dark');}else{r.classList.remove('dark');}
 r.style.colorScheme=t;
 var l=localStorage.getItem('maarech-lang');
 if(l!=='en'){l='ar';}
+if(l==='ar'){try{var c=document.cookie.match(/(?:^|; )maarech-lang=([^;]+)/);if(c&&c[1]==='en'){l='en';}}catch(e){}}
 r.lang=l;r.dir=l==='ar'?'rtl':'ltr';
 }catch(e){}})();
 `;

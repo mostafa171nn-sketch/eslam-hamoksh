@@ -1,6 +1,9 @@
+'use client';
+
 import { useEffect, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { lockScroll, unlockScroll } from '../../lib/scrollLock';
+import { useT } from '../../i18n';
 
 export function Modal({
   open,
@@ -17,6 +20,7 @@ export function Modal({
   footer?: ReactNode;
   size?: 'sm' | 'md' | 'lg';
 }) {
+  const { t } = useT();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -40,7 +44,7 @@ export function Modal({
       <div className={`animate-slide-in relative my-auto w-full rounded-xl bg-white shadow-xl dark:bg-slate-800 ${sizes[size]}`}>
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-700">
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">{title}</h2>
-          <button onClick={onClose} className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-200" aria-label="Close">
+          <button onClick={onClose} className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-200" aria-label={t('close')}>
             <X className="h-5 w-5" />
           </button>
         </div>

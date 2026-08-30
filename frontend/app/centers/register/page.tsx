@@ -122,10 +122,10 @@ export default function CenterRegisterPage() {
     } catch (err) {
       const raw = errorMessage(err, t('registrationFailed'));
       if (raw.toLowerCase().includes('phone') && raw.toLowerCase().includes('already')) {
-        setErrors((prev) => ({ ...prev, phone: 'This phone number is already registered.', adminPhone: 'This phone number is already registered.' }));
+        setErrors((prev) => ({ ...prev, phone: t('alreadyRegistered'), adminPhone: t('alreadyRegistered') }));
       }
       if (raw.toLowerCase().includes('username') && raw.toLowerCase().includes('taken')) {
-        setErrors((prev) => ({ ...prev, adminUsername: 'This username is already taken.' }));
+        setErrors((prev) => ({ ...prev, adminUsername: t('alreadyTaken') }));
       }
       setServerError(raw);
       if (err instanceof ApiClientError && Array.isArray(err.details)) {

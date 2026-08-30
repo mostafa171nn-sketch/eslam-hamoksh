@@ -33,24 +33,24 @@ export default function TeacherPaymentsPage() {
     }
   };
 
-  const onApprove = (p: Payment) => act(() => api.post(`/payments/${p.id}/approve`), 'Payment approved.');
+  const onApprove = (p: Payment) => act(() => api.post(`/payments/${p.id}/approve`), t('paymentApproved'));
   const onReject = (p: Payment, reason?: string) =>
-    act(() => api.post(`/payments/${p.id}/reject`, { reason }), 'Payment rejected.');
+    act(() => api.post(`/payments/${p.id}/reject`, { reason }), t('paymentRejectedMsg'));
 
   return (
     <div>
-      <PageHeader title="Payments" subtitle="Review and confirm payments submitted to you." />
+      <PageHeader title={t('paymentsTitle')} subtitle={t('paymentsSubTeacher')} />
 
       <Card bodyClassName="p-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <Select
-            label="Status"
+            label={t('status')}
             options={paymentStatusFilters(t)}
             value={params.status ?? ''}
             onChange={(e) => updateParam('status', e.target.value)}
           />
           <Select
-            label="Type"
+            label={t('type')}
             options={[{ value: '', label: t('allTypesFilter') }, ...PAYMENT_TYPE_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }))]}
             value={params.type ?? ''}
             onChange={(e) => updateParam('type', e.target.value)}
@@ -60,7 +60,7 @@ export default function TeacherPaymentsPage() {
 
       <Card className="mt-4">
         {error && <Alert message={error} className="m-4" />}
-        {loading && (initialLoading ? <PencilLoader label="Loading payments" /> : <PencilLoader size="sm" label="Loading payments" />)}
+        {loading && (initialLoading ? <PencilLoader label={t('loadingPayments')} /> : <PencilLoader size="sm" label={t('loadingPayments')} />)}
         {!loading && <div className="p-2">{<PaymentList payments={data} showStudent showParent onView={setSelected} onApprove={onApprove} onReject={onReject} />}</div>}
         {meta && (
           <div className="border-t border-slate-100 dark:border-slate-700 p-4">

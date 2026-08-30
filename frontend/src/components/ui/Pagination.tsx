@@ -1,4 +1,7 @@
+'use client';
+
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useT } from '../../i18n';
 
 export function Pagination({
   page,
@@ -9,6 +12,7 @@ export function Pagination({
   totalPages: number;
   onChange: (page: number) => void;
 }) {
+  const { t, dir } = useT();
   if (totalPages <= 1) return null;
   const pages: number[] = [];
   const start = Math.max(1, page - 2);
@@ -17,6 +21,8 @@ export function Pagination({
 
   const btn =
     'inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-colors';
+  const PrevIcon = dir === 'rtl' ? ChevronRight : ChevronLeft;
+  const NextIcon = dir === 'rtl' ? ChevronLeft : ChevronRight;
 
   return (
     <div className="flex items-center justify-center gap-1">
@@ -24,9 +30,9 @@ export function Pagination({
         className={`${btn} ${page === 1 ? 'cursor-not-allowed text-slate-300 dark:text-slate-600' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'}`}
         disabled={page === 1}
         onClick={() => onChange(page - 1)}
-        aria-label="Previous page"
+        aria-label={t('previousPage')}
       >
-        <ChevronLeft className="h-4 w-4" />
+        <PrevIcon className="h-4 w-4" />
       </button>
       {start > 1 && <span className="px-1 text-sm text-slate-400">…</span>}
       {pages.map((p) => (
@@ -43,9 +49,9 @@ export function Pagination({
         className={`${btn} ${page === totalPages ? 'cursor-not-allowed text-slate-300 dark:text-slate-600' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'}`}
         disabled={page === totalPages}
         onClick={() => onChange(page + 1)}
-        aria-label="Next page"
+        aria-label={t('nextPage')}
       >
-        <ChevronRight className="h-4 w-4" />
+        <NextIcon className="h-4 w-4" />
       </button>
     </div>
   );

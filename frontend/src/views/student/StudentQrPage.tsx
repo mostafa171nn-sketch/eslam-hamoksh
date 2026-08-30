@@ -11,6 +11,7 @@ import { Alert } from '../../components/ui/ErrorAlert';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { useApi, errorMessage } from '../../hooks/useApi';
 import { api } from '../../lib/api';
+import { useT, type Dict } from '../../i18n';
 import type { AttendanceQrResponse, Lesson } from '../../lib/types';
 import { formatTime } from '../../lib/format';
 
@@ -21,12 +22,30 @@ interface QrState {
   secondsLeft?: number;
 }
 
+function lessonStatusKey(status: string): keyof Dict {
+  switch (status) {
+    case 'SCHEDULED':
+      return 'scheduled';
+    case 'RESCHEDULED':
+      return 'rescheduled';
+    case 'COMPLETED':
+      return 'completedStatus';
+    case 'CANCELLED':
+      return 'cancelled';
+    case 'NO_SHOW':
+      return 'noShowAction';
+    default:
+      return 'status';
+  }
+}
+
 function todayISO() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 export default function StudentQrPage() {
+  const { t } = useT();
   const [qr, setQr] = useState<Record<string, QrState>>({});
   const timers = useRef<Record<string, ReturnType<typeof setInterval>>>({});
 
@@ -99,18 +118,18 @@ export default function StudentQrPage() {
   return (
     <div>
       <PageHeader
-        title="Today's Attendance"
-        subtitle="Generate a temporary QR code to check in for your lessons. The code is valid for 30 seconds only."
+        title={t('todaysAttendanceTitle')}
+        subtitle={t('qrPageSubtitle')}
       />
 
       {error && <Alert message={error} className="mb-4" />}
-      {loading && (initialLoading ? <PencilLoader label="Loading today's lessons…" /> : <PencilLoader size="sm" label="Loading today's lessons…" />)}
+      {loading && (initialLoading ? <PencilLoader label={t('loadingTodaysLessons')} /> : <PencilLoader size="sm" label={t('loadingTodaysLessons')} />)}
 
       {!loading && data && data.length === 0 && (
         <EmptyState
           icon={QrCode}
-          title="No lessons today"
-          description="You don't have any lessons scheduled for today."
+          title={t('noLessonsTodayTitle')}
+          description={t('noLessonsTodayDesc')}
         />
       )}
 
@@ -122,7 +141,7 @@ export default function StudentQrPage() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                    {lesson.subject?.name ?? 'General Lesson'}
+                    {lesson.subject?.name ?? t('generalLesson')}
                   </h3>
                   <p className="mt-0.5 text-sm text-slate-500">{lesson.teacher.fullName}</p>
                   <p className="mt-0.5 text-sm text-slate-500">
@@ -130,7 +149,7 @@ export default function StudentQrPage() {
                   </p>
                 </div>
                 <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-300">
-                  {lesson.status}
+                  {t(lessonStatusKey(lesson.status))}
                 </span>
               </div>
 
@@ -138,20 +157,20 @@ export default function StudentQrPage() {
                 {state.status === 'idle' && (
                   <Button onClick={() => generate(lesson)} className="w-full">
                     <QrCode className="h-4 w-4" />
-                    Generate Attendance QR
+                    {t('generateAttendanceQr')}
                   </Button>
                 )}
 
-                {state.status === 'locating' && <PencilLoader label="Verifying your location…" />}
+                {state.status === 'locating' && <PencilLoader label={t('verifyingLocation')} />}
 
                 {state.status === 'error' && (
                   <div className="space-y-3">
                     <Alert
-                      title="Could not generate QR"
-                      message={state.error ?? 'Something went wrong.'}
+                      title={t('couldNotGenerateQr')}
+                      message={state.error ?? t('somethingWentWrong')}
                     />
                     <Button variant="secondary" onClick={() => generate(lesson)} className="w-full">
-                      Try Again
+                      {t('tryAgain')}
                     </Button>
                   </div>
                 )}
@@ -163,12 +182,12 @@ export default function StudentQrPage() {
                     </div>
                     <p className="mt-3 flex items-center gap-1.5 text-sm text-emerald-600">
                       <MapPin className="h-4 w-4" />
-                      Inside center — show this to your teacher
+                      {t('insideCenterShowTeacher')}
                     </p>
                     <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-300">
-                      Expires in: {state.secondsLeft ?? 0} seconds
+                      {t('expiresInLabel')}: {state.secondsLeft ?? 0} {t('secondsUnit')}
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">For {state.data.lesson.subject} with {state.data.lesson.teacher}</p>
+                    <p className="mt-1 text-xs text-slate-400">{t('forLabel')} {state.data.lesson.subject} {t('with')} {state.data.lesson.teacher}</p>
                   </div>
                 )}
 
@@ -176,11 +195,11 @@ export default function StudentQrPage() {
                   <div className="space-y-3 text-center">
                     <p className="flex items-center justify-center gap-1.5 text-sm font-medium text-red-600">
                       <AlertTriangle className="h-4 w-4" />
-                      QR Expired
+                      {t('qrExpired')}
                     </p>
                     <Button onClick={() => generate(lesson)} className="w-full">
                       <RefreshCw className="h-4 w-4" />
-                      Generate New QR
+                      {t('generateNewQr')}
                     </Button>
                   </div>
                 )}

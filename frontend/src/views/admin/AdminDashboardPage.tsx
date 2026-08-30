@@ -22,7 +22,7 @@ export default function AdminDashboardPage() {
   const { t } = useT();
   const { data, initialLoading, error } = useApi(() => api.get<AdminStats>('/admin/stats'), []);
 
-  if (initialLoading) return <PencilLoader label="Loading dashboard…" />;
+  if (initialLoading) return <PencilLoader label={t('loadingDashboard')} />;
   if (error || !data) return <Alert message={error || 'Failed to load dashboard.'} />;
 
   const quickLinks = [

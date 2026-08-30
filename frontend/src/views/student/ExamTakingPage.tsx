@@ -9,6 +9,7 @@ import { PencilLoader } from '../../components/ui/PencilLoader';
 import { Alert } from '../../components/ui/ErrorAlert';
 import { errorMessage } from '../../hooks/useApi';
 import { api } from '../../lib/api';
+import { useT } from '../../i18n';
 import type { Exam, ExamQuestion } from '../../lib/types';
 
 interface StartResponse {
@@ -28,6 +29,7 @@ function formatCountdown(ms: number): string {
 }
 
 export default function ExamTakingPage() {
+  const { t } = useT();
   const params = useParams<{ id: string }>();
   const id = params?.id ?? '';
   const router = useRouter();
@@ -109,7 +111,7 @@ export default function ExamTakingPage() {
       .catch(() => setSaved((prev) => ({ ...prev, [questionId]: 'error' })));
   };
 
-  if (loading) return <PencilLoader label="Preparing your exam…" />;
+  if (loading) return <PencilLoader label={t('preparingExam')} />;
   if (loadError) return <Alert message={loadError} />;
   if (!startData || !exam) return null;
 
@@ -119,16 +121,16 @@ export default function ExamTakingPage() {
       <div className="mx-auto max-w-xl">
         <Card className="p-8 text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" />
-          <h2 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">You already submitted this exam</h2>
+          <h2 className="mt-4 text-lg font-semibold text-slate-900 dark:text-white">{t('alreadySubmitted')}</h2>
           <p className="mt-1 text-sm text-slate-500">{exam.name}</p>
           {a.percentage !== null && (
             <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
-              Score: <span className="text-lg font-bold text-slate-900 dark:text-white">{a.percentage}%</span>
+              {t('score')}: <span className="text-lg font-bold text-slate-900 dark:text-white">{a.percentage}%</span>
               {a.score !== null && a.maxScore !== null && ` (${a.score}/${a.maxScore})`}
             </p>
           )}
           <div className="mt-6">
-            <Button onClick={() => router.push(`/student/exams/results/${a.id}`)}>View full result</Button>
+            <Button onClick={() => router.push(`/student/exams/results/${a.id}`)}>{t('viewFullResult')}</Button>
           </div>
         </Card>
       </div>
@@ -141,7 +143,7 @@ export default function ExamTakingPage() {
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">{exam.name}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {exam.questions.length} questions · {exam.durationMinutes} min
+            {exam.questions.length} {t('questionsCount')} · {exam.durationMinutes} {t('minutesShort')}
           </p>
         </div>
         <div
@@ -163,7 +165,7 @@ export default function ExamTakingPage() {
               <p className="text-sm font-semibold text-slate-900 dark:text-white">
                 {i + 1}. {q.question}
               </p>
-              <span className="shrink-0 text-xs font-medium text-slate-400">{q.points} pts</span>
+              <span className="shrink-0 text-xs font-medium text-slate-400">{q.points} {t('points')}</span>
             </div>
             {q.type === 'MULTIPLE_CHOICE' && (
               <div className="space-y-2">
@@ -209,7 +211,7 @@ export default function ExamTakingPage() {
                         onChange={(e) => saveAnswer(q.id, e.target.value)}
                         className="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-500"
                       />
-                      {opt === 'true' ? 'True' : 'False'}
+                      {opt === 'true' ? t('trueOption') : t('falseOption')}
                     </label>
                   );
                 })}
@@ -219,17 +221,17 @@ export default function ExamTakingPage() {
               <>
                 <Textarea
                   rows={4}
-                  placeholder="Type your answer…"
+                  placeholder={t('typeYourAnswer')}
                   value={answers[q.id] ?? ''}
                   onChange={(e) => saveAnswer(q.id, e.target.value)}
                 />
-                <p className="text-[11px] text-slate-400">Answers are saved as you type.</p>
+                <p className="text-[11px] text-slate-400">{t('answersSavedNote')}</p>
               </>
             )}
             <div className="flex items-center justify-end gap-2 text-xs">
-              {saved[q.id] === 'saving' && <span className="text-slate-400">Saving…</span>}
-              {saved[q.id] === 'saved' && <span className="text-emerald-600">Saved</span>}
-              {saved[q.id] === 'error' && <span className="text-red-600">Save failed — retry by editing</span>}
+              {saved[q.id] === 'saving' && <span className="text-slate-400">{t('savingAnswer')}</span>}
+              {saved[q.id] === 'saved' && <span className="text-emerald-600">{t('savedAnswer')}</span>}
+              {saved[q.id] === 'error' && <span className="text-red-600">{t('saveFailedRetry')}</span>}
             </div>
           </Card>
         ))}
@@ -237,23 +239,23 @@ export default function ExamTakingPage() {
 
       <div className="sticky bottom-4 mt-6 flex justify-end">
         <Button size="lg" onClick={() => setConfirmOpen(true)}>
-          <Send className="h-4 w-4" /> Submit exam
+          <Send className="h-4 w-4" /> {t('submitExam')}
         </Button>
       </div>
 
       <Modal
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
-        title="Submit exam?"
+        title={t('submitExamConfirm')}
         footer={
           <>
-            <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={submitting}>Keep working</Button>
-            <Button onClick={doSubmit} loading={submitting}>Submit now</Button>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={submitting}>{t('keepWorking')}</Button>
+            <Button onClick={doSubmit} loading={submitting}>{t('submitNow')}</Button>
           </>
         }
       >
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          You will not be able to change your answers after submitting. Your score is calculated automatically.
+          {t('submitExamWarning')}
         </p>
       </Modal>
     </div>

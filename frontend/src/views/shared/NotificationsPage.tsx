@@ -12,9 +12,11 @@ import { api } from '../../lib/api';
 import type { Notification } from '../../lib/types';
 import { timeAgo } from '../../lib/format';
 import { useToast } from '../../context/ToastContext';
+import { useT } from '../../i18n';
 
 export default function NotificationsPage() {
   const toast = useToast();
+  const { t } = useT();
   const [page, setPage] = useState(1);
   const [busy, setBusy] = useState(false);
   const limit = 20;
@@ -29,7 +31,7 @@ export default function NotificationsPage() {
     try {
       await api.put('/notifications/read-all');
       setData((prev) => (prev ? { ...prev, unread: 0, notifications: prev.notifications.map((n) => ({ ...n, read: true })) } : prev));
-      toast.success('All notifications marked as read.');
+      toast.success(t('allMarkedReadToast'));
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -57,27 +59,27 @@ export default function NotificationsPage() {
   return (
     <div>
       <PageHeader
-        title="Notifications"
-        subtitle={data ? `${data.unread} unread` : undefined}
+        title={t('notificationsTitle')}
+        subtitle={data ? `${data.unread} ${t('unreadSuffix')}` : undefined}
         action={
           data && data.unread > 0 ? (
             <Button variant="outline" size="sm" onClick={markAll} loading={busy}>
-              <CheckCheck className="h-4 w-4" /> Mark all read
+              <CheckCheck className="h-4 w-4" /> {t('markAllRead')}
             </Button>
           ) : undefined
         }
       />
 
       {error && <Alert message={error} className="mb-4" />}
-      {loading && (initialLoading ? <PencilLoader label="Loading notifications…" /> : <PencilLoader size="sm" label="Loading notifications…" />)}
+      {loading && (initialLoading ? <PencilLoader label={t('loadingNotifications')} /> : <PencilLoader size="sm" label={t('loadingNotifications')} />)}
 
       {!loading && data && (
         <>
           {data.notifications.length === 0 ? (
             <EmptyState
               icon={BellOff}
-              title="No notifications"
-              description="When something happens, you'll see it here."
+              title={t('noNotifications')}
+              description={t('whenSomethingHappens')}
             />
           ) : (
             <Card>

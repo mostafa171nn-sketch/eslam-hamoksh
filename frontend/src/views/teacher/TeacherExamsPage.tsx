@@ -18,6 +18,7 @@ import { useApi, errorMessage } from '../../hooks/useApi';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useT } from '../../i18n';
 import type { Exam, ExamQuestionType, TeacherStudent } from '../../lib/types';
 import { formatDateTime } from '../../lib/format';
 
@@ -38,13 +39,8 @@ function toIsoDate(value: string): string | null {
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
-const TYPE_OPTIONS = [
-  { value: 'MULTIPLE_CHOICE', label: 'Multiple choice' },
-  { value: 'TRUE_FALSE', label: 'True / False' },
-  { value: 'WRITTEN', label: 'Written' },
-];
-
 export default function TeacherExamsPage() {
+  const { t } = useT();
   const { user } = useAuth();
   const toast = useToast();
   const [page, setPage] = useState(1);
@@ -60,6 +56,12 @@ export default function TeacherExamsPage() {
   const { data: studentsData } = useApi(() => api.get<TeacherStudent[]>('/teachers/me/students', { page: 1, limit: 100 }), []);
   const students = studentsData ?? [];
   const subjects = user?.role === 'TEACHER' ? user.teacher.subjects : [];
+
+  const typeOptions = [
+    { value: 'MULTIPLE_CHOICE', label: t('multipleChoice') },
+    { value: 'TRUE_FALSE', label: t('trueFalse') },
+    { value: 'WRITTEN', label: t('written') },
+  ];
 
   const [form, setForm] = useState({
     name: '',
@@ -108,19 +110,19 @@ export default function TeacherExamsPage() {
     const endTimeIso = toIsoDate(endTime);
     const durationMinutes = Number(form.durationMinutes);
     if (!form.name.trim() || !startTimeIso || !endTimeIso) {
-      setFormError('Name and exam window are required.');
+      setFormError(t('nameWindowRequired'));
       return;
     }
     if (new Date(startTimeIso).getTime() >= new Date(endTimeIso).getTime()) {
-      setFormError('The exam end time must be after the start time.');
+      setFormError(t('endAfterStart'));
       return;
     }
     if (!Number.isInteger(durationMinutes) || durationMinutes < 1 || durationMinutes > 24 * 60) {
-      setFormError('Duration must be between 1 minute and 24 hours.');
+      setFormError(t('durationRange'));
       return;
     }
     if (!form.allStudents && form.studentIds.length === 0) {
-      setFormError('Select at least one student or choose "All my students".');
+      setFormError(t('selectStudentsOrAll'));
       return;
     }
     const cleanQuestions = questions
@@ -139,20 +141,20 @@ export default function TeacherExamsPage() {
         points: Number(q.points) || 1,
       }));
     if (cleanQuestions.length === 0) {
-      setFormError('Add at least one question.');
+      setFormError(t('addQuestionFirst'));
       return;
     }
     for (const q of cleanQuestions) {
       if (q.type === 'MULTIPLE_CHOICE' && (!q.options || q.options.length < 2)) {
-        setFormError(`"${q.question.slice(0, 30)}" needs at least 2 options (one per line).`);
+        setFormError(t('needsOptions', { q: q.question.slice(0, 30) }));
         return;
       }
       if (q.type !== 'WRITTEN' && !q.correctAnswer) {
-        setFormError(`"${q.question.slice(0, 30)}" needs a correct answer.`);
+        setFormError(t('needsCorrectAnswer', { q: q.question.slice(0, 30) }));
         return;
       }
       if (q.type === 'MULTIPLE_CHOICE' && q.options && q.correctAnswer && !q.options.includes(q.correctAnswer)) {
-        setFormError(`The correct answer for "${q.question.slice(0, 30)}" must be one of the options.`);
+        setFormError(t('mustBeOneOfOptions', { q: q.question.slice(0, 30) }));
         return;
       }
     }
@@ -171,7 +173,7 @@ export default function TeacherExamsPage() {
         studentIds: form.allStudents ? undefined : form.studentIds,
         questions: cleanQuestions,
       });
-      toast.success('Exam created.');
+      toast.success(t('examCreatedToast'));
       setCreateOpen(false);
       reload();
     } catch (err) {
@@ -184,22 +186,22 @@ export default function TeacherExamsPage() {
   return (
     <div>
       <PageHeader
-        title="Exams"
-        subtitle="Create exams and review results."
+        title={t('exams')}
+        subtitle={t('examsTeacherSub')}
         action={
           <Button size="sm" onClick={openCreate}>
-            <Plus className="h-4 w-4" /> New exam
+            <Plus className="h-4 w-4" /> {t('newExam')}
           </Button>
         }
       />
 
       {error && <Alert message={error} className="mb-4" />}
-      {loading && (initialLoading ? <PencilLoader label="Loading exams…" /> : <PencilLoader size="sm" label="Loading exams…" />)}
+      {loading && (initialLoading ? <PencilLoader label={t('loadingExams')} /> : <PencilLoader size="sm" label={t('loadingExams')} />)}
 
       {!loading && data && (
         <>
           {data.length === 0 ? (
-            <EmptyState icon={FileText} title="No exams" description="Create your first exam to get started." />
+            <EmptyState icon={FileText} title={t('noExams')} description={t('teacherCreateFirstExam')} />
           ) : (
             <div className="space-y-3">
               {data.map((e) => (
@@ -209,18 +211,18 @@ export default function TeacherExamsPage() {
                       <p className="text-sm font-semibold text-slate-900 dark:text-white">{e.name}</p>
                       {e.subject && <Badge tone="blue">{e.subject.name}</Badge>}
                       <Badge tone={statusTone(e.isActive ? 'ACTIVE' : e.isUpcoming ? 'UPCOMING' : 'COMPLETED')}>
-                        {e.isActive ? 'Active now' : e.isUpcoming ? 'Upcoming' : 'Ended'}
+                        {e.isActive ? t('activeNow') : e.isUpcoming ? t('upcoming') : t('ended')}
                       </Badge>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      {formatDateTime(e.startTime)} → {formatDateTime(e.endTime)} · {e.durationMinutes} min ·{' '}
-                      {e.questions.length} questions · {e.students.length} students
+                      {formatDateTime(e.startTime)} → {formatDateTime(e.endTime)} · {t('examDurationMinutes', { count: e.durationMinutes })} ·{' '}
+                      {t('examQuestionsCount', { count: e.questions.length })} · {t('examStudentsCount', { count: e.students.length })}
                     </p>
                   </div>
                   <div className="shrink-0">
                     <Link href={`/teacher/exams/${e.id}/results`}>
                       <Button size="sm" variant="outline">
-                        Results
+                        {t('resultsBtn')}
                       </Button>
                     </Link>
                   </div>
@@ -237,30 +239,30 @@ export default function TeacherExamsPage() {
       <Modal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        title="New exam"
+        title={t('newExam')}
         size="lg"
         footer={
           <>
-            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={saving}>Cancel</Button>
-            <Button onClick={create} loading={saving}>Create exam</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={saving}>{t('cancel')}</Button>
+            <Button onClick={create} loading={saving}>{t('createExam')}</Button>
           </>
         }
       >
         <form onSubmit={create} className="space-y-5">
           <InlineError message={formError} />
           <div className="space-y-4">
-            <Input label="Exam name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
-            <Textarea label="Description (optional)" rows={2} value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
+            <Input label={t('examName')} value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
+            <Textarea label={t('descriptionOptional')} rows={2} value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Select
-                label="Subject"
+                label={t('subject')}
                 options={subjects.map((s) => ({ value: s.id, label: s.name }))}
                 value={form.subjectId}
                 onChange={(e) => setForm((p) => ({ ...p, subjectId: e.target.value }))}
-                placeholder="No subject"
+                placeholder={t('noSubject')}
               />
               <Input
-                label="Duration (minutes)"
+                label={t('durationMinutes')}
                 type="number"
                 min={1}
                 value={form.durationMinutes}
@@ -269,7 +271,7 @@ export default function TeacherExamsPage() {
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input
-                label="Starts at"
+                label={t('startsAt')}
                 type="datetime-local"
                 inputRef={startTimeInputRef}
                 value={form.startTime}
@@ -277,7 +279,7 @@ export default function TeacherExamsPage() {
                 onBlur={(e) => setForm((p) => (e.target.value !== p.startTime ? { ...p, startTime: e.target.value } : p))}
               />
               <Input
-                label="Ends at"
+                label={t('endsAt')}
                 type="datetime-local"
                 inputRef={endTimeInputRef}
                 value={form.endTime}
@@ -293,12 +295,12 @@ export default function TeacherExamsPage() {
                   onChange={(e) => setForm((p) => ({ ...p, allStudents: e.target.checked }))}
                   className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                 />
-                Assign to all my students
+                {t('assignAllStudents')}
               </label>
               {!form.allStudents && (
                 <div className="mt-3">
                   <MultiSelect
-                    label="Students"
+                    label={t('studentsLabel')}
                     options={students.map((s) => ({ value: s.id, label: s.fullName }))}
                     selected={form.studentIds}
                     onChange={(v) => setForm((p) => ({ ...p, studentIds: v }))}
@@ -310,34 +312,34 @@ export default function TeacherExamsPage() {
 
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-sm font-medium text-slate-700">Questions</p>
+              <p className="text-sm font-medium text-slate-700">{t('questionsCount')}</p>
               <Button size="sm" variant="secondary" onClick={addQuestion}>
-                <Plus className="h-3.5 w-3.5" /> Add question
+                <Plus className="h-3.5 w-3.5" /> {t('addQuestion')}
               </Button>
             </div>
             <div className="space-y-3">
               {questions.map((q, i) => (
                 <div key={i} className="space-y-3 rounded-lg border border-slate-200 dark:border-slate-700 p-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold uppercase text-slate-400">Question {i + 1}</span>
+                    <span className="text-xs font-semibold uppercase text-slate-400">{t('questionNumber', { n: i + 1 })}</span>
                     {questions.length > 1 && (
-                      <button type="button" onClick={() => removeQuestion(i)} className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label="Remove question">
+                      <button type="button" onClick={() => removeQuestion(i)} className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label={t('removeQuestion')}>
                         <Trash2 className="h-4 w-4" />
                       </button>
                     )}
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px]">
                     <Select
-                      options={TYPE_OPTIONS}
+                      options={typeOptions}
                       value={q.type}
                       onChange={(e) => setQ(i, { type: e.target.value as ExamQuestionType, correctAnswer: e.target.value === 'WRITTEN' ? '' : q.correctAnswer })}
                     />
-                    <Input type="number" min={1} label="Points" value={q.points} onChange={(e) => setQ(i, { points: e.target.value })} />
+                    <Input type="number" min={1} label={t('points')} value={q.points} onChange={(e) => setQ(i, { points: e.target.value })} />
                   </div>
-                  <Textarea label="Question" rows={2} value={q.question} onChange={(e) => setQ(i, { question: e.target.value })} />
+                  <Textarea label={t('question')} rows={2} value={q.question} onChange={(e) => setQ(i, { question: e.target.value })} />
                   {q.type === 'MULTIPLE_CHOICE' && (
                     <Textarea
-                      label="Options (one per line)"
+                      label={t('optionsOnePerLine')}
                       rows={3}
                       value={q.options}
                       onChange={(e) => setQ(i, { options: e.target.value })}
@@ -347,17 +349,17 @@ export default function TeacherExamsPage() {
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       {q.type === 'TRUE_FALSE' ? (
                         <Select
-                          label="Correct answer"
+                          label={t('correctAnswerLabel')}
                           options={[
-                            { value: 'true', label: 'True' },
-                            { value: 'false', label: 'False' },
+                            { value: 'true', label: t('trueOption') },
+                            { value: 'false', label: t('falseOption') },
                           ]}
                           value={q.correctAnswer}
                           onChange={(e) => setQ(i, { correctAnswer: e.target.value })}
                         />
                       ) : (
                         <Input
-                          label="Correct answer"
+                          label={t('correctAnswerLabel')}
                           value={q.correctAnswer}
                           onChange={(e) => setQ(i, { correctAnswer: e.target.value })}
                         />

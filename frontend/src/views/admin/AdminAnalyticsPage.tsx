@@ -26,11 +26,12 @@ function BarRow({ label, value, max }: { label: string; value: number; max: numb
 }
 
 function BarChart({ title, data, labelKey }: { title: string; data: { [key: string]: string | number }[]; labelKey: string }) {
+  const { t } = useT();
   const max = Math.max(1, ...data.map((d) => Number(d.count) || 0));
   return (
     <Card title={title}>
       <div className="space-y-2">
-        {data.length === 0 && <p className="text-sm text-slate-400">No data</p>}
+        {data.length === 0 && <p className="text-sm text-slate-400">{t('noData')}</p>}
         {data.map((d) => (
           <BarRow key={String(d[labelKey])} label={String(d[labelKey])} value={Number(d.count) || 0} max={max} />
         ))}
@@ -61,14 +62,14 @@ export default function AdminAnalyticsPage() {
             <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} label={t('from')} />
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} label={t('to')} />
             <Button variant="secondary" onClick={() => { setAppliedFrom(from); setAppliedTo(to); }}>
-              Apply
+              {t('apply')}
             </Button>
           </div>
         }
       />
 
       {error && <Alert message={error} className="mb-4" />}
-      {loading && (initialLoading ? <PencilLoader label="Loading analytics…" /> : <PencilLoader size="sm" label="Loading analytics…" />)}
+      {loading && (initialLoading ? <PencilLoader label={t('loadingAnalytics')} /> : <PencilLoader size="sm" label={t('loadingAnalytics')} />)}
 
       {!loading && data && (
         <div className="space-y-6">

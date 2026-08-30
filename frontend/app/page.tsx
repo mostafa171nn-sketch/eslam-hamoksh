@@ -22,10 +22,15 @@ const CenterMap = dynamic(() => import('@/src/components/centers/CenterMap'), {
   ssr: false,
   loading: () => (
     <div className="flex h-full w-full items-center justify-center bg-slate-100 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-      Loading map…
+      <TinyLoader />
     </div>
   ),
 });
+
+function TinyLoader() {
+  const { t } = useT();
+  return <>{t('loadingMap')}</>;
+}
 
 export default function HomePage() {
   const { t } = useT();
@@ -96,7 +101,7 @@ export default function HomePage() {
               {t('findTeacher')}
             </h1>
             <p className="mt-4 text-lg text-brand-100 sm:text-xl">
-              Browse verified tutors and schedule lessons at top learning centers.
+              {t('heroSubtitle')}
             </p>
           </div>
 
@@ -145,7 +150,7 @@ export default function HomePage() {
                   className="lg:col-span-1"
                   onClick={handleSearch}
                 >
-                  <Search className="mr-2 h-4 w-4" />
+                  <Search className="h-4 w-4" />
                   {t('search')}
                 </Button>
               </div>
@@ -161,8 +166,8 @@ export default function HomePage() {
             {t('centers')}
           </h2>
           <Link href="/centers" className="group inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300">
-            View all {t('centers')}
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            {t('viewAll')} {t('centers')}
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" />
           </Link>
         </div>
 
@@ -174,7 +179,7 @@ export default function HomePage() {
                 <PencilLoader />
               </div>
             ) : featuredCenters.length === 0 ? (
-              <div className="flex justify-center py-16 text-sm text-slate-500 dark:text-slate-400">No centers yet.</div>
+              <div className="flex justify-center py-16 text-sm text-slate-500 dark:text-slate-400">{t('noCentersYet')}</div>
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 lg:gap-3">
                 {featuredCenters.map((center) => {
@@ -185,7 +190,7 @@ export default function HomePage() {
                       key={center.id}
                       type="button"
                       onClick={() => focusCenter(center.id)}
-                      className={`group rounded-xl border bg-white p-4 text-left transition-all duration-200 dark:bg-slate-800 ${
+                      className={`group rounded-xl border bg-white p-4 text-start transition-all duration-200 dark:bg-slate-800 ${
                         active
                           ? 'border-brand-400 shadow-lg ring-2 ring-brand-400/30 dark:border-brand-500'
                           : 'border-slate-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md dark:border-slate-700 dark:hover:border-brand-500/60'
@@ -224,11 +229,11 @@ export default function HomePage() {
                         </div>
                         {hasCoords ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-medium text-brand-600 dark:bg-brand-900/40 dark:text-brand-300">
-                            <MapPin className="h-3 w-3" /> On map
+                            <MapPin className="h-3 w-3" /> {t('onMap')}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400">
-                            No location
+                            {t('noLocation')}
                           </span>
                         )}
                       </div>
@@ -254,34 +259,34 @@ export default function HomePage() {
       <section className="border-t border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
           <h2 className="mb-8 text-2xl font-bold text-slate-900 dark:text-white text-center">
-            How it works
+            {t('howItWorks')}
           </h2>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
             <div className="text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-900/50 dark:text-brand-300">
                 <Search className="h-6 w-6" />
               </div>
-              <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-white">Search</h3>
+              <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-white">{t('search')}</h3>
               <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                Find a teacher or center that matches your needs with our powerful search.
+                {t('howItWorksSearchSub')}
               </p>
             </div>
             <div className="text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-900/50 dark:text-brand-300">
                 <CalendarDays className="h-6 w-6" />
               </div>
-              <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-white">Select Date</h3>
+              <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-white">{t('howItWorksSelectDate')}</h3>
               <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                Pick a date and time from available slots on the calendar.
+                {t('howItWorksSelectDateSub')}
               </p>
             </div>
             <div className="text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-900/50 dark:text-brand-300">
                 <GraduationCap className="h-6 w-6" />
               </div>
-              <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-white">Book & Learn</h3>
+              <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-white">{t('howItWorksBookLearn')}</h3>
               <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                Confirm your lesson and start learning with verified tutors.
+                {t('howItWorksBookLearnSub')}
               </p>
             </div>
           </div>

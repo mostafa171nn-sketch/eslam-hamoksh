@@ -239,7 +239,7 @@ export default function CenterMap({ centers, focusCenterId, onFocusCenter, defau
   return (
     <div className="ecms-map-box relative h-full min-h-[400px] w-full">
       {/* Floating search */}
-      <div className="pointer-events-none absolute left-3 top-3 z-[1000] w-[calc(100%-6rem)] max-w-xs">
+      <div className="pointer-events-none absolute start-3 top-3 z-[1000] w-[calc(100%-6rem)] max-w-xs">
         <div className="pointer-events-auto flex items-center gap-2 rounded-xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-800/95">
           <Search className="h-4 w-4 shrink-0 text-slate-400" />
           <input
@@ -249,7 +249,7 @@ export default function CenterMap({ centers, focusCenterId, onFocusCenter, defau
             className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-white"
           />
           {query && (
-            <button type="button" onClick={() => setQuery('')} aria-label="Clear" className="text-slate-400 hover:text-slate-600">
+            <button type="button" onClick={() => setQuery('')} aria-label={t('clear')} className="text-slate-400 hover:text-slate-600">
               <X className="h-4 w-4" />
             </button>
           )}

@@ -36,25 +36,25 @@ export default function ParentChildrenPage() {
         action={
           <Link href="/profile">
             <Button size="sm">
-              <Plus className="h-4 w-4" /> Link a child
+              <Plus className="h-4 w-4" /> {t('linkChild')}
             </Button>
           </Link>
         }
       />
 
       {error && <Alert message={error} className="mb-4" />}
-      {loading && (initialLoading ? <PencilLoader label="Loading children…" /> : <PencilLoader size="sm" label="Loading children…" />)}
+      {loading && (initialLoading ? <PencilLoader label={t('loadingChildren')} /> : <PencilLoader size="sm" label={t('loadingChildren')} />)}
 
       {!loading && data && (
         <>
           {data.length === 0 ? (
             <EmptyState
               icon={GraduationCap}
-              title="No children linked"
-              description="Link a child by entering their student ID from the profile page."
+              title={t('noChildrenLinked')}
+              description={t('linkChildByStudentId')}
               action={
                 <Link href="/profile">
-                  <Button size="sm">Go to profile</Button>
+                  <Button size="sm">{t('goToProfile')}</Button>
                 </Link>
               }
             />
@@ -69,7 +69,7 @@ export default function ParentChildrenPage() {
                         <p className="truncate text-sm font-semibold text-slate-900 dark:text-white group-hover:text-brand-700">
                           {c.fullName}
                         </p>
-                        <p className="mt-0.5 text-xs text-slate-500">{c.grade?.name ?? 'No grade'}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">{c.grade?.name ?? t('noGrade')}</p>
                         <div className="mt-2 flex flex-wrap gap-1">
                           {c.subjects.slice(0, 3).map((s) => (
                             <Badge key={s.id} tone="blue">{s.name}</Badge>
@@ -80,15 +80,15 @@ export default function ParentChildrenPage() {
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2 text-xs">
                       <Link href={`/parent/children/${c.id}/assignments`} className="text-brand-600 hover:text-brand-700">
-                        Assignments
+                        {t('assignments')}
                       </Link>
                       <span className="text-slate-300">·</span>
                       <Link href={`/parent/children/${c.id}/exams`} className="text-brand-600 hover:text-brand-700">
-                        Exams
+                        {t('exams')}
                       </Link>
                       <span className="text-slate-300">·</span>
                       <Link href={`/parent/children/${c.id}/attendance`} className="text-brand-600 hover:text-brand-700">
-                        Attendance
+                        {t('attendance')}
                       </Link>
                     </div>
                   </Card>

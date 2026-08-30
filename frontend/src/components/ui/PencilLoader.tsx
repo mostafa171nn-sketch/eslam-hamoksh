@@ -2,6 +2,7 @@
 
 import { useEffect, useId } from 'react';
 import { lockScroll, unlockScroll } from '../../lib/scrollLock';
+import { useT } from '../../i18n';
 
 type Size = 'sm' | 'md' | 'lg';
 
@@ -43,6 +44,7 @@ export function PencilLoader({
   lock = true,
   className = '',
 }: PencilLoaderProps) {
+  const { t } = useT();
   const showOverlay = overlay || center;
   const rawId = useId();
   const uid = rawId.replace(/[^a-zA-Z0-9]/g, '');
@@ -89,7 +91,7 @@ export function PencilLoader({
         {label ? (
           <span className="pencil-overlay__label">{label}</span>
         ) : (
-          <span className="sr-only">Loading</span>
+          <span className="sr-only">{t('loading')}</span>
         )}
       </div>
     );
@@ -106,7 +108,7 @@ export function PencilLoader({
       {label ? (
         <span className="pencil-inline__label">{label}</span>
       ) : (
-        <span className="sr-only">Loading</span>
+        <span className="sr-only">{t('loading')}</span>
       )}
     </span>
   );

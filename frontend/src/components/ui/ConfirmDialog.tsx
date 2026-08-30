@@ -1,5 +1,8 @@
+'use client';
+
 import { Modal } from './Modal';
 import { Button } from './Button';
+import { useT } from '../../i18n';
 
 export function ConfirmDialog({
   open,
@@ -7,7 +10,7 @@ export function ConfirmDialog({
   onConfirm,
   title,
   message,
-  confirmLabel = 'Confirm',
+  confirmLabel,
   loading = false,
 }: {
   open: boolean;
@@ -18,6 +21,8 @@ export function ConfirmDialog({
   confirmLabel?: string;
   loading?: boolean;
 }) {
+  const { t } = useT();
+
   return (
     <Modal
       open={open}
@@ -27,10 +32,10 @@ export function ConfirmDialog({
       footer={
         <>
           <Button variant="outline" onClick={onClose} disabled={loading}>
-            Cancel
+            {t('cancel')}
           </Button>
           <Button variant="danger" onClick={onConfirm} loading={loading}>
-            {confirmLabel}
+            {confirmLabel ?? t('confirm')}
           </Button>
         </>
       }

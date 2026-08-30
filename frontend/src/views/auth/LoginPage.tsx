@@ -41,7 +41,7 @@ export default function LoginPage() {
       await login(username.trim(), password);
       router.replace(next);
     } catch (err) {
-      setServerError(errorMessage(err, 'Login failed.'));
+      setServerError(errorMessage(err, t('loginFailed')));
     } finally {
       setLoading(false);
     }

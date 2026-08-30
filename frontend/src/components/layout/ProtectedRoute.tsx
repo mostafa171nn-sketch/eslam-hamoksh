@@ -4,9 +4,11 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useT } from '../../i18n';
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
+  const { t } = useT();
   const router = useRouter();
 
   useEffect(() => {
@@ -18,7 +20,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
       <div className="flex min-h-[60vh] items-center justify-center px-4 py-16">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-brand-600 dark:border-slate-700 dark:border-t-brand-400" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">Loading…</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('loading')}</p>
         </div>
       </div>
     );

@@ -7,7 +7,7 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Textarea } from '../../components/ui/Textarea';
 import { Modal } from '../../components/ui/Modal';
-import { Badge, StatusBadge } from '../../components/ui/Badge';
+import { Badge, statusTone } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { Pagination } from '../../components/ui/Pagination';
 import { PencilLoader } from '../../components/ui/PencilLoader';
@@ -17,20 +17,30 @@ import { useApi, errorMessage } from '../../hooks/useApi';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useT, type Dict } from '../../i18n';
 import type { Lesson, LessonStatus, Location, TeacherStudent } from '../../lib/types';
 import { formatDate, isToday, formatTime } from '../../lib/format';
 import { Calendar } from 'lucide-react';
 
-const STATUS_OPTIONS = [
-  { value: '', label: 'All statuses' },
-  { value: 'SCHEDULED', label: 'Scheduled' },
-  { value: 'RESCHEDULED', label: 'Rescheduled' },
-  { value: 'COMPLETED', label: 'Completed' },
-  { value: 'CANCELLED', label: 'Cancelled' },
-  { value: 'NO_SHOW', label: 'No show' },
-];
+function lessonStatusKey(status: string): keyof Dict {
+  switch (status) {
+    case 'SCHEDULED':
+      return 'scheduled';
+    case 'RESCHEDULED':
+      return 'rescheduled';
+    case 'COMPLETED':
+      return 'completedStatus';
+    case 'CANCELLED':
+      return 'cancelled';
+    case 'NO_SHOW':
+      return 'noShowAction';
+    default:
+      return 'status';
+  }
+}
 
 export default function TeacherLessonsPage() {
+  const { t } = useT();
   const { user } = useAuth();
   const toast = useToast();
   const [page, setPage] = useState(1);
@@ -52,6 +62,15 @@ export default function TeacherLessonsPage() {
   const locations = locationsData ?? [];
   const teacherId = user?.role === 'TEACHER' ? user.teacher.id : '';
 
+  const statusOptions = [
+    { value: '', label: t('allStatus') },
+    { value: 'SCHEDULED', label: t('scheduled') },
+    { value: 'RESCHEDULED', label: t('rescheduled') },
+    { value: 'COMPLETED', label: t('completedStatus') },
+    { value: 'CANCELLED', label: t('cancelled') },
+    { value: 'NO_SHOW', label: t('noShowAction') },
+  ];
+
   const [form, setForm] = useState({ studentId: '', subjectId: '', date: '', startTime: '', endTime: '', locationId: '', notes: '' });
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -65,7 +84,7 @@ export default function TeacherLessonsPage() {
   const createLesson = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.studentId || !form.date || !form.startTime || !form.endTime) {
-      setFormError('Student, date and times are required.');
+      setFormError(t('studentDateTimeRequired'));
       return;
     }
     setSaving(true);
@@ -81,7 +100,7 @@ export default function TeacherLessonsPage() {
         locationId: form.locationId || undefined,
         notes: form.notes.trim() || undefined,
       });
-      toast.success('Lesson scheduled.');
+      toast.success(t('lessonScheduledToast'));
       setCreateOpen(false);
       reload();
     } catch (err) {
@@ -95,7 +114,7 @@ export default function TeacherLessonsPage() {
     setBusyId(lesson.id);
     try {
       await api.put(`/lessons/${lesson.id}`, { status: next });
-      toast.success(`Lesson marked as ${next.replace(/_/g, ' ').toLowerCase()}.`);
+      toast.success(t('markedAs', { s: t(lessonStatusKey(next)) }));
       reload();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -115,7 +134,7 @@ export default function TeacherLessonsPage() {
         status: attForm.status,
         note: attForm.note.trim() || undefined,
       });
-      toast.success('Attendance marked.');
+      toast.success(t('attendanceMarkedToast'));
       setAttendanceLesson(null);
       reload();
     } catch (err) {
@@ -130,27 +149,27 @@ export default function TeacherLessonsPage() {
   return (
     <div>
       <PageHeader
-        title="My lessons"
-        subtitle="Schedule and manage your lessons."
+        title={t('myLessons')}
+        subtitle={t('teacherLessonsSub')}
         action={
           <Button size="sm" onClick={openCreate}>
-            <CalendarPlus className="h-4 w-4" /> Schedule lesson
+            <CalendarPlus className="h-4 w-4" /> {t('scheduleLesson')}
           </Button>
         }
       />
 
       <Card bodyClassName="p-4 space-y-3">
         <div className="sm:w-56">
-          <Select options={STATUS_OPTIONS} value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }} />
+          <Select options={statusOptions} value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }} />
         </div>
 
         {error && <Alert message={error} />}
-        {loading && (initialLoading ? <PencilLoader label="Loading lessons…" /> : <PencilLoader size="sm" label="Loading lessons…" />)}
+        {loading && (initialLoading ? <PencilLoader label={t('loadingLessons')} /> : <PencilLoader size="sm" label={t('loadingLessons')} />)}
 
         {!loading && data && (
           <>
             {data.length === 0 ? (
-              <EmptyState icon={Calendar} title="No lessons" description="Schedule your first lesson to get started." />
+              <EmptyState icon={Calendar} title={t('noLessons')} description={t('teacherScheduleFirstLesson')} />
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-700">
                 {data.map((l) => (
@@ -163,12 +182,12 @@ export default function TeacherLessonsPage() {
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-sm font-semibold text-slate-900 dark:text-white">{l.student.fullName}</p>
-                          <StatusBadge status={l.status} />
-                          {isToday(l.date) && <Badge tone="blue">Today</Badge>}
+                          <Badge tone={statusTone(l.status)}>{t(lessonStatusKey(l.status))}</Badge>
+                          {isToday(l.date) && <Badge tone="blue">{t('today')}</Badge>}
                         </div>
                         <p className="mt-0.5 text-xs text-slate-500">
-                          {l.subject?.name ?? 'No subject'} · {formatTime(l.startTime)} – {formatTime(l.endTime)} ·{' '}
-                          {l.location?.name ?? 'Online'}
+                          {l.subject?.name ?? t('noSubject')} · {formatTime(l.startTime)} – {formatTime(l.endTime)} ·{' '}
+                          {l.location?.name ?? t('online')}
                         </p>
                         {l.notes && <p className="mt-0.5 line-clamp-2 text-xs text-slate-400">{l.notes}</p>}
                       </div>
@@ -176,19 +195,19 @@ export default function TeacherLessonsPage() {
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
                       {canMarkAttendance(l) && (
                         <Button size="sm" variant="secondary" onClick={() => { setAttForm({ status: 'PRESENT', note: '' }); setAttendanceLesson(l); }}>
-                          Attendance
+                          {t('attendance')}
                         </Button>
                       )}
                       {(l.status === 'SCHEDULED' || l.status === 'RESCHEDULED') && (
                         <>
                           <Button size="sm" variant="outline" loading={busyId === l.id} onClick={() => changeLessonStatus(l, 'COMPLETED')}>
-                            Complete
+                            {t('completeAction')}
                           </Button>
                           <Button size="sm" variant="outline" loading={busyId === l.id} onClick={() => changeLessonStatus(l, 'NO_SHOW')}>
-                            No-show
+                            {t('noShowAction')}
                           </Button>
                           <Button size="sm" variant="danger" loading={busyId === l.id} onClick={() => changeLessonStatus(l, 'CANCELLED')}>
-                            Cancel
+                            {t('cancelLesson')}
                           </Button>
                         </>
                       )}
@@ -205,55 +224,55 @@ export default function TeacherLessonsPage() {
       <Modal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        title="Schedule a lesson"
+        title={t('scheduleLesson')}
         footer={
           <>
-            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={saving}>Cancel</Button>
-            <Button onClick={createLesson} loading={saving}>Schedule</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={saving}>{t('cancel')}</Button>
+            <Button onClick={createLesson} loading={saving}>{t('scheduleLessonBtn')}</Button>
           </>
         }
       >
         <form onSubmit={createLesson} className="space-y-4">
           <InlineError message={formError} />
           <Select
-            label="Student"
+            label={t('studentCol')}
             options={students.map((s) => ({ value: s.id, label: s.fullName }))}
             value={form.studentId}
             onChange={(e) => setForm((p) => ({ ...p, studentId: e.target.value }))}
-            placeholder="Select a student"
+            placeholder={t('selectStudent')}
           />
           <Select
-            label="Subject"
+            label={t('subject')}
             options={subjects.map((s) => ({ value: s.id, label: s.name }))}
             value={form.subjectId}
             onChange={(e) => setForm((p) => ({ ...p, subjectId: e.target.value }))}
-            placeholder="No subject"
+            placeholder={t('noSubject')}
           />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Input label="Date" type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} />
-            <Input label="Start" type="time" value={form.startTime} onChange={(e) => setForm((p) => ({ ...p, startTime: e.target.value }))} />
-            <Input label="End" type="time" value={form.endTime} onChange={(e) => setForm((p) => ({ ...p, endTime: e.target.value }))} />
+            <Input label={t('date')} type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} />
+            <Input label={t('start')} type="time" value={form.startTime} onChange={(e) => setForm((p) => ({ ...p, startTime: e.target.value }))} />
+            <Input label={t('end')} type="time" value={form.endTime} onChange={(e) => setForm((p) => ({ ...p, endTime: e.target.value }))} />
           </div>
           <Select
-            label="Location"
+            label={t('location')}
             options={locations.map((l) => ({ value: l.id, label: l.name }))}
             value={form.locationId}
             onChange={(e) => setForm((p) => ({ ...p, locationId: e.target.value }))}
-            placeholder="Online / no branch"
+            placeholder={t('teacherLocationPlaceholder')}
           />
-          <Textarea label="Notes (optional)" rows={2} value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} />
+          <Textarea label={t('notePlaceholderTime')} rows={2} value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} />
         </form>
       </Modal>
 
       <Modal
         open={!!attendanceLesson}
         onClose={() => setAttendanceLesson(null)}
-        title="Mark attendance"
+        title={t('markAttendance')}
         size="sm"
         footer={
           <>
-            <Button variant="outline" onClick={() => setAttendanceLesson(null)} disabled={saving}>Cancel</Button>
-            <Button onClick={saveAttendance} loading={saving}>Save</Button>
+            <Button variant="outline" onClick={() => setAttendanceLesson(null)} disabled={saving}>{t('cancel')}</Button>
+            <Button onClick={saveAttendance} loading={saving}>{t('save')}</Button>
           </>
         }
       >
@@ -264,21 +283,21 @@ export default function TeacherLessonsPage() {
               <div>
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">{attendanceLesson.student.fullName}</p>
                 <p className="text-xs text-slate-500">
-                  {attendanceLesson.subject?.name ?? 'No subject'} · {formatDate(attendanceLesson.date)} · {formatTime(attendanceLesson.startTime)}
+                  {attendanceLesson.subject?.name ?? t('noSubject')} · {formatDate(attendanceLesson.date)} · {formatTime(attendanceLesson.startTime)}
                 </p>
               </div>
             </div>
             <Select
-              label="Status"
+              label={t('status')}
               options={[
-                { value: 'PRESENT', label: 'Present' },
-                { value: 'ABSENT', label: 'Absent' },
-                { value: 'EXCUSED', label: 'Excused' },
+                { value: 'PRESENT', label: t('present') },
+                { value: 'ABSENT', label: t('absent') },
+                { value: 'EXCUSED', label: t('excused') },
               ]}
               value={attForm.status}
               onChange={(e) => setAttForm((p) => ({ ...p, status: e.target.value }))}
             />
-            <Textarea label="Note (optional)" rows={2} value={attForm.note} onChange={(e) => setAttForm((p) => ({ ...p, note: e.target.value }))} />
+            <Textarea label={t('notePlaceholderTime')} rows={2} value={attForm.note} onChange={(e) => setAttForm((p) => ({ ...p, note: e.target.value }))} />
           </div>
         )}
       </Modal>

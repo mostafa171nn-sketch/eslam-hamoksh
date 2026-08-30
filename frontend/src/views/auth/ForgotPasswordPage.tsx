@@ -8,9 +8,11 @@ import { Button } from '../../components/ui/Button';
 import { InlineError } from '../../components/ui/ErrorAlert';
 import { api } from '../../lib/api';
 import { errorMessage } from '../../hooks/useApi';
+import { useT } from '../../i18n';
 import { MailCheck } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
+  const { t } = useT();
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,7 +21,7 @@ export default function ForgotPasswordPage() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!usernameOrEmail.trim()) {
-      setError('Enter your username or email.');
+      setError(t('enterUsernameOrEmail'));
       return;
     }
     setLoading(true);
@@ -28,7 +30,7 @@ export default function ForgotPasswordPage() {
       await api.post('/auth/forgot-password', { usernameOrEmail: usernameOrEmail.trim() });
       setSent(true);
     } catch (err) {
-      setError(errorMessage(err, 'Request failed.'));
+      setError(errorMessage(err, t('requestFailed')));
     } finally {
       setLoading(false);
     }
@@ -36,15 +38,14 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <AuthLayout title="Check your email" subtitle="We sent you a link to reset your password.">
+      <AuthLayout title={t('checkEmailTitle')} subtitle={t('checkEmailSubtitle')}>
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
           <MailCheck className="mx-auto h-10 w-10 text-emerald-600" />
           <p className="mt-3 text-sm text-emerald-800">
-            If an account exists for <strong>{usernameOrEmail}</strong>, a password reset link has been
-            sent. The link is valid for one hour.
+            {t('checkEmailSentPre')} <strong>{usernameOrEmail}</strong>{t('checkEmailSentPost')}
           </p>
           <Link href="/login" className="mt-4 inline-block text-sm font-medium text-brand-600 hover:text-brand-700">
-            Back to sign in
+            {t('backToSignIn')}
           </Link>
         </div>
       </AuthLayout>
@@ -52,22 +53,22 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <AuthLayout title="Reset your password" subtitle="Enter your username or email and we'll send you a reset link.">
+    <AuthLayout title={t('resetPasswordTitle')} subtitle={t('resetPasswordSubtitle')}>
       <form onSubmit={submit} className="space-y-4">
         <InlineError message={error} />
         <Input
-          label="Username or email"
+          label={t('usernameOrEmail')}
           value={usernameOrEmail}
           onChange={(e) => setUsernameOrEmail(e.target.value)}
-          placeholder="superadmin or you@example.com"
+          placeholder={t('usernamePlaceholder')}
         />
         <Button type="submit" loading={loading} className="w-full" size="lg">
-          Send reset link
+          {t('sendResetLink')}
         </Button>
         <p className="text-center text-sm text-slate-500">
-          Remembered it?{' '}
+          {t('rememberedIt')}{' '}
           <Link href="/login" className="font-medium text-brand-600 hover:text-brand-700">
-            Back to sign in
+            {t('backToSignIn')}
           </Link>
         </p>
       </form>

@@ -13,10 +13,12 @@ import { Select } from '../../components/ui/Select';
 import { useApi, errorMessage } from '../../hooks/useApi';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
+import { useT } from '../../i18n';
 import type { Exam } from '../../lib/types';
 import { formatDateTime } from '../../lib/format';
 
 export default function StudentExamsPage() {
+  const { t } = useT();
   const router = useRouter();
   const toast = useToast();
   const [page, setPage] = useState(1);
@@ -46,15 +48,15 @@ export default function StudentExamsPage() {
   return (
     <div>
       <PageHeader
-        title="Exams"
-        subtitle="Your assigned exams."
+        title={t('exams')}
+        subtitle={t('examsSub')}
         action={
           <Select
             options={[
-              { value: '', label: 'All exams' },
-              { value: 'upcoming', label: 'Upcoming' },
-              { value: 'active', label: 'Active' },
-              { value: 'ended', label: 'Ended' },
+              { value: '', label: t('allExams') },
+              { value: 'upcoming', label: t('upcoming') },
+              { value: 'active', label: t('active') },
+              { value: 'ended', label: t('ended') },
             ]}
             value={status}
             onChange={(e) => {
@@ -67,12 +69,12 @@ export default function StudentExamsPage() {
       />
 
       {error && <Alert message={error} className="mb-4" />}
-      {loading && (initialLoading ? <PencilLoader label="Loading exams…" /> : <PencilLoader size="sm" label="Loading exams…" />)}
+      {loading && (initialLoading ? <PencilLoader label={t('loadingExams')} /> : <PencilLoader size="sm" label={t('loadingExams')} />)}
 
       {!loading && data && (
         <>
           {data.length === 0 ? (
-            <EmptyState icon={FileQuestion} title="No exams" description="Exams assigned to you will appear here." />
+            <EmptyState icon={FileQuestion} title={t('noExams')} description={t('examsAppearHere')} />
           ) : (
             <div className="space-y-3">
               {data.map((e) => (
@@ -83,23 +85,23 @@ export default function StudentExamsPage() {
                       {e.subject && <Badge tone="blue">{e.subject.name}</Badge>}
                       {e.myAttempt ? (
                         <Badge tone={e.myAttempt.status === 'SUBMITTED' || e.myAttempt.status === 'AUTO_SUBMITTED' ? 'green' : 'amber'}>
-                          {e.myAttempt.status === 'IN_PROGRESS' ? 'In progress' : 'Completed'}
+                          {e.myAttempt.status === 'IN_PROGRESS' ? t('inProgress') : t('completedStatus')}
                         </Badge>
                       ) : e.isActive ? (
-                        <Badge tone="green">Available now</Badge>
+                        <Badge tone="green">{t('availableNow')}</Badge>
                       ) : e.isUpcoming ? (
-                        <Badge tone="blue">Upcoming</Badge>
+                        <Badge tone="blue">{t('upcoming')}</Badge>
                       ) : (
-                        <Badge tone="red">Ended</Badge>
+                        <Badge tone="red">{t('ended')}</Badge>
                       )}
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      {formatDateTime(e.startTime)} → {formatDateTime(e.endTime)} · {e.durationMinutes} min ·{' '}
-                      {e.questions.length} questions
+                      {formatDateTime(e.startTime)} → {formatDateTime(e.endTime)} · {e.durationMinutes} {t('minutesShort')} ·{' '}
+                      {e.questions.length} {t('questionsCount')}
                     </p>
                     {e.myAttempt?.percentage !== null && e.myAttempt?.percentage !== undefined && (
                       <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                        Score: <span className="font-semibold text-slate-900 dark:text-white">{e.myAttempt.percentage}%</span>
+                        {t('score')}: <span className="font-semibold text-slate-900 dark:text-white">{e.myAttempt.percentage}%</span>
                         {e.myAttempt.score !== null && ` (${e.myAttempt.score}/${e.myAttempt.maxScore})`}
                       </p>
                     )}
@@ -107,15 +109,15 @@ export default function StudentExamsPage() {
                   <div className="shrink-0">
                     {e.isUpcoming && !e.myAttempt ? (
                       <Button size="sm" disabled>
-                        Starts {formatDateTime(e.startTime).split('·')[1]}
+                        {t('startsAt')} {formatDateTime(e.startTime).split('·')[1]}
                       </Button>
                     ) : (
                       <Button size="sm" onClick={() => go(e)} loading={starting === e.id}>
                         {e.myAttempt?.status === 'IN_PROGRESS'
-                          ? 'Resume'
+                          ? t('resume')
                           : e.myAttempt?.status === 'SUBMITTED' || e.myAttempt?.status === 'AUTO_SUBMITTED'
-                            ? 'View result'
-                            : 'Start exam'}
+                            ? t('viewResult')
+                            : t('startExam')}
                       </Button>
                     )}
                   </div>

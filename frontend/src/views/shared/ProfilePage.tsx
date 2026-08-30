@@ -365,14 +365,14 @@ export default function ProfilePage() {
                   {user.role === 'STUDENT' && (
                     <>
                       <Select
-                        label="Grade"
+                        label={t('grade')}
                         options={grades.map((g) => ({ value: g.id, label: g.name }))}
                         value={gradeId}
                         onChange={(e) => setGradeId(e.target.value)}
-                        placeholder="No grade"
+                        placeholder={t('noGrade')}
                       />
                       <MultiSelect
-                        label="Subjects"
+                        label={t('subjects')}
                         options={subjects.map((s) => ({ value: s.id, label: s.name }))}
                         selected={selectedSubjects}
                         onChange={setSelectedSubjects}

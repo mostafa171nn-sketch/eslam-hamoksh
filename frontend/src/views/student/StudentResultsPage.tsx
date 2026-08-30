@@ -9,21 +9,23 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { Alert } from '../../components/ui/ErrorAlert';
 import { useApi } from '../../hooks/useApi';
 import { api } from '../../lib/api';
+import { useT } from '../../i18n';
 import type { StudentDashboard } from '../../lib/types';
 import { formatDateTime } from '../../lib/format';
 
 export default function StudentResultsPage() {
+  const { t } = useT();
   const { data, initialLoading, error } = useApi(() => api.get<StudentDashboard>('/students/dashboard'), []);
 
-  if (initialLoading) return <PencilLoader label="Loading results…" />;
-  if (error || !data) return <Alert message={error || 'Failed to load results.'} />;
+  if (initialLoading) return <PencilLoader label={t('loadingResults')} />;
+  if (error || !data) return <Alert message={error || t('failedLoadResults')} />;
 
   return (
     <div>
-      <PageHeader title="My results" subtitle="Your exam results and feedback." />
+      <PageHeader title={t('myResultsTitle')} subtitle={t('myResultsSub')} />
 
       {data.recentResults.length === 0 ? (
-        <EmptyState icon={ClipboardCheck} title="No results yet" description="Completed exams will show your score here." />
+        <EmptyState icon={ClipboardCheck} title={t('noResultsYet')} description={t('noResultsSub')} />
       ) : (
         <div className="space-y-3">
           {data.recentResults.map((r) => (
@@ -37,10 +39,10 @@ export default function StudentResultsPage() {
               </div>
               <div className="flex shrink-0 items-center gap-3">
                 <Badge tone={r.percentage !== null && r.percentage >= 50 ? 'green' : 'amber'}>
-                  {r.percentage !== null ? `${r.percentage}%` : 'Pending'}
+                  {r.percentage !== null ? `${r.percentage}%` : t('pending')}
                 </Badge>
                 <Link href={`/student/exams/results/${r.id}`}>
-                  <Button size="sm" variant="outline">Review</Button>
+                  <Button size="sm" variant="outline">{t('review')}</Button>
                 </Link>
               </div>
             </Card>

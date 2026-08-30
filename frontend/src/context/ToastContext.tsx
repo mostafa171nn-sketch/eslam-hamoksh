@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import { CheckCircle2, Info, XCircle } from 'lucide-react';
+import { useT } from '../i18n';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -23,6 +24,7 @@ let nextId = 1;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const { t } = useT();
 
   const dismiss = useCallback((id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -47,19 +49,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
       <div className="pointer-events-none fixed bottom-4 end-4 z-[100] flex w-full max-w-sm flex-col gap-2">
-        {toasts.map((t) => (
+        {toasts.map((toast) => (
           <div
-            key={t.id}
+            key={toast.id}
             className="animate-slide-in pointer-events-auto flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-lg dark:border-slate-700 dark:bg-slate-800"
           >
-            {t.type === 'success' && <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />}
-            {t.type === 'error' && <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />}
-            {t.type === 'info' && <Info className="mt-0.5 h-5 w-5 shrink-0 text-brand-500" />}
-            <p className="flex-1 text-sm text-slate-700 dark:text-slate-200">{t.message}</p>
+            {toast.type === 'success' && <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />}
+            {toast.type === 'error' && <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />}
+            {toast.type === 'info' && <Info className="mt-0.5 h-5 w-5 shrink-0 text-brand-500" />}
+            <p className="flex-1 text-sm text-slate-700 dark:text-slate-200">{toast.message}</p>
             <button
-              onClick={() => dismiss(t.id)}
-              className="text-slate-300 transition hover:text-slate-500 dark:text-slate-600 dark:text-slate-300 dark:hover:text-slate-400"
-              aria-label="Dismiss"
+              onClick={() => dismiss(toast.id)}
+              className="text-slate-300 transition hover:text-slate-500 dark:text-slate-300 dark:hover:text-slate-400"
+              aria-label={t('dismiss')}
             >
               ✕
             </button>

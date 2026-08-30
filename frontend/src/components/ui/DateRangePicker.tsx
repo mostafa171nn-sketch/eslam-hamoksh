@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './Button';
 import { Calendar as CalendarComponent } from './Calendar';
+import { useT } from '../../i18n';
 
 interface DateRangePickerProps {
   value?: { startDate: string; endDate: string | null };
@@ -14,10 +15,10 @@ interface DateRangePickerProps {
   disabled?: boolean;
 }
 
-function formatDateDisplay(dateStr: string | null): string {
+function formatDateDisplay(dateStr: string | null, locale: string): string {
   if (!dateStr) return '';
   const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
     year: 'numeric'
@@ -28,10 +29,12 @@ export function DateRangePicker({
   value,
   onChange,
   minDate = new Date(),
-  placeholder = 'Select dates',
+  placeholder,
   className = '',
   disabled = false,
 }: DateRangePickerProps) {
+  const { t, lang, dir } = useT();
+  const locale = lang === 'ar' ? 'ar-EG' : 'en-US';
   const [isOpen, setIsOpen] = useState(false);
   const [tempStart, setTempStart] = useState<Date | null>(value?.startDate ? new Date(value.startDate) : null);
   const [tempEnd, setTempEnd] = useState<Date | null>(value?.endDate ? new Date(value.endDate) : null);
@@ -66,9 +69,11 @@ export function DateRangePicker({
 
   const displayValue = value?.startDate
     ? value.endDate
-      ? `${formatDateDisplay(value.startDate)} - ${formatDateDisplay(value.endDate)}`
-      : formatDateDisplay(value.startDate)
-    : placeholder;
+      ? `${formatDateDisplay(value.startDate, locale)} - ${formatDateDisplay(value.endDate, locale)}`
+      : formatDateDisplay(value.startDate, locale)
+    : (placeholder || t('selectDates'));
+  const PrevIcon = dir === 'rtl' ? ChevronRight : ChevronLeft;
+  const NextIcon = dir === 'rtl' ? ChevronLeft : ChevronRight;
 
   return (
     <div ref={dropdownRef} className={`relative ${className}`}>
@@ -76,7 +81,7 @@ export function DateRangePicker({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-left transition-colors
+        className={`w-full flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-sm text-start transition-colors
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-brand-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:focus:ring-brand-900'}
           ${value?.startDate ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}
       >
@@ -93,12 +98,13 @@ export function DateRangePicker({
                 newDate.setMonth(prev.getMonth() - 1);
                 return newDate;
               })}
+              aria-label={t('previousMonth')}
               className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             >
-              <ChevronLeft className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+              <PrevIcon className="h-5 w-5 text-slate-600 dark:text-slate-300" />
             </button>
             <span className="text-sm font-semibold text-slate-900 dark:text-white">
-              {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              {currentMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}
             </span>
             <button
               onClick={() => setCurrentMonth(prev => {
@@ -106,9 +112,10 @@ export function DateRangePicker({
                 newDate.setMonth(prev.getMonth() + 1);
                 return newDate;
               })}
+              aria-label={t('nextMonth')}
               className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             >
-              <ChevronRight className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+              <NextIcon className="h-5 w-5 text-slate-600 dark:text-slate-300" />
             </button>
           </div>
 
@@ -128,14 +135,14 @@ export function DateRangePicker({
               onClick={handleClear}
               className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
-              Clear
+              {t('clear')}
             </button>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setIsOpen(false)}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button size="sm" onClick={handleApply} disabled={!tempStart}>
-                Apply
+                {t('apply')}
               </Button>
             </div>
           </div>

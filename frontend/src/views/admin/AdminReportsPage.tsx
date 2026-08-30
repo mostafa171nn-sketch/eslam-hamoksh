@@ -9,6 +9,7 @@ import { Alert } from '../../components/ui/ErrorAlert';
 import { useApi } from '../../hooks/useApi';
 import { api } from '../../lib/api';
 import { formatDate } from '../../lib/format';
+import { useT, type Dict } from '../../i18n';
 
 type ReportType =
   | 'monthly-students'
@@ -18,18 +19,53 @@ type ReportType =
   | 'exam-performance'
   | 'assignments';
 
-const TYPES: { value: ReportType; label: string }[] = [
-  { value: 'monthly-students', label: 'Monthly students' },
-  { value: 'teacher-performance', label: 'Teacher performance' },
-  { value: 'subject-popularity', label: 'Subject popularity' },
-  { value: 'lesson-activity', label: 'Lesson activity' },
-  { value: 'exam-performance', label: 'Exam performance' },
-  { value: 'assignments', label: 'Assignments' },
+function reportTypeLabel(type: ReportType): keyof Dict {
+  switch (type) {
+    case 'monthly-students':
+      return 'reportMonthlyStudents';
+    case 'teacher-performance':
+      return 'reportTeacherPerformance';
+    case 'subject-popularity':
+      return 'reportSubjectPopularity';
+    case 'lesson-activity':
+      return 'reportLessonActivity';
+    case 'exam-performance':
+      return 'reportExamPerformance';
+    case 'assignments':
+      return 'assignments';
+  }
+}
+
+function lessonStatusKey(status: string): keyof Dict {
+  switch (status) {
+    case 'SCHEDULED':
+      return 'scheduled';
+    case 'RESCHEDULED':
+      return 'rescheduled';
+    case 'COMPLETED':
+      return 'completedStatus';
+    case 'CANCELLED':
+      return 'cancelled';
+    case 'NO_SHOW':
+      return 'noShowAction';
+    default:
+      return 'status';
+  }
+}
+
+const TYPES: { value: ReportType }[] = [
+  { value: 'monthly-students' },
+  { value: 'teacher-performance' },
+  { value: 'subject-popularity' },
+  { value: 'lesson-activity' },
+  { value: 'exam-performance' },
+  { value: 'assignments' },
 ];
 
 type ReportData = unknown;
 
 export default function AdminReportsPage() {
+  const { t } = useT();
   const [type, setType] = useState<ReportType>('monthly-students');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -59,7 +95,7 @@ export default function AdminReportsPage() {
               ))}
             </tbody>
           </table>
-          {rows.length === 0 && <p className="py-6 text-center text-sm text-slate-400">No data.</p>}
+          {rows.length === 0 && <p className="py-6 text-center text-sm text-slate-400">{t('noData')}</p>}
         </div>
       );
     }
@@ -76,7 +112,7 @@ export default function AdminReportsPage() {
               ))}
             </tbody>
           </table>
-          {rows.length === 0 && <p className="py-6 text-center text-sm text-slate-400">No data.</p>}
+          {rows.length === 0 && <p className="py-6 text-center text-sm text-slate-400">{t('noData')}</p>}
         </div>
       );
     }
@@ -92,15 +128,15 @@ export default function AdminReportsPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <p className="mb-2 text-sm font-medium text-slate-700">Total: {d.total}</p>
+              <p className="mb-2 text-sm font-medium text-slate-700">{t('total')}: {d.total}</p>
               <div className="flex flex-wrap gap-2">
                 {d.byStatus.map((s) => (
-                  <Badge key={s.status} tone={statusTone(s.status)}>{s.status.replace(/_/g, ' ')}: {s.count}</Badge>
+                  <Badge key={s.status} tone={statusTone(s.status)}>{t(lessonStatusKey(s.status))}: {s.count}</Badge>
                 ))}
               </div>
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium text-slate-700">Per day</p>
+              <p className="mb-2 text-sm font-medium text-slate-700">{t('perDay')}</p>
               <div className="max-h-40 space-y-1 overflow-y-auto">
                 {d.perDay.map((p) => (
                   <div key={String(p.date)} className="flex justify-between text-xs text-slate-600 dark:text-slate-300">
@@ -112,13 +148,13 @@ export default function AdminReportsPage() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead><tr className="border-b border-slate-200 dark:border-slate-700"><th className={th}>Date</th><th className={th}>Time</th><th className={th}>Status</th></tr></thead>
+              <thead><tr className="border-b border-slate-200 dark:border-slate-700"><th className={th}>{t('date')}</th><th className={th}>{t('time')}</th><th className={th}>{t('status')}</th></tr></thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                 {d.recent.map((r) => (
                   <tr key={r.id}>
                     <td className={td}>{formatDate(r.date)}</td>
                     <td className={td}>{r.startTime} – {r.endTime}</td>
-                    <td className={td}><Badge tone={statusTone(r.status)}>{r.status.replace(/_/g, ' ')}</Badge></td>
+                    <td className={td}><Badge tone={statusTone(r.status)}>{t(lessonStatusKey(r.status))}</Badge></td>
                   </tr>
                 ))}
               </tbody>
@@ -145,35 +181,35 @@ export default function AdminReportsPage() {
   return (
     <div>
       <PageHeader
-        title="Reports"
-        subtitle="Generate reports for your center."
+        title={t('reports')}
+        subtitle={t('reportsSub')}
         action={
           <div className="flex flex-wrap items-end gap-2">
-            <Input type="date" label="From" value={from} onChange={(e) => setFrom(e.target.value)} />
-            <Input type="date" label="To" value={to} onChange={(e) => setTo(e.target.value)} />
+            <Input type="date" label={t('from')} value={from} onChange={(e) => setFrom(e.target.value)} />
+            <Input type="date" label={t('to')} value={to} onChange={(e) => setTo(e.target.value)} />
             <Button variant="secondary" onClick={() => { setAppliedFrom(from); setAppliedTo(to); }}>
-              Apply range
+              {t('applyRange')}
             </Button>
           </div>
         }
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
-        {TYPES.map((t) => (
+        {TYPES.map((t2) => (
           <button
-            key={t.value}
-            onClick={() => setType(t.value)}
+            key={t2.value}
+            onClick={() => setType(t2.value)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-              type === t.value ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 dark:text-slate-300 ring-1 ring-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/40 dark:bg-slate-800'
+              type === t2.value ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 dark:text-slate-300 ring-1 ring-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/40 dark:bg-slate-800'
             }`}
           >
-            {t.label}
+            {t(reportTypeLabel(t2.value))}
           </button>
         ))}
       </div>
 
       {error && <Alert message={error} className="mb-4" />}
-      {loading && (initialLoading ? <PencilLoader label="Generating report…" /> : <PencilLoader size="sm" label="Generating report…" />)}
+      {loading && <PencilLoader label={t('generatingReport')} size={initialLoading ? undefined : 'sm'} />}
 
       {!loading && data != null && <Card>{renderData()}</Card>}
     </div>

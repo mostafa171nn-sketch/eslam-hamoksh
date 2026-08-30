@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useT } from '../../i18n';
 
 interface CalendarProps {
   onDateRangeChange?: (startDate: string, endDate: string | null) => void;
@@ -61,9 +62,20 @@ function formatDate(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-function getMonthName(month: number, lang: string = 'en'): string {
+function getMonthName(month: number, locale: string = 'en-US'): string {
   const date = new Date(2024, month, 1);
-  return date.toLocaleString(lang, { month: 'long' });
+  return date.toLocaleDateString(locale, { month: 'long' });
+}
+
+/** Weekday initials starting with Sunday (calendar grid convention). */
+function getWeekdayInitials(locale: string): string[] {
+  // 2024-01-01 is a Monday; offset 0..6 maps Monday(0)..Sunday(6).
+  const mondayBased = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(2024, 0, 1 + i);
+    return d.toLocaleDateString(locale, { weekday: 'narrow' });
+  });
+  // Sunday-first order: [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
+  return [6, 0, 1, 2, 3, 4, 5].map((i) => mondayBased[i]);
 }
 
 export function Calendar({
@@ -80,6 +92,8 @@ export function Calendar({
   twoMonths = true,
   autoConfirm = false,
 }: CalendarProps) {
+  const { t, lang, dir } = useT();
+  const locale = lang === 'ar' ? 'ar-EG' : 'en-US';
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedStart, setSelectedStart] = useState<Date | null>(
     initialStartDate ? new Date(initialStartDate) : null
@@ -107,6 +121,7 @@ export function Calendar({
   }, []);
 
   const showTwo = twoMonths && !isMobile;
+  const weekdayInitials = getWeekdayInitials(locale);
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
@@ -199,12 +214,12 @@ export function Calendar({
       <div className="flex-1 min-w-0 px-2 sm:px-4">
         <div className="flex items-center justify-center mb-4">
           <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
-            {getMonthName(month)} {year}
+            {getMonthName(month, locale)} {year}
           </h3>
         </div>
 
         <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-2">
-          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+          {weekdayInitials.map(day => (
             <div key={day} className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 text-center h-9 flex items-center justify-center">
               {day}
             </div>
@@ -232,8 +247,8 @@ export function Calendar({
                 ? 'bg-brand-100 text-brand-700 dark:bg-brand-900/50 dark:text-brand-200 font-semibold'
                 : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700';
 
-            const startClass = start && mode === 'range' ? 'rounded-r-none' : '';
-            const endClass = end && mode === 'range' ? 'rounded-l-none' : '';
+            const startClass = start && mode === 'range' ? 'rounded-s-none' : '';
+            const endClass = end && mode === 'range' ? 'rounded-e-none' : '';
             const todayClass = isTodayDate && !selected ? 'ring-2 ring-brand-500' : '';
             const singleSelectedClass = selected && mode === 'single' ? 'bg-brand-600 text-white hover:bg-brand-700 font-semibold' : '';
             const rangeSelectedClass = selected && mode === 'range' ? 'bg-brand-600 text-white font-semibold' : '';
@@ -245,7 +260,7 @@ export function Calendar({
                 onClick={() => handleDateClick(day)}
                 onMouseEnter={() => handleDateHover(day)}
                 disabled={past}
-                aria-label={day.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                aria-label={day.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 aria-pressed={selected}
                 aria-disabled={past}
                 className={`${baseClasses} ${stateClasses} ${startClass} ${endClass} ${todayClass} ${singleSelectedClass} ${rangeSelectedClass}`}
@@ -271,6 +286,9 @@ export function Calendar({
     }
   };
 
+  const PrevIcon = dir === 'rtl' ? ChevronRight : ChevronLeft;
+  const NextIcon = dir === 'rtl' ? ChevronLeft : ChevronRight;
+
   return (
     <div className={`p-4 sm:p-5 ${className}`}
       onMouseLeave={() => setHoveredDate(null)}
@@ -279,36 +297,36 @@ export function Calendar({
         <button
           type="button"
           onClick={() => navigateMonth('prev')}
-          aria-label="Previous month"
+          aria-label={t('previousMonth')}
           className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-100 dark:focus:ring-brand-900/40"
         >
-          <ChevronLeft className="h-5 w-5 text-slate-700 dark:text-slate-200" />
+          <PrevIcon className="h-5 w-5 text-slate-700 dark:text-slate-200" />
         </button>
         <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
           {showTwo ? (
             <>
-              {getMonthName(currentDate.getMonth(), 'en')} {currentDate.getFullYear()}
+              {getMonthName(currentDate.getMonth(), locale)} {currentDate.getFullYear()}
               {' – '}
-              {getMonthName((currentDate.getMonth() + 1) % 12, 'en')}{' '}
+              {getMonthName((currentDate.getMonth() + 1) % 12, locale)}{' '}
               {currentDate.getMonth() + 1 >= 12 ? currentDate.getFullYear() + 1 : currentDate.getFullYear()}
             </>
           ) : (
             <>
-              {getMonthName(currentDate.getMonth(), 'en')} {currentDate.getFullYear()}
+              {getMonthName(currentDate.getMonth(), locale)} {currentDate.getFullYear()}
             </>
           )}
         </div>
         <button
           type="button"
           onClick={() => navigateMonth('next')}
-          aria-label="Next month"
+          aria-label={t('nextMonth')}
           className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-100 dark:focus:ring-brand-900/40"
         >
-          <ChevronRight className="h-5 w-5 text-slate-700 dark:text-slate-200" />
+          <NextIcon className="h-5 w-5 text-slate-700 dark:text-slate-200" />
         </button>
       </div>
 
-      <div className={showTwo ? 'flex divide-x divide-slate-200 dark:divide-slate-700' : ''}>
+      <div className={showTwo ? 'flex divide-x divide-slate-200 dark:divide-slate-700 rtl:divide-x-reverse' : ''}>
         {renderMonth(currentDate, currentDate.getFullYear(), currentDate.getMonth())}
         {showTwo && renderMonth(
           new Date(currentDate.getFullYear(), currentDate.getMonth() + 1),
@@ -324,7 +342,7 @@ export function Calendar({
             onClick={handleApplyRange}
             className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-brand-100 dark:focus:ring-brand-900/40"
           >
-            Apply Date Range
+            {t('applyRange')}
           </button>
         </div>
       )}
@@ -332,7 +350,7 @@ export function Calendar({
       {showToday && isToday(new Date()) && (
         <div className="mt-4 text-center">
           <span className="inline-flex items-center px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-medium dark:bg-brand-900/30 dark:text-brand-300">
-            Today
+            {t('today')}
           </span>
         </div>
       )}

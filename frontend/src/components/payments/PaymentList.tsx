@@ -3,6 +3,7 @@
 import type { Payment, PaymentStatusType } from '../../lib/types';
 import { Badge } from '../ui/Badge';
 import { formatDate, formatCurrency } from '../../lib/format';
+import { useT, type Dict } from '../../i18n';
 
 interface Props {
   payments: Payment[];
@@ -23,25 +24,41 @@ const STATUS_TONE: Record<PaymentStatusType, 'green' | 'red' | 'amber' | 'blue' 
   REFUNDED: 'blue',
 };
 
+function paymentStatusKey(status: PaymentStatusType): keyof Dict {
+  switch (status) {
+    case 'PENDING':
+      return 'paymentStatusPending';
+    case 'PAID':
+      return 'paymentStatusPaid';
+    case 'REJECTED':
+      return 'paymentStatusRejected';
+    case 'EXPIRED':
+      return 'paymentStatusExpired';
+    case 'REFUNDED':
+      return 'paymentStatusRefunded';
+  }
+}
+
 export function PaymentList({ payments, showStudent, showTeacher, showParent, onView, onApprove, onReject, onRefund }: Props) {
+  const { t } = useT();
   if (payments.length === 0) {
-    return <p className="py-8 text-center text-sm text-slate-400">No payments found.</p>;
+    return <p className="py-8 text-center text-sm text-slate-400">{t('noPaymentsFound')}</p>;
   }
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">
-            <th className="pb-2 pr-4 font-medium">Payment ID</th>
-            <th className="pb-2 pr-4 font-medium">Payer</th>
-            {showStudent && <th className="pb-2 pr-4 font-medium">Student</th>}
-            {showParent && <th className="pb-2 pr-4 font-medium">Parent</th>}
-            {showTeacher && <th className="pb-2 pr-4 font-medium">Teacher</th>}
-            <th className="pb-2 pr-4 font-medium">Amount</th>
-            <th className="pb-2 pr-4 font-medium">Method</th>
-            <th className="pb-2 pr-4 font-medium">Status</th>
-            <th className="pb-2 pr-4 font-medium">Date</th>
-            <th className="pb-2 font-medium">Actions</th>
+            <th className="pb-2 pr-4 font-medium">{t('paymentId')}</th>
+            <th className="pb-2 pr-4 font-medium">{t('payer')}</th>
+            {showStudent && <th className="pb-2 pr-4 font-medium">{t('student')}</th>}
+            {showParent && <th className="pb-2 pr-4 font-medium">{t('parent')}</th>}
+            {showTeacher && <th className="pb-2 pr-4 font-medium">{t('teacher')}</th>}
+            <th className="pb-2 pr-4 font-medium">{t('amount')}</th>
+            <th className="pb-2 pr-4 font-medium">{t('method')}</th>
+            <th className="pb-2 pr-4 font-medium">{t('status')}</th>
+            <th className="pb-2 pr-4 font-medium">{t('date')}</th>
+            <th className="pb-2 font-medium">{t('actions')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -55,27 +72,27 @@ export function PaymentList({ payments, showStudent, showTeacher, showParent, on
               <td className="py-3 pr-4 font-medium text-slate-800 dark:text-slate-100">{formatCurrency(p.amount)}</td>
               <td className="py-3 pr-4 text-slate-500">{p.methodLabel}</td>
               <td className="py-3 pr-4">
-                <Badge tone={STATUS_TONE[p.status]}>{p.status}</Badge>
+                <Badge tone={STATUS_TONE[p.status]}>{t(paymentStatusKey(p.status))}</Badge>
               </td>
               <td className="py-3 pr-4 text-slate-500">{formatDate(p.createdAt)}</td>
               <td className="py-3 pr-4">
                 <div className="flex flex-wrap gap-1.5">
                   <button onClick={() => onView(p)} className="text-brand-600 hover:underline">
-                    View
+                    {t('view')}
                   </button>
                   {onApprove && p.status === 'PENDING' && (
                     <button onClick={() => onApprove(p)} className="text-emerald-600 hover:underline">
-                      Approve
+                      {t('approve')}
                     </button>
                   )}
                   {onReject && p.status === 'PENDING' && (
                     <button onClick={() => onReject(p)} className="text-red-600 hover:underline">
-                      Reject
+                      {t('reject')}
                     </button>
                   )}
                   {onRefund && p.status === 'PAID' && (
                     <button onClick={() => onRefund(p)} className="text-blue-600 hover:underline">
-                      Refund
+                      {t('refund')}
                     </button>
                   )}
                 </div>

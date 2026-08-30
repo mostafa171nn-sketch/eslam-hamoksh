@@ -12,6 +12,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { Alert } from '../../components/ui/ErrorAlert';
 import { useApi } from '../../hooks/useApi';
 import { api } from '../../lib/api';
+import { useT } from '../../i18n';
 
 interface ParentDashboardData {
   children: { id: string; userId: string; fullName: string; photo: string | null; grade: string | null }[];
@@ -19,35 +20,36 @@ interface ParentDashboardData {
 }
 
 export default function ParentDashboardPage() {
+  const { t } = useT();
   const { data, initialLoading, error } = useApi(() => api.get<ParentDashboardData>('/parents/dashboard'), []);
 
-  if (initialLoading) return <PencilLoader label="Loading dashboard…" />;
-  if (error || !data) return <Alert message={error || 'Failed to load dashboard.'} />;
+  if (initialLoading) return <PencilLoader label={t('loadingDashboard')} />;
+  if (error || !data) return <Alert message={error || t('failedLoadDashboard')} />;
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Parent dashboard" subtitle="Keep up with your children's learning." />
+      <PageHeader title={t('parentDashTitle')} subtitle={t('parentDashSub')} />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Children" value={data.children.length} icon={Users} />
-        <StatCard label="Unread notifications" value={data.unreadNotifications} icon={Bell} />
+        <StatCard label={t('children')} value={data.children.length} icon={Users} />
+        <StatCard label={t('unreadNotifications')} value={data.unreadNotifications} icon={Bell} />
       </div>
 
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">My children</h2>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">{t('myChildrenTitle')}</h2>
           <Link href="/parent/children">
-            <Button variant="ghost" size="sm">View all</Button>
+            <Button variant="ghost" size="sm">{t('viewAll')}</Button>
           </Link>
         </div>
         {data.children.length === 0 ? (
           <EmptyState
             icon={GraduationCap}
-            title="No children linked yet"
-            description="Link your children to follow their lessons, exams and attendance."
+            title={t('noChildrenLinkedYet')}
+            description={t('linkChildrenDesc')}
             action={
               <Link href="/profile">
-                <Button size="sm">Link a child</Button>
+                <Button size="sm">{t('linkChild')}</Button>
               </Link>
             }
           />
@@ -62,7 +64,7 @@ export default function ParentDashboardPage() {
                       <p className="truncate text-sm font-semibold text-slate-900 dark:text-white group-hover:text-brand-700">
                         {c.fullName}
                       </p>
-                      <p className="text-xs text-slate-500">{c.grade ?? 'No grade'}</p>
+                      <p className="text-xs text-slate-500">{c.grade ?? t('noGrade')}</p>
                     </div>
                   </div>
                 </Card>

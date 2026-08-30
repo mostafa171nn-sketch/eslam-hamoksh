@@ -5,7 +5,13 @@ const BASE = '/api';
 /** Hard cap for every API call so a stalled backend can never block the UI. */
 export const REQUEST_TIMEOUT_MS = 12_000;
 /** Abort errors surface as network failures with a clear message. */
-export const TIMEOUT_MESSAGE = 'The server took too long to respond. Please try again.';
+import { getFormatLang } from './format';
+export function timeoutMessage(): string {
+  return getFormatLang() === 'ar'
+    ? 'استغرق الخادم وقتًا طويلاً للرد. يرجى المحاولة مرة أخرى.'
+    : 'The server took too long to respond. Please try again.';
+}
+export const TIMEOUT_MESSAGE = timeoutMessage();
 
 // --- Multi-tenant center types --------------------------------------------
 

@@ -13,6 +13,7 @@ import { Alert, InlineError } from '../../components/ui/ErrorAlert';
 import { useApi, errorMessage } from '../../hooks/useApi';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
+import { useT } from '../../i18n';
 import { Tags } from 'lucide-react';
 
 interface Field {
@@ -40,6 +41,7 @@ export default function CatalogManager({
   fields: Field[];
   addLabel: string;
 }) {
+  const { t } = useT();
   const toast = useToast();
   const { data, loading, initialLoading, error, reload } = useApi(() => api.get<Row[]>(endpoint), []);
 
@@ -72,7 +74,7 @@ export default function CatalogManager({
     for (const f of fields) {
       const val = form[f.key]?.trim() ?? '';
       if (f.required && !val) {
-        setFormError(`${f.label} is required.`);
+        setFormError(t('fieldRequired', { f: f.label }));
         return;
       }
       payload[f.key] = f.type === 'number' ? Number(val) : val;
@@ -82,10 +84,10 @@ export default function CatalogManager({
     try {
       if (editing) {
         await api.put(`${endpoint}/${editing.id}`, payload);
-        toast.success('Updated.');
+        toast.success(t('updated'));
       } else {
         await api.post(endpoint, payload);
-        toast.success('Created.');
+        toast.success(t('created'));
       }
       setModalOpen(false);
       reload();
@@ -101,7 +103,7 @@ export default function CatalogManager({
     setDeleteBusy(true);
     try {
       await api.delete(`${endpoint}/${deleting.id}`);
-      toast.success('Deleted.');
+      toast.success(t('deleted'));
       setDeleting(null);
       reload();
     } catch (err) {
@@ -124,15 +126,15 @@ export default function CatalogManager({
       />
 
       {error && <Alert message={error} className="mb-4" />}
-      {loading && (initialLoading ? <PencilLoader label="Loading…" /> : <PencilLoader size="sm" label="Loading…" />)}
+      {loading && <PencilLoader label={t('loading')} size={initialLoading ? undefined : 'sm'} />}
 
       {!loading && data && (
         <>
           {data.length === 0 ? (
             <EmptyState
               icon={Tags}
-              title={`No ${title.toLowerCase()} yet`}
-              description={`Create your first one using the button above.`}
+              title={t('noItemsYet', { t: title.toLowerCase() })}
+              description={t('createFirstUsingButton')}
             />
           ) : (
             <Card>
@@ -154,14 +156,14 @@ export default function CatalogManager({
                       <button
                         onClick={() => openEdit(row)}
                         className="rounded-md p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-slate-300"
-                        aria-label="Edit"
+                        aria-label={t('edit')}
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => setDeleting(row)}
                         className="rounded-md p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-                        aria-label="Delete"
+                        aria-label={t('delete')}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -177,14 +179,14 @@ export default function CatalogManager({
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? `Edit ${title}` : addLabel}
+        title={editing ? t('editItem', { t: title }) : addLabel}
         footer={
           <>
             <Button variant="outline" onClick={() => setModalOpen(false)} disabled={saving}>
-              Cancel
+              {t('cancel')}
             </Button>
             <Button onClick={save} loading={saving}>
-              {editing ? 'Save changes' : 'Create'}
+              {editing ? t('saveChanges') : t('create')}
             </Button>
           </>
         }
@@ -219,9 +221,9 @@ export default function CatalogManager({
         onClose={() => setDeleting(null)}
         onConfirm={doDelete}
         loading={deleteBusy}
-        title="Delete item"
-        message={`Delete "${deleting?.name ?? ''}"? This cannot be undone.`}
-        confirmLabel="Delete"
+        title={t('deleteItem')}
+        message={t('deleteConfirm', { name: String(deleting?.name ?? '') })}
+        confirmLabel={t('delete')}
       />
     </div>
   );

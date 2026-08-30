@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useT } from '../../i18n';
 
 export interface SearchableOption {
   value: string;
@@ -24,12 +25,13 @@ export function SearchableSelect({
   options,
   value,
   onChange,
-  placeholder = 'Select…',
-  emptyText = 'No results found',
+  placeholder,
+  emptyText,
   error,
   className = '',
   disabled,
 }: Props) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
@@ -120,7 +122,7 @@ export function SearchableSelect({
         disabled={disabled}
         onClick={() => (open ? setOpen(false) : openDropdown())}
         onKeyDown={handleKeyDown}
-        className={`flex w-full items-center justify-between gap-2 rounded-lg border bg-white px-3 py-2 text-left text-sm focus:outline-none focus:ring-2 dark:bg-slate-900 dark:text-slate-100 ${
+        className={`flex w-full items-center justify-between gap-2 rounded-lg border bg-white px-3 py-2 text-start text-sm focus:outline-none focus:ring-2 dark:bg-slate-900 dark:text-slate-100 ${
           error
             ? 'border-red-300 focus:border-red-500 focus:ring-red-100 dark:border-red-500/60 dark:focus:ring-red-900/40'
             : open
@@ -129,7 +131,7 @@ export function SearchableSelect({
         } ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
       >
         <span className={selected ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-400'}>
-          {selected ? selected.label : placeholder}
+          {selected ? selected.label : (placeholder || t('select'))}
         </span>
         <span className="pointer-events-none ml-auto flex items-center gap-1">
           {selected && (
@@ -141,7 +143,7 @@ export function SearchableSelect({
                 if (e.key === 'Enter' || e.key === ' ') clearSelection(e);
               }}
               className="text-slate-400 hover:text-slate-600 dark:text-slate-300"
-              aria-label="Clear selection"
+              aria-label={t('clearSelection')}
             >
               ×
             </span>
@@ -167,13 +169,13 @@ export function SearchableSelect({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search…"
+              placeholder={t('searchPlaceholder')}
               className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-200 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400"
             />
           </div>
           <ul ref={listRef} className="max-h-48 overflow-y-auto pb-1" role="listbox">
             {filtered.length === 0 && (
-              <li className="px-3 py-2 text-center text-sm text-slate-400 dark:text-slate-400">{emptyText}</li>
+              <li className="px-3 py-2 text-center text-sm text-slate-400 dark:text-slate-400">{emptyText || t('noResults')}</li>
             )}
             {filtered.map((o, i) => (
               <li

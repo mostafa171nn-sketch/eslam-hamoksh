@@ -91,11 +91,11 @@ export default function CenterDetailPage() {
       if (isFollowing) {
         await api.unfollowCenter(id);
         setIsFollowing(false);
-        toast.success('Unfollowed center');
+        toast.success(t('unfollowedCenterToast'));
       } else {
         await api.followCenter(id);
         setIsFollowing(true);
-        toast.success('Following center - you will be notified of new schedules');
+        toast.success(t('followedCenterToast'));
       }
     } catch (err) {
       toast.error(errorMessage(err));
@@ -131,7 +131,9 @@ export default function CenterDetailPage() {
         setRatingCount(ratingRes.data.count ?? 0);
         if ('error' in teachersRes) {
           setTeachersError(
-            teachersRes.error instanceof Error ? teachersRes.error.message : 'Failed to load teachers.',
+            teachersRes.error instanceof Error
+              ? teachersRes.error.message
+              : t('failedToLoadTeachers'),
           );
           setTeachers([]);
         } else {
@@ -140,7 +142,7 @@ export default function CenterDetailPage() {
       })
       .catch((err) => {
         if (!active) return;
-        setError(err instanceof Error ? err.message : 'Failed to load center.');
+        setError(err instanceof Error ? err.message : t('failedToLoadCenter'));
       })
       .finally(() => {
         if (active) {
@@ -358,7 +360,7 @@ export default function CenterDetailPage() {
                               {teacher.fullName}
                             </p>
                             <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                              {teacher.subjects.map((s) => s.name).join('، ')}
+                              {teacher.subjects.map((s) => s.name).join(dir === 'rtl' ? '، ' : ', ')}
                             </p>
                           </div>
                           {(teacher.ratingCount ?? 0) > 0 && (
@@ -404,7 +406,7 @@ export default function CenterDetailPage() {
                 loading={followLoading}
                 onClick={toggleFollow}
               >
-                {isFollowing ? 'Following' : 'Follow Center'}
+                {isFollowing ? t('following') : t('followCenter')}
               </Button>
             )}
 
@@ -426,7 +428,7 @@ export default function CenterDetailPage() {
               href="/register/student"
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200"
             >
-              Register as Student (no center required)
+              {t('registerAsStudentNoCenter')}
               <ArrowRight className={`h-4 w-4 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
             </Link>
           </div>

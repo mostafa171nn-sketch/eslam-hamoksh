@@ -148,10 +148,10 @@ export default function RegisterPage() {
     } catch (err: unknown) {
       const raw = errorMessage(err, t('registrationFailed'));
       if (raw.toLowerCase().includes('phone') && raw.toLowerCase().includes('already')) {
-        setErrors((prev) => ({ ...prev, phone: 'This phone number is already registered.' }));
+        setErrors((prev) => ({ ...prev, phone: t('alreadyRegistered') }));
       }
       if (raw.toLowerCase().includes('username') && raw.toLowerCase().includes('taken')) {
-        setErrors((prev) => ({ ...prev, username: 'This username is already taken.' }));
+        setErrors((prev) => ({ ...prev, username: t('alreadyTaken') }));
       }
       setServerError(raw);
       const details = (err as { details?: Array<{ path?: string; message?: string }> })?.details;

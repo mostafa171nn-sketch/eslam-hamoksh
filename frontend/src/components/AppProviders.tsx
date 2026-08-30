@@ -10,15 +10,15 @@ import { ErrorBoundary } from './ErrorBoundary';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <LangProvider>
+    <ThemeProvider>
+      <LangProvider>
+        <ErrorBoundary>
           <ToastProvider>
             <AuthProvider>{children}</AuthProvider>
           </ToastProvider>
-        </LangProvider>
+        </ErrorBoundary>
         <GlobalLoader />
-      </ThemeProvider>
-    </ErrorBoundary>
+      </LangProvider>
+    </ThemeProvider>
   );
 }

@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState, type DependencyList } from 'react';
-import { ApiClientError, TIMEOUT_MESSAGE, type ApiResponse } from '../lib/api';
+import { ApiClientError, timeoutMessage, type ApiResponse } from '../lib/api';
+import { getFormatLang } from '../lib/format';
 
-export function errorMessage(err: unknown, fallback = 'Something went wrong.'): string {
+export function errorMessage(err: unknown, fallback?: string): string {
+  const fallbackText = fallback ?? (getFormatLang() === 'ar' ? 'حدث خطأ ما.' : 'Something went wrong.');
   if (err instanceof ApiClientError) return err.message;
   if (err instanceof Error && err.name === 'AbortError') return '';
-  if (err instanceof DOMException && err.name === 'TimeoutError') return TIMEOUT_MESSAGE;
-  if (err instanceof Error && err.message === 'The operation was aborted.') return TIMEOUT_MESSAGE;
+  if (err instanceof DOMException && err.name === 'TimeoutError') return timeoutMessage();
+  if (err instanceof Error && err.message === 'The operation was aborted.') return timeoutMessage();
   if (err instanceof Error && err.message) return err.message;
-  return fallback;
+  return fallbackText;
 }
 
 interface UseApiResult<T> {

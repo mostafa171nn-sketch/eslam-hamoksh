@@ -28,12 +28,12 @@ export default function StudentPaymentsPage() {
 
   return (
     <div>
-      <PageHeader title="Payments" subtitle="Submit payments to your teachers and track their status." />
+      <PageHeader title={t('payments')} subtitle={t('paymentsSubStudent')} />
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-44">
           <Select
-            label="Status"
+            label={t('status')}
             options={paymentStatusFilters(t)}
             value={params.status ?? ''}
             onChange={(e) => updateParam('status', e.target.value)}
@@ -41,7 +41,7 @@ export default function StudentPaymentsPage() {
         </div>
         <div className="w-44">
           <Select
-            label="Type"
+            label={t('typeCol')}
             options={[{ value: '', label: t('allTypesFilter') }, ...PAYMENT_TYPE_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }))]}
             value={params.type ?? ''}
             onChange={(e) => updateParam('type', e.target.value)}
@@ -49,13 +49,13 @@ export default function StudentPaymentsPage() {
         </div>
         <Button className="ml-auto" onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4" />
-          New Payment
+          {t('newPaymentBtn')}
         </Button>
       </div>
 
       <Card className="mt-4">
         {error && <Alert message={error} className="m-4" />}
-        {loading && (initialLoading ? <PencilLoader label="Loading payments" /> : <PencilLoader size="sm" label="Loading payments" />)}
+        {loading && (initialLoading ? <PencilLoader label={t('loadingPayments')} /> : <PencilLoader size="sm" label={t('loadingPayments')} />)}
         {!loading && <div className="p-2"><PaymentList payments={data} showTeacher onView={setSelected} /></div>}
         {meta && (
           <div className="border-t border-slate-100 dark:border-slate-700 p-4">

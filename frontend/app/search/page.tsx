@@ -120,7 +120,7 @@ function SearchPageInner() {
         totalPages: centerRes.data?.totalPages ?? Math.max(1, Math.ceil((totalCenters + totalTeachers) / 12)),
       });
     } catch (err) {
-      setError('Failed to load search results');
+      setError(t('failedLoadSearchResults'));
     } finally {
       setLoading(false);
     }
@@ -367,7 +367,7 @@ function SearchPageInner() {
                               {teacher.availability.length > 0
                                 ? teacher.availability
                                     .slice(0, 2)
-                                    .map((a) => dayName(a.day, 'en'))
+                                    .map((a) => dayName(a.day))
                                     .join(', ')
                                 : t('noSetSchedule')}
                             </p>

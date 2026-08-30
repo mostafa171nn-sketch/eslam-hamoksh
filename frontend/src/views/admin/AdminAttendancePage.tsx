@@ -21,14 +21,6 @@ import { formatDate, formatTime } from '../../lib/format';
 import { useT } from '../../i18n';
 import type { AttendanceAdminRow, AttendanceAdminSummary, AttendanceStatus, Subject } from '../../lib/types';
 
-const STATUS_OPTIONS = [
-  { value: '', label: 'All status' },
-  { value: 'PRESENT', label: 'Present' },
-  { value: 'ABSENT', label: 'Absent' },
-  { value: 'LATE', label: 'Late' },
-  { value: 'EXCUSED', label: 'Excused' },
-];
-
 const STATUS_TONE: Record<string, 'green' | 'red' | 'amber' | 'blue' | 'slate' | 'violet'> = {
   PRESENT: 'green',
   LATE: 'amber',
@@ -39,6 +31,13 @@ const STATUS_TONE: Record<string, 'green' | 'red' | 'amber' | 'blue' | 'slate' |
 export default function AdminAttendancePage() {
   const { t } = useT();
   const toast = useToast();
+  const STATUS_OPTIONS = [
+    { value: '', label: t('allStatus') },
+    { value: 'PRESENT', label: t('present') },
+    { value: 'ABSENT', label: t('absent') },
+    { value: 'LATE', label: t('late') },
+    { value: 'EXCUSED', label: t('excused') },
+  ];
   const [params, setParams] = useState({ search: '', status: '', dateFrom: '', dateTo: '', subjectId: '', teacherId: '' });
   const [page, setPage] = useState(1);
   const [data, setData] = useState<AttendanceAdminRow[]>([]);
@@ -111,7 +110,7 @@ export default function AdminAttendancePage() {
     setSaving(true);
     try {
       await api.put(`/attendance/${editRow.id}`, { status, note });
-      toast.success('Attendance updated.');
+      toast.success(t('attendanceUpdatedToast'));
       setEditRow(null);
       load();
     } catch (e) {
@@ -121,10 +120,10 @@ export default function AdminAttendancePage() {
     }
   };
 
-  const subjectOptions = [{ value: '', label: 'All subjects' }, ...(subjects ?? []).map((s) => ({ value: s.id, label: s.name }))];
+  const subjectOptions = [{ value: '', label: t('allSubjects') }, ...(subjects ?? []).map((s) => ({ value: s.id, label: s.name }))];
   const teacherOptions = [
-    { value: '', label: 'All teachers' },
-    ...(teachers ?? []).map((t) => ({ value: t.id, label: t.fullName ?? t.user?.fullName ?? 'Teacher' })),
+    { value: '', label: t('allTeachers') },
+    ...(teachers ?? []).map((t) => ({ value: t.id, label: t.fullName ?? t.user?.fullName ?? t('teacher') })),
   ];
 
   return (
@@ -169,7 +168,7 @@ export default function AdminAttendancePage() {
 
       <Card className="mt-4">
         {error && <Alert message={error} className="m-4" />}
-        {loading && (initialLoading ? <PencilLoader label="Loading records…" /> : <PencilLoader size="sm" label="Loading records…" />)}
+        {loading && (initialLoading ? <PencilLoader label={t('loadingRecords')} /> : <PencilLoader size="sm" label={t('loadingRecords')} />)}
         {!loading && (
           <div className="overflow-x-auto p-2">
             {data.length === 0 ? (
@@ -205,7 +204,7 @@ export default function AdminAttendancePage() {
                       </td>
                       <td className="py-3 pr-4">
                         <button onClick={() => openEdit(row)} className="text-brand-600 hover:underline">
-                          Edit
+                          {t('edit')}
                         </button>
                       </td>
                     </tr>
@@ -237,10 +236,10 @@ export default function AdminAttendancePage() {
             <Textarea label={t('note')} value={note} onChange={(e) => setNote(e.target.value)} />
             <div className="flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setEditRow(null)}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button onClick={saveEdit} loading={saving}>
-                Save
+                {t('save')}
               </Button>
             </div>
           </div>
