@@ -298,6 +298,22 @@
   }
 }
 
+/* Auth form scientific focus */
+.auth-form .auth-input:focus-within {
+  box-shadow: 0 0 0 2px rgba(79,195,247,0.25), 0 1px 4px rgba(11,22,66,0.06);
+  border-color: rgba(79,195,247,0.5);
+}
+.auth-form input[type="text"],
+.auth-form input[type="email"],
+.auth-form input[type="password"] {
+  background: rgba(255,255,255,0.95);
+}
+.dark .auth-form input[type="text"],
+.dark .auth-form input[type="email"],
+.dark .auth-form input[type="password"] {
+  background: rgba(11,17,30,0.95);
+}
+
 /* ============================================================
    Scrollbar Styling
    ============================================================ */
