@@ -11,9 +11,6 @@ import { useAuth } from '../../context/AuthContext';
 import { errorMessage } from '../../hooks/useApi';
 import { useT } from '../../i18n';
 
-// Demo credentials removed for production security.
-// Use seed data or environment-specific test accounts instead.
-
 export default function LoginPage() {
   const { login } = useAuth();
   const { t } = useT();
@@ -70,7 +67,7 @@ export default function LoginPage() {
           placeholder="••••••••"
         />
         <div className="flex items-center justify-between text-sm">
-          <Link href="/forgot-password" className="font-medium text-brand-600 hover:text-brand-700">
+          <Link href="/forgot-password" className="font-medium text-brand-600 hover:text-brand-700 transition-colors">
             {t('forgotPasswordQ')}
           </Link>
         </div>
@@ -79,22 +76,22 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+      <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
         <p className="font-medium text-slate-700 dark:text-slate-200">{t('register')}</p>
         <div className="mt-2 flex flex-wrap gap-3">
-          <Link href="/register/teacher" className="text-brand-600 hover:text-brand-700">
+          <Link href="/register/teacher" className="text-brand-600 hover:text-brand-700 transition-colors">
             {t('teacher')}
           </Link>
-          <span className="text-slate-300">·</span>
-          <Link href="/register/student" className="text-brand-600 hover:text-brand-700">
+          <span className="text-slate-300 dark:text-slate-600">·</span>
+          <Link href="/register/student" className="text-brand-600 hover:text-brand-700 transition-colors">
             {t('student')}
           </Link>
-          <span className="text-slate-300">·</span>
-          <Link href="/register/parent" className="text-brand-600 hover:text-brand-700">
+          <span className="text-slate-300 dark:text-slate-600">·</span>
+          <Link href="/register/parent" className="text-brand-600 hover:text-brand-700 transition-colors">
             {t('parent')}
           </Link>
-          <span className="text-slate-300">·</span>
-          <Link href="/centers/register" className="text-brand-600 hover:text-brand-700">
+          <span className="text-slate-300 dark:text-slate-600">·</span>
+          <Link href="/centers/register" className="text-brand-600 hover:text-brand-700 transition-colors">
             {t('registerCenter')}
           </Link>
         </div>

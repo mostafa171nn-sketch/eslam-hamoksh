@@ -112,7 +112,7 @@ function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => 
   const pathname = usePathname();
   const { t } = useT();
   return (
-    <nav className="space-y-1 px-3">
+    <nav className="space-y-0.5 px-3">
       {items.map((item) => {
         const active = item.end
           ? pathname === item.to
@@ -123,13 +123,15 @@ function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => 
             key={item.to}
             href={item.to}
             onClick={onNavigate}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 ${
               active
-                ? 'bg-white/10 text-white'
-                : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                ? 'bg-white/10 text-white shadow-sm'
+                : 'text-slate-400 hover:bg-white/5 hover:text-white'
             }`}
           >
-            <Icon className="h-[18px] w-[18px]" />
+            <Icon className={`h-[18px] w-[18px] transition-colors duration-150 ${
+              active ? 'text-brand-400' : 'text-slate-500 group-hover:text-slate-300'
+            }`} />
             {t(item.labelKey)}
           </Link>
         );
@@ -158,32 +160,37 @@ export function Sidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose:
   return (
     <>
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 bg-slate-900/60 lg:hidden" onClick={onClose} />
+        <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm lg:hidden" onClick={onClose} />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-slate-900 transition-transform lg:translate-x-0 ${
+        className={`fixed inset-y-0 start-0 z-50 flex w-64 flex-col bg-slate-900 transition-transform duration-300 ease-out-expo lg:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
+        {/* Logo */}
         <div className="flex h-16 items-center justify-between px-5">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white">
-              <BookOpen className="h-[18px] w-[18px]" />
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 shadow-brand">
+              <BookOpen className="h-5 w-5 text-white" />
             </div>
-            <span className="text-base font-bold text-white">معارج</span>
+            <span className="text-lg font-bold text-white tracking-tight">معارج</span>
           </Link>
-          <button onClick={onClose} className="text-slate-400 hover:text-white lg:hidden" aria-label={t('closeMenu')}>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white lg:hidden" aria-label={t('closeMenu')}>
             <X className="h-5 w-5" />
           </button>
         </div>
+
+        {/* Navigation */}
         <div className="mt-2 flex-1 overflow-y-auto pb-6">
           <NavLinks items={items} onNavigate={onClose} />
         </div>
+
+        {/* User info */}
         <div className="border-t border-white/10 px-5 py-4">
           {center && (
             <p className="mb-1 truncate text-xs font-medium text-brand-400">{center.name}</p>
           )}
-          <p className="text-xs font-medium text-slate-400">{roleLabel}</p>
+          <p className="text-xs font-medium text-slate-500">{roleLabel}</p>
           <p className="mt-0.5 truncate text-sm font-medium text-white">{user.fullName}</p>
         </div>
       </aside>

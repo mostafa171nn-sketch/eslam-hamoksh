@@ -142,7 +142,7 @@ export default function CentersPage() {
                   e.preventDefault();
                   focusCenter(c.id);
                 }}
-                className="text-base font-semibold text-slate-900 hover:text-brand-600 dark:text-white"
+                className="text-base font-semibold text-slate-900 hover:text-brand-600 dark:text-white transition-colors"
               >
                 {c.name}
               </Link>
@@ -184,7 +184,7 @@ export default function CentersPage() {
                 <GraduationCap className="h-4 w-4" /> {c.teacherCount}
               </span>
             </div>
-            <Link href={`/centers/${c.id}`} className="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-300">
+            <Link href={`/centers/${c.id}`} className="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-300 transition-colors">
               {t('centerDetails')} →
             </Link>
           </div>
@@ -230,7 +230,7 @@ export default function CentersPage() {
               value={filters.q}
               onChange={(e) => patch({ q: e.target.value })}
               placeholder={t('search')}
-              className="w-full rounded-lg border border-slate-300 bg-white py-2 ps-9 pe-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:ring-brand-900"
+              className="w-full rounded-lg border border-slate-300 bg-white py-2 ps-9 pe-3 text-sm text-slate-900 placeholder:text-slate-400 transition-all duration-150 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:ring-brand-900"
             />
           </div>
           <Input value={filters.city} onChange={(e) => patch({ city: e.target.value })} placeholder={t('city')} />

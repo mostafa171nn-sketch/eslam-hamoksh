@@ -37,7 +37,7 @@ export function LangToggle({ className = '' }: { className?: string }) {
               ? t('switchToArabic', { language: 'العربية' })
               : t('switchToEnglish', { language: 'English' })
           }
-          className={`inline-flex h-7 items-center rounded-md px-2 text-xs font-semibold transition ${
+          className={`inline-flex h-7 items-center rounded-md px-2 text-xs font-semibold transition-all duration-150 ${
             lang === opt.value
               ? 'bg-brand-600 text-white shadow-sm'
               : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-100'

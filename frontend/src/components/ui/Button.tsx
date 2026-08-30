@@ -6,13 +6,13 @@ type Size = 'sm' | 'md' | 'lg';
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    'bg-brand-600 text-white hover:bg-brand-700 focus-visible:outline-brand-600 shadow-sm',
+    'bg-brand-600 text-white hover:bg-brand-700 focus-visible:outline-brand-600 shadow-sm hover:shadow-brand active:bg-brand-800',
   secondary:
     'bg-brand-50 text-brand-700 hover:bg-brand-100 focus-visible:outline-brand-400 dark:bg-brand-500/15 dark:text-brand-300 dark:hover:bg-brand-500/25',
   outline:
     'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:outline-brand-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700',
   ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
-  danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm',
+  danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm hover:shadow-lg active:bg-red-800',
 };
 
 const SIZES: Record<Size, string> = {
@@ -40,7 +40,7 @@ export function Button({
   return (
     <button
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 press-effect ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
       {...rest}
     >
       {loading && <PencilLoader size="sm" />}

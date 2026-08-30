@@ -20,7 +20,7 @@ function BarRow({ label, value, max }: { label: string; value: number; max: numb
       <div className="h-5 flex-1 overflow-hidden rounded bg-slate-100">
         <div className="h-full rounded bg-brand-500" style={{ width: `${pct}%` }} />
       </div>
-      <span className="w-8 shrink-0 text-right text-xs font-medium text-slate-700">{value}</span>
+      <span className="w-8 shrink-0 text-end text-xs font-medium text-slate-700">{value}</span>
     </div>
   );
 }

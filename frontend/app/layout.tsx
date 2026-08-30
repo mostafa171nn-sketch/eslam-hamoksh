@@ -1,8 +1,21 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { cookies } from 'next/headers';
+import { Inter, Noto_Sans_Arabic } from 'next/font/google';
 import './globals.css';
 import { AppProviders } from '../src/components/AppProviders';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
+
+const notoSansArabic = Noto_Sans_Arabic({
+  subsets: ['arabic'],
+  display: 'swap',
+  variable: '--font-noto-arabic',
+});
 
 export function generateMetadata(): Metadata {
   const lang = cookies().get('maarech-lang')?.value === 'en' ? 'en' : 'ar';
@@ -37,7 +50,7 @@ r.lang=l;r.dir=l==='ar'?'rtl':'ltr';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ar" dir="rtl" suppressHydrationWarning>
+    <html lang="ar" dir="rtl" suppressHydrationWarning className={`${inter.variable} ${notoSansArabic.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

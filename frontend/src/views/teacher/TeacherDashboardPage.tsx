@@ -55,10 +55,10 @@ export default function TeacherDashboardPage() {
   ];
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <PageHeader title={t('teacherDashTitle')} subtitle={t('teacherDashSub')} />
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 stagger-children">
         <StatCard label={t('myStudents')} value={data.totalStudents} icon={Users} />
         <StatCard label={t('lessonsToday')} value={data.todayLessons} icon={Calendar} />
         <StatCard label={t('upcomingLessons')} value={data.upcomingLessons} icon={Calendar} />
@@ -69,17 +69,17 @@ export default function TeacherDashboardPage() {
         <StatCard label={t('totalStudents')} value={data.totalStudents} icon={GraduationCap} />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 stagger-children">
         {quickLinks.map((q) => {
           const Icon = q.icon;
           return (
             <Link
               key={q.to}
               href={q.to}
-              className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white p-4 shadow-sm transition hover:border-brand-300 hover:shadow"
+              className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:border-brand-300 hover:shadow-elevated dark:border-slate-700 dark:bg-slate-800"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50">
-                <Icon className="h-5 w-5 text-brand-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 transition-colors group-hover:bg-brand-100 dark:bg-brand-900/40">
+                <Icon className="h-5 w-5 text-brand-600 dark:text-brand-300" />
               </div>
               <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{q.label}</span>
             </Link>

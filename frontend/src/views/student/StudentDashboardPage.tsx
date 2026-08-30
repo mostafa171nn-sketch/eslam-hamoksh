@@ -42,39 +42,52 @@ export default function StudentDashboardPage() {
   const present = data.attendance.filter((a) => a.status === 'PRESENT').length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
+      {/* Quick Actions */}
       <Card title={t('discover')}>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Link href="/centers" className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 p-4 text-center hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:hover:bg-slate-800">
-            <Building2 className="h-6 w-6 text-brand-600" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 stagger-children">
+          <Link href="/centers" className="group flex flex-col items-center gap-2.5 rounded-xl border border-slate-200 p-4 text-center transition-all duration-200 hover:border-brand-300 hover:bg-brand-50 hover:shadow-elevated dark:border-slate-700 dark:hover:bg-slate-800">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-100 dark:bg-brand-900/40 dark:text-brand-300">
+              <Building2 className="h-5 w-5" />
+            </div>
             <span className="text-sm font-medium">{t('searchCenters')}</span>
           </Link>
-          <Link href="/teachers" className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 p-4 text-center hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:hover:bg-slate-800">
-            <Search className="h-6 w-6 text-brand-600" />
+          <Link href="/teachers" className="group flex flex-col items-center gap-2.5 rounded-xl border border-slate-200 p-4 text-center transition-all duration-200 hover:border-brand-300 hover:bg-brand-50 hover:shadow-elevated dark:border-slate-700 dark:hover:bg-slate-800">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-100 dark:bg-brand-900/40 dark:text-brand-300">
+              <Search className="h-5 w-5" />
+            </div>
             <span className="text-sm font-medium">{t('searchTeachersLabel')}</span>
           </Link>
-          <Link href="/student/lessons" className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 p-4 text-center hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:hover:bg-slate-800">
-            <CalendarDays className="h-6 w-6 text-brand-600" />
+          <Link href="/student/lessons" className="group flex flex-col items-center gap-2.5 rounded-xl border border-slate-200 p-4 text-center transition-all duration-200 hover:border-brand-300 hover:bg-brand-50 hover:shadow-elevated dark:border-slate-700 dark:hover:bg-slate-800">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-100 dark:bg-brand-900/40 dark:text-brand-300">
+              <CalendarDays className="h-5 w-5" />
+            </div>
             <span className="text-sm font-medium">{t('myBookings')}</span>
           </Link>
-          <Link href="/student/followed" className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 p-4 text-center hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:hover:bg-slate-800">
-            <Building2 className="h-6 w-6 text-brand-600" />
+          <Link href="/student/followed" className="group flex flex-col items-center gap-2.5 rounded-xl border border-slate-200 p-4 text-center transition-all duration-200 hover:border-brand-300 hover:bg-brand-50 hover:shadow-elevated dark:border-slate-700 dark:hover:bg-slate-800">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-100 dark:bg-brand-900/40 dark:text-brand-300">
+              <Building2 className="h-5 w-5" />
+            </div>
             <span className="text-sm font-medium">{t('followedCenters')}{followed ? ` (${followed.length})` : ''}</span>
           </Link>
-          <Link href="/notifications" className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 p-4 text-center hover:border-brand-300 hover:bg-brand-50 dark:border-slate-700 dark:hover:bg-slate-800">
-            <Bell className="h-6 w-6 text-brand-600" />
+          <Link href="/notifications" className="group flex flex-col items-center gap-2.5 rounded-xl border border-slate-200 p-4 text-center transition-all duration-200 hover:border-brand-300 hover:bg-brand-50 hover:shadow-elevated dark:border-slate-700 dark:hover:bg-slate-800">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-100 dark:bg-brand-900/40 dark:text-brand-300">
+              <Bell className="h-5 w-5" />
+            </div>
             <span className="text-sm font-medium">{t('notifications')}</span>
           </Link>
         </div>
       </Card>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 stagger-children">
         <StatCard label={t('todaysLessons')} value={data.todayLessons.length} icon={CalendarDays} />
         <StatCard label={t('upcomingExams')} value={data.upcomingExams.length} icon={FileQuestion} />
         <StatCard label={t('pendingHomework')} value={data.pendingAssignments.filter((a) => !a.submitted).length} icon={ClipboardList} />
         <StatCard label={t('attendance')} value={data.attendance.length ? `${Math.round((present / data.attendance.length) * 100)}%` : '—'} icon={TrendingUp} />
       </div>
 
+      {/* Content Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card
           title={t('todaysLessons')}
@@ -184,6 +197,7 @@ export default function StudentDashboardPage() {
         </Card>
       </div>
 
+      {/* Teachers */}
       {teachers && teachers.length > 0 && (
         <Card
           title={t('myTeachers')}

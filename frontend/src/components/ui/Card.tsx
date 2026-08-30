@@ -16,7 +16,7 @@ export function Card({
   bodyClassName?: string;
 }) {
   return (
-    <div className={`rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800 ${className}`}>
+    <div className={`rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800 transition-shadow duration-200 hover:shadow-md ${className}`}>
       {(title || action) && (
         <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-700">
           <div>

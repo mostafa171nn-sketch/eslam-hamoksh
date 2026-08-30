@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Search, MapPin, CalendarDays, Users, GraduationCap, ArrowRight } from 'lucide-react';
+import { Search, MapPin, CalendarDays, Users, GraduationCap, ArrowRight, Shield, Clock, Sparkles } from 'lucide-react';
 import { PublicNav } from '@/src/components/layout/PublicNav';
 import { Input } from '@/src/components/ui/Input';
 import { Select } from '@/src/components/ui/Select';
@@ -16,8 +16,6 @@ import { api } from '@/src/lib/api';
 import type { Subject, Grade, Location } from '@/src/lib/types';
 import { useT } from '@/src/i18n';
 
-// Leaflet must only run on the client, so load the map lazily with SSR disabled
-// to avoid "window is not defined" during server rendering.
 const CenterMap = dynamic(() => import('@/src/components/centers/CenterMap'), {
   ssr: false,
   loading: () => (
@@ -85,31 +83,39 @@ export default function HomePage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <PublicNav />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand-600 to-brand-800 dark:from-brand-700 dark:to-brand-900">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-white rounded-full mix-blend-multiply filter blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-white rounded-full mix-blend-multiply filter blur-3xl" />
+      {/* Hero Section — THE ASCENT */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 dark:from-brand-800 dark:via-brand-900 dark:to-surface-950">
+        {/* Subtle pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.03]">
+          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '40px 40px' }} />
         </div>
+        {/* Gradient orbs */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-gold-400/10 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-brand-300/10 blur-3xl" />
+        </div>
+
         <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8 lg:py-32">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-brand-100 backdrop-blur-sm">
-              <BookOpen className="h-4 w-4" />
-              {t('appName')}
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-brand-100 backdrop-blur-sm">
+              <Sparkles className="h-4 w-4 text-gold-400" />
+              {t('authTaglineBadge')}
             </div>
+
+            {/* Heading */}
             <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
               {t('findTeacher')}
             </h1>
-            <p className="mt-4 text-lg text-brand-100 sm:text-xl">
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-brand-100 sm:text-xl">
               {t('heroSubtitle')}
             </p>
           </div>
 
           {/* Search Bar */}
           <div className="mx-auto mt-10 max-w-4xl">
-            <div className="rounded-2xl bg-white/95 p-4 shadow-xl backdrop-blur-sm sm:p-6">
+            <div className="rounded-2xl border border-white/20 bg-white/95 p-4 shadow-2xl backdrop-blur-sm sm:p-6 dark:bg-surface-800/95 dark:border-surface-700/50">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
-                {/* Search Query */}
                 <div className="lg:col-span-2">
                   <Input
                     value={searchQuery}
@@ -119,32 +125,24 @@ export default function HomePage() {
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   />
                 </div>
-
-                {/* Location */}
                 <Select
                   options={catalog.locations.map(l => ({ value: l.id, label: l.name }))}
                   value={selectedLocation}
                   onChange={(e) => setSelectedLocation(e.target.value)}
                   placeholder={t('anyBranch')}
                 />
-
-                {/* Subject */}
                 <Select
                   options={catalog.subjects.map(s => ({ value: s.id, label: s.name }))}
                   value={selectedSubject}
                   onChange={(e) => setSelectedSubject(e.target.value)}
                   placeholder={t('anySubject')}
                 />
-
-                {/* Date Picker */}
                 <DatePicker
                   value={selectedDate}
                   onChange={setSelectedDate}
                   placeholder={t('selectDate')}
                   minDate={new Date()}
                 />
-
-                {/* Search Button */}
                 <Button
                   size="lg"
                   className="lg:col-span-1"
@@ -154,6 +152,18 @@ export default function HomePage() {
                   {t('search')}
                 </Button>
               </div>
+            </div>
+          </div>
+
+          {/* Trust badges */}
+          <div className="mx-auto mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-brand-200/80">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              <span>{t('authTaglineTitle')}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span>{t('heroSubtitle')}</span>
             </div>
           </div>
         </div>
@@ -192,15 +202,15 @@ export default function HomePage() {
                       onClick={() => focusCenter(center.id)}
                       className={`group rounded-xl border bg-white p-4 text-start transition-all duration-200 dark:bg-slate-800 ${
                         active
-                          ? 'border-brand-400 shadow-lg ring-2 ring-brand-400/30 dark:border-brand-500'
-                          : 'border-slate-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md dark:border-slate-700 dark:hover:border-brand-500/60'
+                          ? 'border-brand-400 shadow-brand ring-2 ring-brand-400/30 dark:border-brand-500'
+                          : 'border-slate-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-elevated dark:border-slate-700 dark:hover:border-brand-500/60'
                       }`}
                     >
                       <div className="flex items-start gap-3">
                         {center.photoUrl ? (
-                          <img src={center.photoUrl} alt={center.name} className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+                          <img src={center.photoUrl} alt={center.name} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
                         ) : (
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-lg font-bold text-brand-600 dark:bg-brand-900/40 dark:text-brand-300">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-lg font-bold text-brand-600 dark:bg-brand-900/40 dark:text-brand-300">
                             {center.name.charAt(0)}
                           </div>
                         )}
@@ -255,36 +265,36 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* How It Works — THE ASCENT */}
       <section className="border-t border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-          <h2 className="mb-8 text-2xl font-bold text-slate-900 dark:text-white text-center">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+          <h2 className="mb-12 text-2xl font-bold text-slate-900 dark:text-white text-center">
             {t('howItWorks')}
           </h2>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
             <div className="text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-900/50 dark:text-brand-300">
-                <Search className="h-6 w-6" />
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-100 text-brand-600 dark:bg-brand-900/50 dark:text-brand-300">
+                <Search className="h-7 w-7" />
               </div>
-              <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-white">{t('search')}</h3>
+              <h3 className="mt-5 text-base font-semibold text-slate-900 dark:text-white">{t('search')}</h3>
               <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                 {t('howItWorksSearchSub')}
               </p>
             </div>
             <div className="text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-900/50 dark:text-brand-300">
-                <CalendarDays className="h-6 w-6" />
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-100 text-gold-600 dark:bg-gold-900/50 dark:text-gold-300">
+                <CalendarDays className="h-7 w-7" />
               </div>
-              <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-white">{t('howItWorksSelectDate')}</h3>
+              <h3 className="mt-5 text-base font-semibold text-slate-900 dark:text-white">{t('howItWorksSelectDate')}</h3>
               <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                 {t('howItWorksSelectDateSub')}
               </p>
             </div>
             <div className="text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-900/50 dark:text-brand-300">
-                <GraduationCap className="h-6 w-6" />
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-300">
+                <GraduationCap className="h-7 w-7" />
               </div>
-              <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-white">{t('howItWorksBookLearn')}</h3>
+              <h3 className="mt-5 text-base font-semibold text-slate-900 dark:text-white">{t('howItWorksBookLearn')}</h3>
               <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                 {t('howItWorksBookLearnSub')}
               </p>

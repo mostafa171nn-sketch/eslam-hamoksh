@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { Sidebar } from '../components/layout/Sidebar';
-import { Topbar } from '../components/layout/Topbar';
-import { PageBackButton } from '../components/layout/PageBackButton';
+import { Sidebar } from '../../src/components/layout/Sidebar';
+import { Topbar } from '../../src/components/layout/Topbar';
+import { PageBackButton } from '../../src/components/layout/PageBackButton';
 
 const NO_BACK = new Set([
   '/student',
@@ -21,7 +21,6 @@ function fallbackFor(pathname: string): string {
   if (!pathname || pathname === '/') return '/';
   const parts = pathname.split('/').filter(Boolean);
   if (parts.length <= 1) {
-    // top-level dashboard pages: back to their role dashboard
     const seg = parts[0];
     if (seg === 'student' || seg === 'teacher' || seg === 'parent' || seg === 'admin') return `/${seg}`;
     return '/';
@@ -38,15 +37,17 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-900">
       <Sidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="lg:pl-64">
+      <div className="lg:ps-64">
         <Topbar onOpenSidebar={() => setSidebarOpen(true)} />
-        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
           {showBack && (
             <div className="mb-4">
               <PageBackButton fallback={fallbackFor(pathname ?? '/')} />
             </div>
           )}
-          {children}
+          <div className="animate-fade-in">
+            {children}
+          </div>
         </main>
       </div>
     </div>

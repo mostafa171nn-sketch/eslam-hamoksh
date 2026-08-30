@@ -27,10 +27,10 @@ export default function ParentDashboardPage() {
   if (error || !data) return <Alert message={error || t('failedLoadDashboard')} />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader title={t('parentDashTitle')} subtitle={t('parentDashSub')} />
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 stagger-children">
         <StatCard label={t('children')} value={data.children.length} icon={Users} />
         <StatCard label={t('unreadNotifications')} value={data.unreadNotifications} icon={Bell} />
       </div>
@@ -54,14 +54,14 @@ export default function ParentDashboardPage() {
             }
           />
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 stagger-children">
             {data.children.map((c) => (
               <Link key={c.id} href={`/parent/children/${c.id}`} className="group">
-                <Card bodyClassName="p-5 transition group-hover:border-brand-300 group-hover:shadow">
+                <Card bodyClassName="p-5">
                   <div className="flex items-center gap-3">
                     <Avatar name={c.fullName} src={c.photo} size="lg" />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-900 dark:text-white group-hover:text-brand-700">
+                      <p className="truncate text-sm font-semibold text-slate-900 dark:text-white group-hover:text-brand-700 transition-colors">
                         {c.fullName}
                       </p>
                       <p className="text-xs text-slate-500">{c.grade ?? t('noGrade')}</p>

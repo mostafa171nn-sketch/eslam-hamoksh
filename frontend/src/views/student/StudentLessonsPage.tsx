@@ -87,9 +87,9 @@ export default function StudentLessonsPage() {
               {data.map((l) => (
                 <Card key={l.id} bodyClassName="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-brand-50">
-                      <span className="text-lg font-bold leading-none text-brand-700">{new Date(l.date).getDate()}</span>
-                      <span className="text-[10px] font-medium uppercase text-brand-500">
+                    <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-brand-50 dark:bg-brand-900/40">
+                      <span className="text-lg font-bold leading-none text-brand-700 dark:text-brand-300">{new Date(l.date).getDate()}</span>
+                      <span className="text-[10px] font-medium uppercase text-brand-500 dark:text-brand-400">
                         {new Date(l.date).toLocaleString('en', { month: 'short' })}
                       </span>
                     </div>

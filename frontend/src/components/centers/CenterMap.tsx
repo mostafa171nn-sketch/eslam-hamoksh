@@ -287,7 +287,7 @@ export default function CenterMap({ centers, focusCenterId, onFocusCenter, defau
 
       {/* Fit-all button */}
       {withCoords.length > 0 && (
-        <div className="pointer-events-none absolute bottom-3 right-3 z-[1000]">
+        <div className="pointer-events-none absolute bottom-3 end-3 z-[1000]">
           <button
             type="button"
             onClick={() => setFitKey((k) => k + 1)}

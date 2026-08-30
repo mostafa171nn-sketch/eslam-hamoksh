@@ -47,7 +47,7 @@ export default function StudentPaymentsPage() {
             onChange={(e) => updateParam('type', e.target.value)}
           />
         </div>
-        <Button className="ml-auto" onClick={() => setCreateOpen(true)}>
+        <Button className="ms-auto" onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4" />
           {t('newPaymentBtn')}
         </Button>

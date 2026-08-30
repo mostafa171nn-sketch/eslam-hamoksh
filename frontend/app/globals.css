@@ -2,6 +2,304 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   MAAREJ Design System — CSS Custom Properties
+   THE ASCENT + THE FOCUSED WORKROOM + THE ACADEMIC EDITION
+   ============================================================ */
+
+@layer base {
+  :root {
+    /* Brand */
+    --color-brand-50: #eef2ff;
+    --color-brand-100: #e0e7ff;
+    --color-brand-200: #c7d2fe;
+    --color-brand-300: #a5b4fc;
+    --color-brand-400: #818cf8;
+    --color-brand-500: #6366f1;
+    --color-brand-600: #4f46e5;
+    --color-brand-700: #4338ca;
+    --color-brand-800: #3730a3;
+    --color-brand-900: #312e81;
+
+    /* Gold (Academic) */
+    --color-gold-50: #fffbeb;
+    --color-gold-100: #fef3c7;
+    --color-gold-200: #fde68a;
+    --color-gold-300: #fcd34d;
+    --color-gold-400: #fbbf24;
+    --color-gold-500: #f59e0b;
+    --color-gold-600: #d97706;
+
+    /* Surface */
+    --color-surface-0: #ffffff;
+    --color-surface-50: #f8fafc;
+    --color-surface-100: #f1f5f9;
+    --color-surface-200: #e2e8f0;
+    --color-surface-300: #cbd5e1;
+    --color-surface-400: #94a3b8;
+    --color-surface-500: #64748b;
+    --color-surface-600: #475569;
+    --color-surface-700: #334155;
+    --color-surface-800: #1e293b;
+    --color-surface-900: #0f172a;
+
+    /* Radius */
+    --radius-xs: 0.25rem;
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1.25rem;
+    --radius-3xl: 1.5rem;
+
+    /* Shadows */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-elevated: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 4px 12px 0 rgb(0 0 0 / 0.06);
+
+    /* Motion */
+    --duration-fast: 150ms;
+    --duration-normal: 250ms;
+    --duration-slow: 350ms;
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+
+    /* Typography scale */
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
+    --text-3xl: 1.875rem;
+    --text-4xl: 2.25rem;
+
+    /* Line heights */
+    --leading-tight: 1.25;
+    --leading-snug: 1.375;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.625;
+
+    /* Spacing */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+  }
+}
+
+/* ============================================================
+   Typography Base — THE ACADEMIC EDITION
+   ============================================================ */
+
+@layer base {
+  html {
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* Arabic typography adjustments */
+  [lang="ar"] {
+    font-feature-settings: 'cv01', 'cv02', 'cv03', 'cv04';
+    line-height: 1.7;
+  }
+
+  /* Headings — Academic style */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+    line-height: var(--leading-tight);
+  }
+
+  h1 { @apply text-4xl; }
+  h2 { @apply text-3xl; }
+  h3 { @apply text-2xl; }
+  h4 { @apply text-xl; }
+  h5 { @apply text-lg; }
+  h6 { @apply text-base; }
+
+  /* Paragraphs */
+  p {
+    @apply leading-relaxed;
+  }
+
+  /* Links */
+  a {
+    @apply transition-colors duration-150;
+  }
+}
+
+/* ============================================================
+   Surface & Container Styles
+   ============================================================ */
+
+@layer components {
+  /* Premium surface */
+  .surface {
+    @apply bg-white border border-surface-200;
+  }
+
+  .dark .surface {
+    @apply bg-surface-800 border-surface-700;
+  }
+
+  /* Elevated surface */
+  .surface-elevated {
+    @apply bg-white border border-surface-200 shadow-elevated;
+  }
+
+  .dark .surface-elevated {
+    @apply bg-surface-800 border-surface-700;
+  }
+
+  /* Academic surface (for reading content) */
+  .surface-academic {
+    @apply bg-white;
+    line-height: 1.8;
+    letter-spacing: 0.01em;
+  }
+
+  .dark .surface-academic {
+    @apply bg-surface-800;
+  }
+
+  /* Container */
+  .container-sm {
+    @apply mx-auto max-w-3xl px-4 sm:px-6;
+  }
+
+  .container-md {
+    @apply mx-auto max-w-5xl px-4 sm:px-6;
+  }
+
+  .container-lg {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+}
+
+/* ============================================================
+   Focus States — Accessible & Visible
+   ============================================================ */
+
+@layer base {
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+
+  /* Remove default focus ring for mouse users */
+  *:focus:not(:focus-visible) {
+    @apply outline-none;
+  }
+}
+
+@layer components {
+  .focus-ring {
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500;
+  }
+
+  .focus-ring-inset {
+    @apply focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-500;
+  }
+}
+
+/* ============================================================
+   Interactive States
+   ============================================================ */
+
+@layer components {
+  /* Hover lift */
+  .hover-lift {
+    transition: transform var(--duration-fast) var(--ease-out-expo),
+                box-shadow var(--duration-fast) var(--ease-out-expo);
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Hover glow (brand) */
+  .hover-glow {
+    transition: box-shadow var(--duration-normal) var(--ease-out-expo);
+  }
+  .hover-glow:hover {
+    box-shadow: 0 0 0 3px rgb(99 102 241 / 0.15);
+  }
+
+  /* Press effect */
+  .press-effect {
+    transition: transform var(--duration-fast) ease;
+  }
+  .press-effect:active {
+    transform: scale(0.98);
+  }
+}
+
+/* ============================================================
+   Scrollbar Styling
+   ============================================================ */
+
+@layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
+
+  /* Webkit scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #475569;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  .dark * {
+    scrollbar-color: #475569 transparent;
+  }
+}
+
+/* ============================================================
+   Animations — THE ASCENT Motion
+   ============================================================ */
+
 @keyframes slide-in {
   from {
     opacity: 0;
@@ -17,28 +315,141 @@
   animation: slide-in 0.15s ease-out;
 }
 
+/* Ascent animation — upward reveal */
+@keyframes ascent-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-ascent-reveal {
+  animation: ascent-reveal 0.5s var(--ease-out-expo) both;
+}
+
+/* Stagger children */
+.stagger-children > * {
+  animation: ascent-reveal 0.4s var(--ease-out-expo) both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 300ms; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Educational Reading Surfaces — THE ACADEMIC EDITION
+   ============================================================ */
+
+@layer components {
+  /* Lesson content */
+  .lesson-content {
+    @apply text-slate-700 dark:text-slate-300;
+    line-height: 1.8;
+    letter-spacing: 0.01em;
+  }
+
+  .lesson-content h1,
+  .lesson-content h2,
+  .lesson-content h3 {
+    @apply font-semibold text-slate-900 dark:text-white mt-6 mb-3;
+    line-height: 1.3;
+  }
+
+  .lesson-content h1 { @apply text-2xl; }
+  .lesson-content h2 { @apply text-xl; }
+  .lesson-content h3 { @apply text-lg; }
+
+  .lesson-content p {
+    @apply mb-4;
+  }
+
+  .lesson-content ul,
+  .lesson-content ol {
+    @apply mb-4 ps-6;
+  }
+
+  .lesson-content ul {
+    @apply list-disc;
+  }
+
+  .lesson-content ol {
+    @apply list-decimal;
+  }
+
+  .lesson-content li {
+    @apply mb-1;
+  }
+
+  .lesson-content blockquote {
+    @apply border-e-4 border-brand-300 bg-brand-50/50 py-2 ps-4 pe-3 my-4 text-sm italic text-slate-600 dark:border-brand-700 dark:bg-brand-900/20 dark:text-slate-400;
+  }
+
+  .lesson-content code {
+    @apply rounded-md bg-slate-100 px-1.5 py-0.5 text-sm font-mono text-brand-700 dark:bg-slate-800 dark:text-brand-300;
+  }
+
+  .lesson-content pre {
+    @apply rounded-xl bg-slate-900 p-4 my-4 overflow-x-auto dark:bg-slate-950;
+  }
+
+  .lesson-content pre code {
+    @apply bg-transparent p-0 text-slate-200;
+  }
+
+  .lesson-content img {
+    @apply rounded-xl my-4 max-w-full;
+  }
+
+  .lesson-content table {
+    @apply w-full border-collapse my-4 text-sm;
+  }
+
+  .lesson-content th,
+  .lesson-content td {
+    @apply border border-slate-200 px-3 py-2 text-start dark:border-slate-700;
+  }
+
+  .lesson-content th {
+    @apply bg-slate-50 font-semibold text-slate-900 dark:bg-slate-800 dark:text-white;
+  }
+
+  /* Homework note surface */
+  .homework-surface {
+    @apply rounded-xl border border-gold-200 bg-gold-50/50 p-4 dark:border-gold-800 dark:bg-gold-900/10;
+  }
+
+  /* Notes surface */
+  .notes-surface {
+    @apply rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800;
+    line-height: 1.7;
+  }
+}
+
+/* ============================================================
+   Pencil Loader (existing)
+   ============================================================ */
+
 html,
 body {
   min-height: 100%;
 }
 
-/* Reserve the scrollbar gutter so toggling body overflow (modals/loaders)
-   never causes a layout shift or a brief "double scrollbar". */
-html {
-  scrollbar-gutter: stable;
-}
-
-body {
-  @apply bg-slate-50 text-slate-900 antialiased;
-  min-height: 100dvh;
-  overflow-x: hidden;
-}
-
-/* ===== Pencil Loader (global ECMS loading indicator) ===== */
-
-/* The pencil graphic. Size is fixed at 60em exactly; the rendered size is
-   controlled by the font-size of an ancestor (em-based), never by editing
-   this rule. The loading overlay / inline wrappers set that font-size. */
 .pencil {
   display: block;
   width: 60em;
@@ -51,7 +462,6 @@ body {
   height: 100%;
 }
 
-/* Full-viewport page/route/data loading overlay. */
 .pencil-overlay {
   position: fixed;
   inset: 0;
@@ -64,8 +474,7 @@ body {
   width: 100%;
   height: 100dvh;
   overflow: hidden;
-  background: #f8fafc; /* slate-50, matches the app background */
-  /* Sizes the em-based .pencil so 60em fits comfortably inside the viewport. */
+  background: #f8fafc;
   font-size: min(1.4vw, 1.4vh);
 }
 
@@ -75,7 +484,6 @@ body {
   color: #64748b;
 }
 
-/* Inline (in-container) usage, e.g. inside a modal or button. */
 .pencil-inline {
   display: inline-flex;
   flex-direction: column;
@@ -98,7 +506,7 @@ body {
 }
 
 .ecms-pencil-ink {
-  stroke: #4f46e5; /* brand-600 */
+  stroke: #4f46e5;
   stroke-width: 3;
   stroke-linecap: round;
   stroke-dasharray: 170;
@@ -107,19 +515,19 @@ body {
 }
 
 .ecms-pencil-body {
-  fill: #4f46e5; /* brand-600 */
+  fill: #4f46e5;
 }
 
 .ecms-pencil-lead {
-  fill: #0f172a; /* slate-900 */
+  fill: #0f172a;
 }
 
 .ecms-pencil-ferrule {
-  fill: #cbd5e1; /* slate-300 */
+  fill: #cbd5e1;
 }
 
 .ecms-pencil-eraser {
-  fill: #fda4af; /* rose-300 */
+  fill: #fda4af;
 }
 
 .ecms-pencil-move {
@@ -129,30 +537,18 @@ body {
 }
 
 @keyframes ecms-pencil-move {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(170px);
-  }
+  from { transform: translateX(0); }
+  to { transform: translateX(170px); }
 }
 
 @keyframes ecms-pencil-draw {
-  from {
-    stroke-dashoffset: 170;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
+  from { stroke-dashoffset: 170; }
+  to { stroke-dashoffset: 0; }
 }
 
 @keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .animate-spin-slow {
@@ -160,13 +556,8 @@ body {
 }
 
 @keyframes pencil-float {
-  0%,
-  100% {
-    transform: translateY(-2px) rotate(-8deg);
-  }
-  50% {
-    transform: translateY(2px) rotate(8deg);
-  }
+  0%, 100% { transform: translateY(-2px) rotate(-8deg); }
+  50% { transform: translateY(2px) rotate(8deg); }
 }
 
 .pencil-float {
@@ -184,7 +575,10 @@ body {
   }
 }
 
-/* Dark mode base so the app stays readable. */
+/* ============================================================
+   Dark Mode
+   ============================================================ */
+
 .dark body {
   @apply bg-slate-900 text-slate-100;
 }
@@ -199,9 +593,10 @@ body {
   color: #94a3b8;
 }
 
-/* ===== Interactive map (Leaflet) ===== */
+/* ============================================================
+   Interactive Map (Leaflet)
+   ============================================================ */
 
-/* Constrain the Leaflet root so it fills its parent and never escapes the grid. */
 .ecms-map-box .leaflet-container {
   border-radius: 0.75rem;
   overflow: hidden;
@@ -212,12 +607,12 @@ body {
   font-size: 10px;
 }
 
-/* Custom single-pin marker (DivIcon) */
 .ecms-pin-wrap {
   background: transparent !important;
   border: none !important;
   transition: transform 0.2s ease;
 }
+
 .ecms-pin {
   position: relative;
   width: 30px;
@@ -225,10 +620,12 @@ body {
   filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.3));
   transition: transform 0.2s ease, filter 0.2s ease;
 }
+
 .ecms-pin-wrap:hover .ecms-pin {
   transform: scale(1.15) translateY(-2px);
   filter: drop-shadow(0 4px 8px rgba(79, 70, 229, 0.4));
 }
+
 .ecms-pin::before {
   content: '';
   position: absolute;
@@ -237,10 +634,11 @@ body {
   width: 26px;
   height: 34px;
   transform: translateX(-50%);
-  background: #4f46e5; /* brand-600 */
+  background: #4f46e5;
   clip-path: polygon(50% 0%, 100% 38%, 100% 100%, 0% 100%, 0% 38%);
   transition: background 0.2s ease;
 }
+
 .ecms-pin::after {
   content: '';
   position: absolute;
@@ -252,31 +650,36 @@ body {
   border-radius: 9999px;
   background: #ffffff;
 }
+
 .ecms-pin--active {
   transform: scale(1.2) translateY(-3px);
   filter: drop-shadow(0 4px 12px rgba(225, 29, 72, 0.5));
 }
+
 .ecms-pin--active::before {
-  background: #e11d48; /* rose-600 highlight for the focused center */
+  background: #e11d48;
 }
+
 .dark .ecms-pin::before {
-  background: #6366f1; /* brand-500 in dark mode */
+  background: #6366f1;
 }
+
 .dark .ecms-pin--active::before {
   background: #fb7185;
 }
+
 .dark .ecms-pin-wrap:hover .ecms-pin {
   filter: drop-shadow(0 4px 8px rgba(99, 102, 241, 0.4));
 }
 
-/* Center name label rendered below the pin */
 .ecms-pin-wrap {
   position: relative;
   z-index: 10;
 }
+
 .ecms-marker-label {
   position: absolute;
-  top: 40px; /* just below the 38px pin */
+  top: 40px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
@@ -299,7 +702,7 @@ body {
   transition: box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
   transform-origin: top center;
 }
-/* Small pointer connecting the label to the pin */
+
 .ecms-marker-label::before {
   content: '';
   position: absolute;
@@ -310,6 +713,7 @@ body {
   border-right: 6px solid transparent;
   border-bottom: 6px solid rgba(15, 23, 42, 0.14);
 }
+
 .ecms-marker-label::after {
   content: '';
   position: absolute;
@@ -320,73 +724,81 @@ body {
   border-right: 5px solid transparent;
   border-bottom: 5px solid #ffffff;
 }
+
 .ecms-pin-wrap:hover .ecms-marker-label {
   border-color: rgba(79, 70, 229, 0.4);
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.24);
 }
+
 .ecms-marker-label--active {
   border-color: #e11d48;
   box-shadow: 0 4px 16px rgba(225, 29, 72, 0.35);
   transform: translateX(-50%) scale(1.06);
   background: #fff5f5;
 }
+
 .ecms-marker-label--active::before {
   border-bottom-color: #e11d48;
 }
+
 .ecms-marker-label--active::after {
   border-bottom-color: #fff5f5;
 }
+
 .dark .ecms-marker-label--active {
   border-color: #fb7185;
   box-shadow: 0 4px 16px rgba(251, 113, 133, 0.35);
 }
 
-/* Leaflet popups */
 .ecms-map-box .leaflet-popup-content-wrapper {
   border-radius: 0.75rem;
   padding: 0;
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);
   overflow: hidden;
 }
+
 .ecms-map-box .leaflet-popup-content {
   margin: 12px;
   line-height: 1.4;
 }
+
 .ecms-map-box .leaflet-popup-tip {
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 }
 
-/* Popup card styles */
 .ecms-popup-card {
   font-family: inherit;
 }
 
-/* Center list custom scrollbar */
 .ecms-centers-list::-webkit-scrollbar {
   width: 6px;
 }
+
 .ecms-centers-list::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .ecms-centers-list::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 9999px;
 }
+
 .ecms-centers-list::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
 .dark .ecms-centers-list::-webkit-scrollbar-thumb {
   background: #475569;
 }
+
 .dark .ecms-centers-list::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
 
-/* Center card hover animation */
 .ecms-center-card {
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
+
 .ecms-center-card:hover {
   transform: translateY(-2px);
 }
-

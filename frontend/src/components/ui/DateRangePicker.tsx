@@ -90,7 +90,7 @@ export function DateRangePicker({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 z-50 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-4 min-w-[320px] md:min-w-[600px]">
+        <div className="absolute top-full start-0 mt-2 z-50 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-4 min-w-[320px] md:min-w-[600px]">
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => setCurrentMonth(prev => {

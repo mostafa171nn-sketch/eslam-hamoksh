@@ -274,7 +274,7 @@ export default function ProfilePage() {
                   <button
                     onClick={() => fileRef.current?.click()}
                     disabled={savingPhoto}
-                    className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 dark:hover:bg-slate-700/40 dark:bg-slate-800 disabled:opacity-50"
+                    className="absolute -bottom-1 -end-1 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 dark:hover:bg-slate-700/40 dark:bg-slate-800 disabled:opacity-50"
                     aria-label={t('changePhoto')}
                   >
                     <Camera className="h-4 w-4" />
