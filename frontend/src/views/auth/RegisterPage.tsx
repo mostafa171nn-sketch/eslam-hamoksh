@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AuthLayout } from '../../layouts/AuthLayout';
 import { StudentLoginShell } from '../../components/auth/StudentAuthShell';
-import { Input } from '../../components/ui/Input';
+import { FloatInput } from '../../components/auth/FloatInput';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { MultiSelect } from '../../components/ui/MultiSelect';
@@ -203,7 +203,7 @@ export default function RegisterPage() {
           </ul>
         )}
 
-        <Input
+        <FloatInput
           label={t('username')}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -211,13 +211,13 @@ export default function RegisterPage() {
           placeholder="john.doe"
           autoComplete="username"
         />
-        <Input
+        <FloatInput
           label={t('fullName')}
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           error={errors.fullName}
         />
-        <Input
+        <FloatInput
           label={t('emailOptional')}
           type="email"
           value={email}
@@ -226,7 +226,7 @@ export default function RegisterPage() {
           placeholder="you@example.com"
           autoComplete="email"
         />
-        <Input
+        <FloatInput
           label={t('password')}
           type="password"
           value={password}
@@ -234,7 +234,7 @@ export default function RegisterPage() {
           error={errors.password}
           autoComplete="new-password"
         />
-        <Input
+        <FloatInput
           label={t('confirmPassword')}
           type="password"
           value={confirmPassword}
@@ -256,7 +256,7 @@ export default function RegisterPage() {
           <>
             <MultiSelect label={t('subjects')} options={subjectOptions} selected={subjects} onChange={setSubjects} error={errors.subjects} />
             <MultiSelect label={t('grades')} options={gradeOptions} selected={grades} onChange={setGrades} error={errors.grades} />
-            <Input
+            <FloatInput
               label={t('yearsExperience')}
               type="number"
               min={0}
@@ -264,7 +264,7 @@ export default function RegisterPage() {
               onChange={(e) => setYearsExperience(e.target.value)}
               error={errors.yearsExperience}
             />
-            <Input
+            <FloatInput
               label={t('hourlyRate')}
               type="number"
               min={0}

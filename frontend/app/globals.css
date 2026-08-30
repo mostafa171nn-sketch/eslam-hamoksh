@@ -314,6 +314,29 @@
   background: rgba(11,17,30,0.95);
 }
 
+.float-label-group .float-label {
+  position: absolute;
+  start: 1rem;
+  top: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  pointer-events: none;
+  transition: transform 0.18s ease, font-size 0.18s ease, color 0.18s ease;
+  transform-origin: left top;
+  z-index: 10;
+}
+.float-label-group input:focus + .float-label,
+.float-label-group input:not(:placeholder-shown) + .float-label {
+  transform: translateY(-22px) scale(0.82);
+  color: #4f46e5;
+  font-weight: 500;
+}
+.dark .float-label-group input:focus + .float-label,
+.dark .float-label-group input:not(:placeholder-shown) + .float-label {
+  color: #818cf8;
+}
+
 /* ============================================================
    Scrollbar Styling
    ============================================================ */
