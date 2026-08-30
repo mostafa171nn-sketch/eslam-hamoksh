@@ -27,7 +27,7 @@ export function AuthLayout({
       {/* LEFT — abstract scientific identity, no book, no large card */}
       <aside
         aria-label="Brand identity"
-        className="relative z-10 flex w-full flex-col overflow-hidden lg:w-[52%] lg:items-stretch"
+        className="hidden lg:flex relative z-10 w-full flex-col overflow-hidden lg:w-[52%] lg:items-stretch"
       >
         {/* Deep ink with soft atmospheric glow */}
         <div aria-hidden className="absolute inset-0 bg-gradient-to-br from-[#060f22] via-[#0b1638] to-[#0d1638]" />
@@ -63,31 +63,10 @@ export function AuthLayout({
           </div>
         </div>
 
-        {/* Subtle abstract scientific pattern (not a book) */}
-        <div className="relative z-10 flex flex-1 items-center justify-center px-6 lg:px-12" aria-hidden>
-          <div className="relative w-full max-w-sm lg:max-w-md" style={{ perspective: '1000px' }}>
-            {/* Layered translucent geometric planes */}
-            <div className="relative h-48 lg:h-56 w-full" style={{ transformStyle: 'preserve-3d', transform: dir === 'rtl' ? 'rotateY(6deg) rotateX(4deg)' : 'rotateY(-6deg) rotateX(4deg)' }}>
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-brand-900/40 to-cyan-900/30 border border-white/10 backdrop-blur-sm shadow-2xl" />
-              <div className="absolute inset-4 rounded-2xl bg-gradient-to-br from-[#091a30]/60 to-[#060f22]/80 border border-white/5" />
-              {/* Thin orbital curves */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 200 160" preserveAspectRatio="none">
-                <ellipse cx="100" cy="80" rx="85" ry="55" fill="none" stroke="rgba(79,195,247,0.15)" strokeWidth="0.5" />
-                <ellipse cx="100" cy="80" rx="55" ry="35" fill="none" stroke="rgba(212,168,67,0.15)" strokeWidth="0.5" transform="rotate(15 100 80)" />
-                <circle cx="100" cy="80" r="3" fill="#f0c97a" opacity="0.9" />
-                <circle cx="65" cy="50" r="2" fill="#4fc3f7" opacity="0.7" />
-                <circle cx="135" cy="110" r="2" fill="#4fc3f7" opacity="0.7" />
-                <line x1="65" y1="50" x2="100" y2="80" stroke="#4fc3f7" strokeWidth="0.4" opacity="0.6" />
-                <line x1="135" y1="110" x2="100" y2="80" stroke="#4fc3f7" strokeWidth="0.4" opacity="0.6" />
-                <line x1="100" y1="80" x2="100" y2="30" stroke="#d4a843" strokeWidth="0.3" opacity="0.5" />
-                <text x="100" y="145" textAnchor="middle" fill="#94a3b8" fontSize="7" opacity="0.7" fontFamily="system-ui">Maarej — Education</text>
-              </svg>
-            </div>
+        <div className="relative z-10 px-6 pb-6 pl-6 lg:px-10 lg:pb-8">
+          <div className="text-[11px] font-medium uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            <span className="text-slate-400">معارج</span>
           </div>
-        </div>
-
-        <div className="relative z-10 px-6 pb-6 pl-6 lg:px-10 lg:pb-8 text-xs text-slate-500 tracking-widest uppercase">
-          <span className="text-slate-600">معارج</span> · Knowledge Platform
         </div>
       </aside>
 
