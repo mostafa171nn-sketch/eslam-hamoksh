@@ -1,4 +1,4 @@
-﻿import { useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { StatCard } from '../../components/ui/StatCard';
@@ -53,7 +53,7 @@ export default function ExamResultsPage() {
       </div>
 
       <Card className="mt-6">
-        <div className="overflow-x-auto">
+        <div className="tbl-surface tbl-scroll">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">

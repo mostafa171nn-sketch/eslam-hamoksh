@@ -1040,6 +1040,65 @@
   gradeOrderLabel: 'المستوى (الترتيب)',
   create: 'إنشاء',
 
+  // --- App shell (sidebar groups & controls) ---
+  navOverview: 'نظرة عامة',
+  navLearn: 'التعلّم',
+  navExplore: 'الاستكشاف',
+  navTeach: 'التدريس',
+  navManage: 'الإدارة',
+  navOperations: 'العمليات',
+  navSettings: 'الإعدادات',
+  collapseSidebar: 'طي القائمة الجانبية',
+  expandSidebar: 'توسيع القائمة الجانبية',
+  secureAppLabel: 'بيئة آمنة لتعليمك',
+
+  // --- Student dashboard (redesigned) ---
+  dashGreeting: 'أهلاً، {name}',
+  studentHeroSub: 'واصل مسيرتك — خطوة صغيرة اليوم تصنع فرقًا غدًا.',
+  focusLessonsToday: '{count} حصص اليوم',
+  studyStep: 'درس اليوم',
+  homeworkStep: 'واجب اليوم',
+  examStep: 'امتحانات قادمة',
+  focusPendingHomework: 'أنهِ واجباتك',
+  focusUpcomingExam: 'استعد لامتحانك',
+  dayStreak: 'أيام متواصلة',
+  exploreMore: 'استكشف المزيد',
+  resultsAvg: 'متوسط آخر النتائج',
+  openSchedule: 'عرض الجدول',
+  openHomework: 'اذهب إلى الواجبات',
+  openExams: 'اذهب إلى الامتحانات',
+  focusNext: 'خطوتك التالية',
+  learningPath: 'مسارك الدراسي',
+  resultsSub: 'أحدث نتائجك في الامتحانات.',
+
+  // --- Teacher dashboard (redesigned) ---
+  teacherHeroSub: 'يومك التدريسي يبدأ الآن — علّم، وقيّم، وتابع تقدم طلابك.',
+  classStep: 'حصص اليوم',
+  gradingStep: 'تصحيح الأعمال',
+  examPrepStep: 'الاستعداد للامتحانات',
+  focusTodayClasses: '{count} حصص اليوم',
+  openRoster: 'افتح قائمة الطلاب',
+  upNext: 'التالي',
+  studentRosterSub: 'قائمة طلابك وأحدث التقييمات.',
+  teacherRatingsSub: 'متوسط تقييم أهالي الطلاب لك.',
+
+  // --- Parent dashboard (redesigned) ---
+  parentHeroSub: 'تابع مسيرة أطفالك وكن قريبًا من تقدمهم يومًا بعد يوم.',
+  childCardHint: 'افتح لوحة المتابعة',
+  attendanceHint: 'متابعة حضور أطفالك.',
+  paymentHistory: 'سجل الدفعات والاشتراكات.',
+
+  // --- Admin dashboard (redesigned) ---
+  adminHeroSub: 'منصة تنبض بالحركة — أدر، واحتسب، واعتمد.',
+  adminUsersMix: 'توزيع المستخدمين',
+  adminStatusTitle: 'حالة المنصة',
+  adminOpsTitle: 'مهام اليوم',
+  usersMixStudents: 'طلاب',
+  usersMixTeachers: 'معلمون',
+  usersMixParents: 'أولياء الأمور',
+  totalUsersLabel: 'إجمالي المستخدمين',
+  adminRole: 'مسؤول',
+
   // --- Landing story ---
   homeWhyTitle: 'لماذا يختار الأهالي معارج؟',
   homeWhySub: 'منصة واحدة لاكتشاف المعلمين وحجز الحصص ومتابعة التقدم — للطلاب وأولياء الأمور والمعلمين.',

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
@@ -73,7 +73,7 @@ export default function AdminTeachersPage() {
 
         {!loading && data && (
           <>
-            <div className="overflow-x-auto">
+            <div className="tbl-surface tbl-scroll">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">

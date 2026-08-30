@@ -1,4 +1,4 @@
-﻿import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -86,7 +86,7 @@ export default function AdminReportsPage() {
     if (type === 'monthly-students' || type === 'subject-popularity') {
       const rows = data as { [k: string]: string | number }[];
       return (
-        <div className="overflow-x-auto">
+        <div className="tbl-surface tbl-scroll">
           <table className="w-full text-sm">
             <thead><tr className="border-b border-slate-200 dark:border-slate-700">{Object.keys(rows[0] ?? {}).map((k) => <th key={k} className={th}>{k.replace(/_/g, ' ')}</th>)}</tr></thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -103,7 +103,7 @@ export default function AdminReportsPage() {
     if (type === 'teacher-performance' || type === 'exam-performance') {
       const rows = data as Record<string, string | number>[];
       return (
-        <div className="overflow-x-auto">
+        <div className="tbl-surface tbl-scroll">
           <table className="w-full text-sm">
             <thead><tr className="border-b border-slate-200 dark:border-slate-700">{Object.keys(rows[0] ?? {}).map((k) => <th key={k} className={th}>{k.replace(/_/g, ' ')}</th>)}</tr></thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -146,7 +146,7 @@ export default function AdminReportsPage() {
               </div>
             </div>
           </div>
-          <div className="overflow-x-auto">
+          <div className="tbl-surface tbl-scroll">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-slate-200 dark:border-slate-700"><th className={th}>{t('date')}</th><th className={th}>{t('time')}</th><th className={th}>{t('status')}</th></tr></thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700">

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { CalendarPlus } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
@@ -43,7 +43,7 @@ export default function TeacherStudentsPage() {
       {!loading && data && (
         <>
           <Card>
-            <div className="overflow-x-auto">
+            <div className="tbl-surface tbl-scroll">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">

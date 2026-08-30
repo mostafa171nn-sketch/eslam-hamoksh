@@ -1043,6 +1043,65 @@ export const en: Dict = {
   gradeOrderLabel: 'Level (order)',
   create: 'Create',
 
+  // --- App shell (sidebar groups & controls) ---
+  navOverview: 'Overview',
+  navLearn: 'Learning',
+  navExplore: 'Explore',
+  navTeach: 'Teaching',
+  navManage: 'Management',
+  navOperations: 'Operations',
+  navSettings: 'Settings',
+  collapseSidebar: 'Collapse sidebar',
+  expandSidebar: 'Expand sidebar',
+  secureAppLabel: 'Secure environment for your learning',
+
+  // --- Student dashboard (redesigned) ---
+  dashGreeting: 'Hi, {name}',
+  studentHeroSub: 'Keep the momentum — small steps today, big leaps tomorrow.',
+  focusLessonsToday: '{count} lessons today',
+  studyStep: "Today's lesson",
+  homeworkStep: "Today's homework",
+  examStep: 'Upcoming exams',
+  focusPendingHomework: 'Finish your homework',
+  focusUpcomingExam: 'Prep for your exam',
+  dayStreak: 'Day streak',
+  exploreMore: 'Explore more',
+  resultsAvg: 'Recent results average',
+  openSchedule: 'Open schedule',
+  openHomework: 'Go to homework',
+  openExams: 'Go to exams',
+  focusNext: 'Your next step',
+  learningPath: 'Your study path',
+  resultsSub: 'Your latest exam results.',
+
+  // --- Teacher dashboard (redesigned) ---
+  teacherHeroSub: 'Your teaching day starts now — teach, grade, and track your students.',
+  classStep: "Today's classes",
+  gradingStep: 'Grading',
+  examPrepStep: 'Exam prep',
+  focusTodayClasses: '{count} classes today',
+  openRoster: 'Open roster',
+  upNext: 'Up next',
+  studentRosterSub: 'Your class roster and recent ratings.',
+  teacherRatingsSub: "Average rating from your students' parents.",
+
+  // --- Parent dashboard (redesigned) ---
+  parentHeroSub: 'Follow your children’s journey and stay close to their progress every day.',
+  childCardHint: 'Open tracking dashboard',
+  attendanceHint: 'Track your children’s attendance.',
+  paymentHistory: 'Payment history & subscriptions.',
+
+  // --- Admin dashboard (redesigned) ---
+  adminHeroSub: 'A platform in motion — manage, review, and approve.',
+  adminUsersMix: 'User mix',
+  adminStatusTitle: 'Platform status',
+  adminOpsTitle: "Today's ops",
+  usersMixStudents: 'Students',
+  usersMixTeachers: 'Teachers',
+  usersMixParents: 'Parents',
+  totalUsersLabel: 'Total users',
+  adminRole: 'Admin',
+
   // --- Landing story ---
   homeWhyTitle: 'Why families choose Maarej',
   homeWhySub: 'One platform to discover teachers, book lessons and follow progress — for students, parents and educators.',

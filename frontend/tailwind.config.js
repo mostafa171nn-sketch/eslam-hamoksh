@@ -47,8 +47,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'Noto Sans Arabic', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Inter', 'Noto Sans Arabic', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['var(--font-inter)', 'var(--font-noto-arabic)', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        display: ['var(--font-inter)', 'var(--font-noto-arabic)', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       borderRadius: {

@@ -85,13 +85,15 @@ export function BottomNav() {
             <Link
               key={item.to}
               href={item.to}
-              className={`flex min-w-0 flex-1 flex-col items-center gap-1 px-1 py-2.5 text-current transition-colors duration-150 ${
-                active ? 'text-brand-600 dark:text-brand-300' : 'text-slate-400 dark:text-slate-500'
+              className={`flex min-w-0 flex-1 flex-col items-center gap-1 px-1 py-2.5 transition-colors duration-150 ${
+                active ? 'text-brand-700 dark:text-brand-300' : 'text-slate-400 dark:text-slate-500'
               }`}
             >
               <span
                 className={`flex h-7 w-12 items-center justify-center rounded-full transition-all duration-200 ${
-                  active ? 'bg-brand-100 dark:bg-brand-500/15' : 'bg-transparent'
+                  active
+                    ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-brand'
+                    : 'bg-transparent'
                 }`}
               >
                 <Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2.2 : 1.8} />

@@ -8,6 +8,8 @@ import { Topbar } from '../../src/components/layout/Topbar';
 import { BottomNav } from '../../src/components/layout/BottomNav';
 import { PageBackButton } from '../../src/components/layout/PageBackButton';
 
+const SIDEBAR_STORAGE_KEY = 'maarech-sidebar';
+
 const NO_BACK = new Set([
   '/student',
   '/teacher',
@@ -30,16 +32,44 @@ function fallbackFor(pathname: string): string {
   return '/' + parts.join('/');
 }
 
+function initialCollapsed(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
   const pathname = usePathname();
   const showBack = pathname ? !NO_BACK.has(pathname) : false;
 
+  const toggleCollapse = () => {
+    setCollapsed((c) => {
+      const next = !c;
+      try {
+        window.localStorage.setItem(SIDEBAR_STORAGE_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-900">
-      <Sidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="lg:ps-64">
-        <Topbar onOpenSidebar={() => setSidebarOpen(true)} />
+      <div aria-hidden className="pointer-events-none fixed inset-x-0 top-0 z-0 h-64 bg-gradient-to-b from-brand-100/40 via-transparent to-transparent dark:from-brand-950/20" />
+      <Sidebar
+        mobileOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        collapsed={collapsed}
+        onToggleCollapse={toggleCollapse}
+      />
+      <div className={`relative transition-[padding-inline-start] duration-300 ease-out-expo ${collapsed ? 'lg:ps-20' : 'lg:ps-64'}`}>
+        <Topbar onOpenSidebar={() => setSidebarOpen(true)} collapsed={collapsed} />
         <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:pb-8">
           <div className="pb-24 lg:pb-0">
             {showBack && (
@@ -47,7 +77,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 <PageBackButton fallback={fallbackFor(pathname ?? '/')} />
               </div>
             )}
-            <div className="animate-fade-in">
+            <div key={pathname} className="animate-fade-in">
               {children}
             </div>
           </div>

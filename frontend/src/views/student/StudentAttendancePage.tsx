@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { ClipboardCheck } from 'lucide-react';
@@ -78,7 +78,7 @@ export default function StudentAttendancePage() {
             />
           ) : (
             <Card>
-              <div className="overflow-x-auto">
+              <div className="tbl-surface tbl-scroll">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-700 text-start text-xs uppercase tracking-wide text-slate-400">

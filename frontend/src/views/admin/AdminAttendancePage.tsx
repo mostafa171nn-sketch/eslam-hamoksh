@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScanLine, TrendingDown } from 'lucide-react';
@@ -170,7 +170,7 @@ export default function AdminAttendancePage() {
         {error && <Alert message={error} className="m-4" />}
         {loading && (initialLoading ? <PencilLoader label={t('loadingRecords')} /> : <PencilLoader size="sm" label={t('loadingRecords')} />)}
         {!loading && (
-          <div className="overflow-x-auto p-2">
+          <div className="tbl-surface tbl-scroll p-2">
             {data.length === 0 ? (
               <p className="py-8 text-center text-sm text-slate-400">{t('noAttendanceFound')}</p>
             ) : (
