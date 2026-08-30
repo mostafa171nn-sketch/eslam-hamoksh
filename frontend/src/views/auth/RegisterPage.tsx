@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AuthLayout } from '../../layouts/AuthLayout';
+import { StudentLoginShell } from '../../components/auth/StudentAuthShell';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
@@ -31,6 +32,7 @@ export default function RegisterPage() {
   // the user lands directly on the normal registration flow instead of a
   // "Choose an account type" chooser. Specific routes stay as-is.
   const effectiveRole = role || 'parent';
+  const Shell = (effectiveRole === 'student' || effectiveRole === 'teacher' || effectiveRole === 'parent') ? StudentLoginShell : AuthLayout;
   const validRole: RegisterRole | null =
     effectiveRole === 'teacher' || effectiveRole === 'student' || effectiveRole === 'parent'
       ? effectiveRole
@@ -165,7 +167,7 @@ export default function RegisterPage() {
 
   if (isCenter) {
     return (
-      <AuthLayout title={t('registerCenter')} subtitle={t('registerCenterSubtitle')}>
+      <Shell title={t('registerCenter')} subtitle={t('registerCenterSubtitle')}>
         <div className="space-y-4 text-center">
           <p className="text-sm text-slate-500 dark:text-slate-400">{t('centerOwnersNote')}</p>
           <Link
@@ -178,7 +180,7 @@ export default function RegisterPage() {
             ? {t('back')}
           </Link>
         </div>
-      </AuthLayout>
+      </Shell>
     );
   }
 
@@ -190,7 +192,7 @@ export default function RegisterPage() {
   const gradeOptions = gradesList.map((g) => ({ value: g.id, label: g.name }));
 
   return (
-    <AuthLayout title={`${t('register')} – ${t(renderRole)}`} subtitle={t('registerSubtitle')}>
+    <Shell title={`${t('register')} – ${t(renderRole)}`} subtitle={t('registerSubtitle')}>
       <form onSubmit={submit} className="space-y-4">
         {serverError && <InlineError message={serverError} />}
         {serverDetails.length > 0 && (
@@ -298,6 +300,6 @@ export default function RegisterPage() {
           {t('login')}
         </Link>
       </p>
-    </AuthLayout>
+    </Shell>
   );
 }
