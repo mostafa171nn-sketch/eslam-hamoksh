@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { AuthLayout } from '../../layouts/AuthLayout';
+import { StudentLoginShell } from '../../components/auth/StudentAuthShell';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { InlineError } from '../../components/ui/ErrorAlert';
@@ -45,8 +45,8 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthLayout title={t('login')} subtitle={t('enterCredentials')}>
-      <form onSubmit={submit} className="space-y-4">
+      <StudentLoginShell title={t('login')} subtitle={t('enterCredentials')} back={true} flipTo="/register/student" flipLabel={t('register')}>
+        <form onSubmit={submit} className="space-y-4">
         <InlineError message={serverError} />
         <Input
           label={t('username')}
@@ -102,6 +102,6 @@ export default function LoginPage() {
           {t('testAccountsNote')}
         </p>
       )}
-    </AuthLayout>
+    </StudentLoginShell>
   );
 }
