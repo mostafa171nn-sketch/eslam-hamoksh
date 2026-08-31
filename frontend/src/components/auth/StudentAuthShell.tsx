@@ -13,6 +13,8 @@ export interface StudentLoginShellProps {
   back?: boolean | string;
   flipTo?: string;
   flipLabel?: string;
+  /** Show flashlight+eyes decorative visual underneath "Built for modern learning". Only for /login. */
+  showVisual?: boolean;
 }
 
 export function StudentLoginShell({
@@ -22,6 +24,7 @@ export function StudentLoginShell({
   back = true,
   flipTo,
   flipLabel,
+  showVisual = false,
 }: StudentLoginShellProps) {
   const { t, dir } = useT();
   return (
@@ -66,6 +69,14 @@ export function StudentLoginShell({
               {t('authTaglineBadge')}
             </div>
           </div>
+          {/* Decorative visual — scoped .container flashlight+eyes underneath "Built for modern learning" — login only */}
+          {showVisual && (
+            <div className="login-hero-visual" aria-hidden="true">
+              <div className="login-visual-wrapper">
+                <div className="container"></div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="relative z-10 mt-auto px-10 pb-8 pt-6">

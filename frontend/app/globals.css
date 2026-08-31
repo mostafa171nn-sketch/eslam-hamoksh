@@ -1077,6 +1077,182 @@ body {
   }
 }
 
+/* ============================================================
+   Login hero decorative visual — .container flashlight + eyes
+   Scoped to .login-hero-visual to avoid overwriting Tailwind's
+   global .container utility. Visual uses exact HTML:
+   <div class="container"></div>
+   and exact selectors/CSS contract:
+   .container, .container:before, .container:after,
+   @keyframes flashlight, @keyframes eyes
+   but scoped under .login-hero-visual for safety so other pages
+   and Tailwind's container are never affected. A .login-visual-container
+   alias is also provided with identical behavior if the global
+   .container clash is detected.
+   - Decorative only, underneath "Built for modern learning"
+   - Not a loader, not blocking (pointer-events:none)
+   - Stays inside left/hero, centered, responsive, no overflow
+   ============================================================ */
+.login-hero-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 1.75rem;
+  margin-inline: auto;
+  box-sizing: border-box;
+  pointer-events: none;
+  overflow: hidden;
+  min-width: 0;
+}
+.login-hero-visual .login-visual-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+/* Scoped .container — preserves exact visual/animation contract */
+.login-hero-visual .container,
+.login-visual-container {
+  position: relative;
+  display: block;
+  width: min(280px, 82vw);
+  max-width: 100%;
+  height: clamp(110px, 14vw, 148px);
+  box-sizing: border-box;
+  border-radius: 18px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background:
+    radial-gradient(ellipse 420px 180px at 50% -15%, rgba(99,102,241,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 300px 140px at 30% 105%, rgba(56,189,248,0.12) 0%, transparent 65%),
+    radial-gradient(ellipse 220px 120px at 85% 30%, rgba(245,158,11,0.08) 0%, transparent 60%),
+    linear-gradient(180deg, #0e1b36 0%, #0a1430 28%, #060f22 62%, #040a1e 100%);
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    inset 0 -1px 0 rgba(0,0,0,0.35),
+    0 10px 28px rgba(2,8,20,0.45),
+    0 4px 10px rgba(2,8,20,0.35);
+  pointer-events: none;
+}
+
+.login-hero-visual .container::before,
+.login-visual-container::before {
+  content: "";
+  position: absolute;
+  inset: -22% -34%;
+  background:
+    radial-gradient(ellipse 120px 110px at 42% 52%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.06) 18%, transparent 58%),
+    conic-gradient(from -12deg at 50% 102%, transparent 0deg, rgba(255,244,180,0.00) 8deg, rgba(255,244,180,0.21) 14deg, rgba(255,248,190,0.34) 17deg, rgba(255,244,180,0.20) 20deg, transparent 26deg, transparent 360deg),
+    radial-gradient(ellipse 240px 90px at 50% 112%, rgba(99,102,241,0.22) 0%, rgba(56,189,248,0.14) 32%, transparent 72%),
+    radial-gradient(ellipse 180px 60px at 50% 40%, rgba(255,255,255,0.06) 0%, transparent 70%);
+  filter: blur(0.15px) saturate(1.05);
+  animation: flashlight 3.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  transform-origin: 50% 102%;
+  pointer-events: none;
+  will-change: transform, opacity;
+  box-sizing: border-box;
+}
+
+.login-hero-visual .container::after,
+.login-visual-container::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 49%;
+  width: 78px;
+  height: 26px;
+  transform: translate(-50%, -50%);
+  background:
+    radial-gradient(circle 10px at 18px 13px, #ffffff 0 4.2px, #f8fafc 4.3px 5px, #0f172a 5.1px 7.8px, #0ea5e9 7.9px 9.2px, #38bdf8 9.3px 10px, transparent 10.5px),
+    radial-gradient(circle 10px at 60px 13px, #ffffff 0 4.2px, #f8fafc 4.3px 5px, #0f172a 5.1px 7.8px, #0ea5e9 7.9px 9.2px, #38bdf8 9.3px 10px, transparent 10.5px),
+    radial-gradient(ellipse 74px 22px at 50% 50%, rgba(255,255,255,0.96) 0% 18%, rgba(248,250,252,0.94) 45%, rgba(226,232,240,0.92) 100%);
+  background-repeat: no-repeat;
+  border-radius: 9999px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.12),
+    0 1px 3px rgba(2,8,20,0.45),
+    0 0 10px rgba(56,189,248,0.55),
+    0 0 22px rgba(99,102,241,0.32),
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    inset 0 -2px 4px rgba(15,23,42,0.08);
+  animation: eyes 3.6s ease-in-out infinite;
+  pointer-events: none;
+  will-change: transform, opacity;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
+  .login-hero-visual { margin-top: 1.25rem; }
+  .login-hero-visual .container,
+  .login-visual-container {
+    width: min(260px, 78vw);
+    height: clamp(100px, 18vw, 132px);
+    border-radius: 16px;
+  }
+}
+@media (max-width: 640px) {
+  .login-hero-visual { margin-top: 1rem; }
+  .login-hero-visual .container,
+  .login-visual-container {
+    width: min(240px, 88vw);
+    height: clamp(92px, 24vw, 118px);
+  }
+  .login-hero-visual .container::after,
+  .login-visual-container::after {
+    width: 70px;
+    height: 24px;
+    background:
+      radial-gradient(circle 9px at 16px 12px, #ffffff 0 3.8px, #f8fafc 3.9px 4.6px, #0f172a 4.7px 7.2px, #0ea5e9 7.3px 8.6px, #38bdf8 8.7px 9px, transparent 9.5px),
+      radial-gradient(circle 9px at 54px 12px, #ffffff 0 3.8px, #f8fafc 3.9px 4.6px, #0f172a 4.7px 7.2px, #0ea5e9 7.3px 8.6px, #38bdf8 8.7px 9px, transparent 9.5px),
+      radial-gradient(ellipse 66px 20px at 50% 50%, rgba(255,255,255,0.96) 0% 18%, rgba(248,250,252,0.94) 45%, rgba(226,232,240,0.92) 100%);
+  }
+}
+
+@keyframes flashlight {
+  0% { transform: rotate(-18deg) translateX(-6%) translateY(0%); opacity: 0.92; }
+  12% { transform: rotate(-16deg) translateX(-4%) translateY(1%); opacity: 0.95; }
+  25% { transform: rotate(14deg) translateX(4%) translateY(0%); opacity: 1; }
+  35% { transform: rotate(8deg) translateX(2%) translateY(-1%); opacity: 0.97; }
+  40% { transform: rotate(-8deg) translateX(-2%) translateY(0%); opacity: 0.94; }
+  48% { transform: rotate(-10deg) translateX(-3%) translateY(1%); opacity: 0.92; }
+  55% { transform: rotate(10deg) translateX(3%) translateY(0%); opacity: 0.98; }
+  62% { transform: rotate(6deg) translateX(1.5%) translateY(-0.5%); opacity: 0.96; }
+  70% { transform: rotate(-12deg) translateX(-4%) translateY(0%); opacity: 0.93; }
+  78% { transform: rotate(-4deg) translateX(-1%) translateY(0.5%); opacity: 0.95; }
+  85% { transform: rotate(6deg) translateX(2%) translateY(0%); opacity: 0.97; }
+  92% { transform: rotate(-14deg) translateX(-5%) translateY(1%); opacity: 0.94; }
+  100% { transform: rotate(-18deg) translateX(-6%) translateY(0%); opacity: 0.92; }
+}
+
+@keyframes eyes {
+  0%, 7%, 46%, 48%, 100% { transform: translate(-50%, -50%) scaleY(1) translateX(0); opacity: 1; }
+  8%, 9.5% { transform: translate(-50%, -50%) scaleY(0.10) translateX(0); opacity: 0.92; }
+  46.5%, 47.2% { transform: translate(-50%, -50%) scaleY(0.10) translateX(0); opacity: 0.92; }
+  22% { transform: translate(-50%, -52%) scaleY(1) translateX(-1.5px); }
+  28% { transform: translate(-50%, -52%) scaleY(1) translateX(-1.5px); }
+  52% { transform: translate(-50%, -48%) scaleY(1) translateX(2px); }
+  58% { transform: translate(-50%, -48%) scaleY(1) translateX(2px); }
+  65% { transform: translate(-50%, -50%) scaleY(1) translateX(0.5px); }
+  75% { transform: translate(-50%, -50%) scaleY(1) translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-hero-visual .container::before,
+  .login-visual-container::before,
+  .login-hero-visual .container::after,
+  .login-visual-container::after {
+    animation: none !important;
+  }
+}
+
 /* Prevent any flex/grid child from forcing overflow */
 .min-w-0 {
   min-width: 0;
