@@ -45,7 +45,7 @@ export default function LoginPage() {
   };
 
   return (
-      <StudentLoginShell title={t('login')} subtitle={t('enterCredentials')} back={true} flipTo="/register/student" flipLabel={t('register')} showVisual>
+      <StudentLoginShell title={t('login')} subtitle={t('enterCredentials')} back={true} flipTo="/register/student" flipLabel={t('register')}>
         <form onSubmit={submit} className="space-y-4">
         <InlineError message={serverError} />
         <Input
