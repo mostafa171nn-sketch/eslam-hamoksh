@@ -21,8 +21,6 @@ import {
   ScanLine,
   BarChart3,
   TrendingUp,
-  Star,
-  Phone,
 } from 'lucide-react';
 import { PublicNav } from '@/src/components/layout/PublicNav';
 import { Input } from '@/src/components/ui/Input';
@@ -507,39 +505,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-200/70 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
-            <div className="max-w-sm">
-              <Link href="/" className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 shadow-brand">
-                  <BookOpen className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">{t('appName')}</span>
-              </Link>
-              <p className="mt-3 text-sm leading-relaxed text-slate-500 dark:text-slate-400">{t('homeFooterTagline')}</p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-slate-600 dark:text-slate-300">
-              <Link href="/centers" className="transition-colors hover:text-brand-600 dark:hover:text-brand-400">{t('centers')}</Link>
-              <Link href="/teachers" className="transition-colors hover:text-brand-600 dark:hover:text-brand-400">{t('browseTeachers')}</Link>
-              <Link href="/packages" className="transition-colors hover:text-brand-600 dark:hover:text-brand-400">{t('packagesNav')}</Link>
-              <Link href="/login" className="transition-colors hover:text-brand-600 dark:hover:text-brand-400">{t('login')}</Link>
-            </div>
-          </div>
-
-          <div className="mt-10 flex flex-col items-start justify-between gap-3 border-t border-slate-200/70 pt-6 text-xs text-slate-400 sm:flex-row sm:items-center dark:border-slate-800 dark:text-slate-500">
-            <span>© {new Date().getFullYear()} {t('appName')}. {t('rightsReserved')}</span>
-            <span className="inline-flex items-center gap-1.5">
-              <Star className="h-3.5 w-3.5 text-gold-400" />
-              <Phone className="h-3 w-3.5" />
-              {t('browseTeachers')} · {t('centers')}
-            </span>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

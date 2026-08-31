@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { Inter, Noto_Sans_Arabic } from 'next/font/google';
 import './globals.css';
 import { AppProviders } from '../src/components/AppProviders';
+import { ConditionalFooter } from '../src/components/layout/ConditionalFooter';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -54,8 +55,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-[100dvh] bg-slate-50 font-sans text-slate-900 antialiased dark:bg-slate-900 dark:text-slate-100">
-        <AppProviders>{children}</AppProviders>
+      <body className="flex min-h-[100dvh] flex-col bg-slate-50 font-sans text-slate-900 antialiased dark:bg-slate-900 dark:text-slate-100">
+        <AppProviders>
+          <div className="flex-1">{children}</div>
+          <ConditionalFooter />
+        </AppProviders>
       </body>
     </html>
   );
