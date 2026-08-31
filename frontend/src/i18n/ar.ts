@@ -1127,17 +1127,12 @@
   heroChipLessons: 'حصص وواجبات',
   heroChipLive: 'متابعة الحضور',
   heroChipResults: 'نتائج وتقارير',
-  homeFooterTagline: 'طريق أذكى للعائلات والمعلمين ليتعلّموا معًا.',
   rightsReserved: 'جميع الحقوق محفوظة.',
   mainNavigation: 'التنقل الرئيسي',
 
   // --- Footer (premium) ---
   footerTagline: 'التعلم يربط الجميع.',
   footerSub: 'منصة تعليمية متكاملة للمعلمين والطلاب وأولياء الأمور.',
-  footerCtaTitle: 'يبدأ التعلم بالتواصل الصحيح.',
-  footerCtaSub: 'معارج تجمع المعلمين والطلاب وأولياء الأمور في منصة تعليمية واحدة.',
-  footerGetStarted: 'ابدأ الآن',
-  footerExplore: 'استكشف معارج',
   footerPlatformTitle: 'المنصة',
   footerCompanyTitle: 'الشركة',
   footerSupportTitle: 'الدعم',
@@ -1162,10 +1157,7 @@
   footerSocialInstagram: 'إنستغرام',
   footerSocialLinkedin: 'لينكدإن',
   footerSocialYoutube: 'يوتيوب',
-  footerHeartLabel: 'رسم معارج للتواصل: المعلمون والطلاب متحدون في التعلم',
   footerEducationLabel: 'معارج — التعليم',
-  footerTeacherStudent: 'المعلم ↔ الطالب',
-  footerParentLabel: 'ولي الأمر',
 } as const;
 
 export type Dict = Record<keyof typeof ar, string>;

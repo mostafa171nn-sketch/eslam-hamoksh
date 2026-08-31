@@ -1130,17 +1130,12 @@ export const en: Dict = {
   heroChipLessons: 'Lessons & homework',
   heroChipLive: 'Live attendance',
   heroChipResults: 'Results & reports',
-  homeFooterTagline: 'A smarter way for families and educators to learn together.',
   rightsReserved: 'All rights reserved.',
   mainNavigation: 'Main navigation',
 
   // --- Footer (premium) ---
   footerTagline: 'Learning connects everyone.',
   footerSub: 'A complete educational center platform for teachers, students and parents.',
-  footerCtaTitle: 'Learning starts with the right connection.',
-  footerCtaSub: 'Maarej brings teachers, students and parents together in one educational platform.',
-  footerGetStarted: 'Get Started',
-  footerExplore: 'Explore Maarej',
   footerPlatformTitle: 'Platform',
   footerCompanyTitle: 'Company',
   footerSupportTitle: 'Support',
@@ -1165,8 +1160,5 @@ export const en: Dict = {
   footerSocialInstagram: 'Instagram',
   footerSocialLinkedin: 'LinkedIn',
   footerSocialYoutube: 'YouTube',
-  footerHeartLabel: 'Maarej connection graphic: teachers and students united in learning',
   footerEducationLabel: 'MAAREJ — EDUCATION',
-  footerTeacherStudent: 'Teacher ↔ Student',
-  footerParentLabel: 'Parent',
 };
