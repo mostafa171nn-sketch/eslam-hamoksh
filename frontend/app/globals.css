@@ -1059,14 +1059,21 @@ body {
   }
 }
 
-/* Mobile: ensure no fixed 100dvh cuts off form, allow normal page scroll */
+/* Mobile: registration pages must have normal document vertical scrolling */
 @media (max-width: 1023px) {
-  /* Outer should not be fixed height on mobile — allow natural height */
-  .auth-mobile-scroll-fix {
-    min-height: 100dvh;
+  html {
     height: auto;
+    min-height: 100%;
     max-height: none;
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
+  body {
+    height: auto;
+    min-height: 100dvh;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: visible;
   }
 }
 

@@ -26,7 +26,7 @@ export function StudentLoginShell({
   const { t, dir } = useT();
   return (
     <div
-      className={`relative flex min-h-[100dvh] w-full max-w-full flex-col overflow-x-hidden bg-[#060f22] text-slate-900 [box-sizing:border-box] dark:text-white lg:h-[100dvh] lg:max-h-[100dvh] lg:min-h-[100dvh] lg:flex-row lg:overflow-hidden ${dir === 'rtl' ? 'rtl' : 'ltr'}`}
+      className={`relative flex h-auto max-h-none min-h-[100dvh] w-full max-w-full flex-col overflow-x-hidden overflow-y-visible bg-[#060f22] text-slate-900 [box-sizing:border-box] dark:text-white lg:h-[100dvh] lg:max-h-[100dvh] lg:min-h-[100dvh] lg:flex-row lg:overflow-hidden ${dir === 'rtl' ? 'rtl' : 'ltr'}`}
       style={{ boxSizing: 'border-box' }}
     >
       {/* LEFT — subtle abstract scientific identity */}
@@ -78,8 +78,8 @@ export function StudentLoginShell({
 
       {/* RIGHT — clean premium form */}
       <main
-        className="relative z-10 box-border flex w-full max-w-full min-w-0 flex-col items-stretch justify-start overflow-x-hidden bg-[#f8f7f0] px-5 py-8 sm:px-6 sm:py-10 lg:min-h-[100dvh] lg:h-[100dvh] lg:max-h-[100dvh] lg:flex-1 lg:w-auto lg:items-center lg:justify-start lg:overflow-y-auto lg:overflow-x-hidden lg:px-8 lg:py-10 xl:px-10 dark:bg-[#0b1122]"
-        style={{ overscrollBehavior: 'contain', boxSizing: 'border-box', scrollbarGutter: 'stable' } as React.CSSProperties}
+        className="relative z-10 box-border flex h-auto max-h-none w-full max-w-full min-w-0 flex-col items-stretch justify-start overflow-x-hidden overflow-y-visible bg-[#f8f7f0] px-5 py-8 sm:px-6 sm:py-10 lg:min-h-[100dvh] lg:h-[100dvh] lg:max-h-[100dvh] lg:flex-1 lg:w-auto lg:items-center lg:justify-start lg:overflow-y-auto lg:overflow-x-hidden lg:px-8 lg:py-10 xl:px-10 dark:bg-[#0b1122] lg:[overscroll-behavior:contain] lg:[scrollbar-gutter:stable]"
+        style={{ boxSizing: 'border-box' }}
       >
         <div aria-hidden className="pointer-events-none absolute -start-10 -top-10 h-56 w-56 rounded-full bg-brand-200/30 blur-3xl dark:bg-brand-900/20" />
 
