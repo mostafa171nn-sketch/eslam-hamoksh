@@ -24,8 +24,7 @@ export function RegisterShell({
   const { t, dir } = useT();
   return (
     <div
-      className={`relative flex h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-gradient-to-b from-[#fcfcf9] to-[#f5f3ee] text-slate-900 lg:flex-row ${dir === 'rtl' ? 'rtl' : 'ltr'} dark:bg-gradient-to-b dark:from-[#0b1122] dark:to-[#060f22] dark:text-slate-100`}
-      style={{ overflowY: 'hidden' }}
+      className={`relative flex min-h-[100dvh] w-full overflow-x-hidden bg-gradient-to-b from-[#fcfcf9] to-[#f5f3ee] text-slate-900 lg:flex-row ${dir === 'rtl' ? 'rtl' : 'ltr'} dark:bg-gradient-to-b dark:from-[#0b1122] dark:to-[#060f22] dark:text-slate-100`}
     >
       {/* Subtle abstract left visual — very restrained */}
       <aside
@@ -68,7 +67,7 @@ export function RegisterShell({
 
       {/* RIGHT — premium registration form */}
       <main
-        className="relative z-10 flex w-full flex-col justify-start overflow-y-auto bg-[#f8f7f0] px-6 py-8 lg:w-[58%] lg:items-center lg:justify-center lg:px-14 lg:py-10 dark:bg-[#0b1122]"
+        className="relative z-10 flex w-full flex-col justify-start overflow-y-auto overflow-x-hidden bg-[#f8f7f0] px-5 py-8 sm:px-6 lg:w-[58%] lg:items-center lg:justify-center lg:px-14 lg:py-10 dark:bg-[#0b1122]"
         style={{ overscrollBehavior: 'contain' }}
       >
         <div aria-hidden className="pointer-events-none absolute -end-16 -top-16 h-72 w-72 rounded-full bg-brand-200/30 blur-3xl dark:bg-brand-900/20" />

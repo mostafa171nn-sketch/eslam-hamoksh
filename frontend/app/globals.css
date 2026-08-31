@@ -328,13 +328,13 @@
   transition: transform 0.18s ease, font-size 0.18s ease, color 0.18s ease;
   transform-origin: left top;
   z-index: 10;
-  background: rgba(248,247,240,0.95);
+  background: white;
   padding-inline: 0.25rem;
   border-radius: 0.25rem;
 }
 .dark .float-label-group .float-label {
   color: #94a3b8;
-  background: rgba(11,17,30,0.95);
+  background: #0f172a;
 }
 .float-label-group input {
   padding-top: 1.75rem !important;
@@ -346,13 +346,14 @@
   transform: translateY(-22px) scale(0.82);
   color: #4f46e5;
   font-weight: 500;
-  background: rgba(248, 247, 240, 0.95);
+  background: white;
 }
 .dark .float-label-group input:focus ~ .float-label,
 .dark .float-label-group input:not(:placeholder-shown) ~ .float-label,
 .dark .float-label-group.is-floating .float-label {
+  transform: translateY(-22px) scale(0.82);
   color: #818cf8;
-  background: rgba(11, 17, 30, 0.95);
+  background: #0f172a;
 }
 .float-label-group input:focus {
   border-color: #4f46e5 !important;
@@ -366,6 +367,13 @@
 @layer base {
   html {
     scrollbar-gutter: stable;
+  }
+
+  /* Disable scrollbar reservation on small screens to reclaim width */
+  @media (max-width: 639px) {
+    html {
+      scrollbar-gutter: auto;
+    }
   }
 
   /* Webkit scrollbar */
@@ -1015,4 +1023,4 @@ body {
 
 .ecms-center-card:hover {
   transform: translateY(-2px);
-}\n
+}

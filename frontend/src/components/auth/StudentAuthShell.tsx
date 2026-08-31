@@ -76,7 +76,7 @@ export function StudentLoginShell({
 
       {/* RIGHT — clean premium form */}
       <main
-        className="relative z-10 flex w-full flex-col items-start justify-start overflow-y-auto bg-[#f8f7f0] px-6 py-10 lg:w-[45%] lg:items-start lg:justify-start lg:px-10 lg:py-10 dark:bg-[#0b1122]"
+        className="relative z-10 flex w-full flex-col items-start justify-start overflow-y-auto overflow-x-hidden bg-[#f8f7f0] px-5 py-8 sm:px-6 sm:py-10 lg:w-[45%] lg:items-start lg:justify-start lg:px-10 lg:py-10 dark:bg-[#0b1122]"
         style={{ overscrollBehavior: 'contain' }}
       >
         <div aria-hidden className="pointer-events-none absolute -start-10 -top-10 h-56 w-56 rounded-full bg-brand-200/30 blur-3xl dark:bg-brand-900/20" />
@@ -100,7 +100,7 @@ export function StudentLoginShell({
           </div>
 
           {/* Form surface */}
-          <div className="rounded-2xl border border-slate-200/70 bg-white/90 shadow-[0_2px_30px_rgba(11,22,66,0.06)] backdrop-blur-xl transition-colors dark:border-slate-700/60 dark:bg-slate-900/80 dark:shadow-[0_2px_30px_rgba(11,22,66,0.2)] p-7 sm:p-8 lg:p-10">
+          <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white/90 shadow-[0_2px_30px_rgba(11,22,66,0.06)] backdrop-blur-xl transition-colors dark:border-slate-700/60 dark:bg-slate-900/80 dark:shadow-[0_2px_30px_rgba(11,22,66,0.2)] p-5 sm:p-7 lg:p-10">
             <div aria-hidden className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-400 via-cyan-400 to-gold-400 opacity-60" />
 
             <div className="text-center lg:text-start mb-6">

@@ -31,7 +31,7 @@ export function FloatInput({ label, error, hint, inputRef, id, className = '', v
       {label && (
         <label
           htmlFor={inputId}
-          className="float-label absolute text-sm font-medium text-slate-500 dark:text-slate-400 transition-all duration-180 ease-out bg-white dark:bg-[#0b1122] px-1 rounded-sm pointer-events-none z-10"
+          className="float-label absolute text-sm font-medium text-slate-500 dark:text-slate-400 transition-all duration-180 ease-out bg-white dark:bg-slate-900 px-1 rounded-sm pointer-events-none z-10"
         >
           {label}
         </label>

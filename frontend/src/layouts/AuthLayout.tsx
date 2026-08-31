@@ -21,8 +21,7 @@ export function AuthLayout({
 
   return (
     <div
-      className={`relative flex h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-[#060f22] text-slate-900 dark:text-white lg:flex-row ${dir === 'rtl' ? 'rtl' : 'ltr'}`}
-      style={{ overflowY: 'hidden' }}
+      className={`relative flex min-h-[100dvh] w-full overflow-x-hidden bg-[#060f22] text-slate-900 dark:text-white lg:flex-row ${dir === 'rtl' ? 'rtl' : 'ltr'}`}
     >
       {/* LEFT — abstract scientific identity, no book, no large card */}
       <aside
@@ -72,7 +71,7 @@ export function AuthLayout({
 
       {/* RIGHT — Form surface */}
       <main
-        className="relative z-10 flex w-full flex-col justify-start overflow-y-auto bg-[#f8f7f0] px-6 py-8 lg:w-[45%] lg:items-center lg:justify-center lg:px-10 lg:py-12 dark:bg-[#0b1122]"
+        className="relative z-10 flex w-full flex-col justify-start overflow-y-auto overflow-x-hidden bg-[#f8f7f0] px-5 py-8 sm:px-6 lg:w-[45%] lg:items-center lg:justify-center lg:px-10 lg:py-12 dark:bg-[#0b1122]"
         style={{ overscrollBehavior: 'contain' }}
       >
         <div aria-hidden className="pointer-events-none absolute -start-16 -top-16 h-64 w-64 rounded-full bg-brand-200/40 blur-3xl dark:bg-brand-900/20" />
