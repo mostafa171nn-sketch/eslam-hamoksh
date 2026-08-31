@@ -27,9 +27,9 @@ export function MultiSelect({
   };
 
   return (
-    <div className="w-full">
+    <div className="box-border w-full max-w-full min-w-0" style={{ boxSizing: 'border-box' }}>
       <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
-      <div className="grid max-h-52 grid-cols-1 gap-1 overflow-y-auto rounded-lg border border-slate-300 bg-white p-2 sm:grid-cols-2 dark:border-slate-600 dark:bg-slate-900">
+      <div className="box-border grid max-h-52 w-full max-w-full min-w-0 grid-cols-1 gap-1 overflow-y-auto overflow-x-hidden rounded-lg border border-slate-300 bg-white p-2 sm:grid-cols-2 dark:border-slate-600 dark:bg-slate-900" style={{ boxSizing: 'border-box' }}>
         {options.length === 0 && (
           <p className="col-span-full px-2 py-3 text-center text-sm text-slate-400">
             No options available

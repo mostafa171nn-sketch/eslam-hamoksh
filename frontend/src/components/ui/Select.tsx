@@ -15,7 +15,7 @@ interface Props extends SelectHTMLAttributes<HTMLSelectElement> {
 export function Select({ label, options, placeholder, error, className = '', id, ...rest }: Props) {
   const selectId = id ?? rest.name ?? label;
   return (
-    <div className="w-full">
+    <div className="box-border w-full max-w-full min-w-0" style={{ boxSizing: 'border-box' }}>
       {label && (
         <label htmlFor={selectId} className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
           {label}
@@ -23,11 +23,12 @@ export function Select({ label, options, placeholder, error, className = '', id,
       )}
       <select
         id={selectId}
-        className={`w-full appearance-none rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 dark:bg-slate-900 dark:text-slate-100 ${
+        className={`box-border w-full max-w-full min-w-0 appearance-none rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 dark:bg-slate-900 dark:text-slate-100 ${
           error
             ? 'border-red-300 focus:border-red-500 focus:ring-red-100 dark:border-red-500/60 dark:focus:ring-red-900/40'
             : 'border-slate-300 focus:border-brand-500 focus:ring-brand-100 dark:border-slate-600 dark:focus:border-brand-400 dark:focus:ring-brand-900/40'
         } ${className}`}
+        style={{ boxSizing: 'border-box' }}
         {...rest}
       >
         {placeholder && <option value="">{placeholder}</option>}

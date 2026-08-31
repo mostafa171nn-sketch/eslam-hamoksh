@@ -32,14 +32,15 @@ export function PhoneInput({ label, value, countryCode, onValueChange, onCountry
   })();
 
   return (
-    <div className="w-full">
+    <div className="box-border w-full max-w-full min-w-0" style={{ boxSizing: 'border-box' }}>
       {label && <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>}
-      <div className="flex gap-2">
+      <div className="flex min-w-0 max-w-full flex-col gap-2 [box-sizing:border-box] min-[360px]:flex-row" style={{ boxSizing: 'border-box' }}>
         <select
           value={countryCode}
           onChange={(e) => onCountryChange(e.target.value)}
           disabled={disabled}
-          className="flex-shrink-0 w-[110px] sm:w-36 rounded-lg border border-slate-300 bg-white px-1.5 sm:px-2 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 min-w-0"
+          className="box-border w-full min-w-0 max-w-full flex-shrink-0 rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 min-[360px]:w-[108px] sm:w-36"
+          style={{ boxSizing: 'border-box' }}
           aria-label={t('countryCode')}
         >
           {COUNTRIES.map((c) => (
@@ -54,11 +55,12 @@ export function PhoneInput({ label, value, countryCode, onValueChange, onCountry
           placeholder={placeholder}
           disabled={disabled}
           inputMode="tel"
-          className={`min-w-0 flex-1 rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 ${
+          className={`box-border w-full min-w-0 max-w-full flex-1 rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 min-[360px]:w-auto ${
             error
               ? 'border-red-300 focus:border-red-500 focus:ring-red-100 dark:border-red-500/60'
               : 'border-slate-300 focus:border-brand-500 focus:ring-brand-100 dark:border-slate-600'
           }`}
+          style={{ boxSizing: 'border-box' }}
         />
       </div>
       {normalizedPreview && !error && <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Will be sent as: {normalizedPreview}</p>}

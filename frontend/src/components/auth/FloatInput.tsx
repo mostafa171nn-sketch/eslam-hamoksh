@@ -17,14 +17,15 @@ export function FloatInput({ label, error, hint, inputRef, id, className = '', v
   const isFloating = focused || hasValue;
 
   return (
-    <div className={`float-label-group relative ${className} ${isFloating ? 'is-floating' : ''}`}>
+    <div className={`float-label-group relative box-border w-full max-w-full min-w-0 ${className} ${isFloating ? 'is-floating' : ''}`} style={{ boxSizing: 'border-box' }}>
       <input
         {...rest}
         id={inputId}
         ref={inputRef}
         value={propValue}
         placeholder=" "
-        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-sm text-slate-900 placeholder:text-transparent transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-brand-400 dark:focus:ring-brand-900/40"
+        className="box-border w-full max-w-full min-w-0 rounded-[10px] border border-slate-300 bg-white px-4 text-sm text-slate-900 placeholder:text-transparent transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-brand-400 dark:focus:ring-brand-900/40"
+        style={{ boxSizing: 'border-box' }}
         onFocus={(e) => { setFocused(true); onFocus?.(e); }}
         onBlur={(e) => { setFocused(false); onBlur?.(e); }}
       />

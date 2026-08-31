@@ -193,7 +193,7 @@ export default function RegisterPage() {
 
   return (
     <Shell title={`${t('register')} – ${t(renderRole)}`} subtitle={t('registerSubtitle')}>
-      <form onSubmit={submit} className="space-y-4">
+      <form onSubmit={submit} className="box-border w-full max-w-full min-w-0 space-y-4" style={{ boxSizing: 'border-box' }}>
         {serverError && <InlineError message={serverError} />}
         {serverDetails.length > 0 && (
           <ul className="list-inside list-disc space-y-1 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
@@ -294,7 +294,7 @@ export default function RegisterPage() {
         </Button>
       </form>
 
-      <p className="mt-4 text-center text-sm text-slate-500">
+      <p className="box-border mt-4 w-full max-w-full break-words pb-2 text-center text-sm text-slate-500" style={{ boxSizing: 'border-box' }}>
         {t('alreadyHaveAccount')}{' '}
         <Link href="/login" className="font-medium text-brand-600 hover:text-brand-700">
           {t('login')}

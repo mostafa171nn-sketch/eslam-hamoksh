@@ -1024,3 +1024,53 @@ body {
 .ecms-center-card:hover {
   transform: translateY(-2px);
 }
+
+/* ============================================================
+   Responsive Registration Fix — overflow + box-sizing + phone stack
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Ensure auth shells never cause horizontal overflow */
+.float-label-group,
+.float-label-group input,
+.PhoneInput,
+.PhoneInput select,
+.PhoneInput input {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Desktop: right panel independent scroll — gutter stable so scrollbar doesn't overlap */
+@media (min-width: 1024px) {
+  /* Right panel is lg:overflow-y-auto already; ensure gutter */
+  main[class*="lg:overflow-y-auto"] {
+    scrollbar-gutter: stable;
+  }
+}
+
+/* Mobile: ensure no fixed 100dvh cuts off form, allow normal page scroll */
+@media (max-width: 1023px) {
+  /* Outer should not be fixed height on mobile — allow natural height */
+  .auth-mobile-scroll-fix {
+    min-height: 100dvh;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* Prevent any flex/grid child from forcing overflow */
+.min-w-0 {
+  min-width: 0;
+}

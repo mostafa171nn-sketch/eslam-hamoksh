@@ -26,12 +26,14 @@ export function StudentLoginShell({
   const { t, dir } = useT();
   return (
     <div
-      className={`relative flex min-h-[100dvh] w-full overflow-x-hidden bg-[#060f22] text-slate-900 dark:text-white lg:flex-row ${dir === 'rtl' ? 'rtl' : 'ltr'}`}
+      className={`relative flex min-h-[100dvh] w-full max-w-full flex-col overflow-x-hidden bg-[#060f22] text-slate-900 [box-sizing:border-box] dark:text-white lg:h-[100dvh] lg:max-h-[100dvh] lg:min-h-[100dvh] lg:flex-row lg:overflow-hidden ${dir === 'rtl' ? 'rtl' : 'ltr'}`}
+      style={{ boxSizing: 'border-box' }}
     >
       {/* LEFT — subtle abstract scientific identity */}
       <aside
         aria-label="Brand identity"
-        className="hidden lg:flex relative z-10 w-[45%] flex-col overflow-hidden bg-gradient-to-br from-[#060f22] via-[#091a30] to-[#0d1638]"
+        className="relative z-10 hidden min-w-0 flex-col overflow-hidden bg-gradient-to-br from-[#060f22] via-[#091a30] to-[#0d1638] [box-sizing:border-box] lg:flex lg:h-[100dvh] lg:max-h-[100dvh] lg:min-h-[100dvh] lg:w-[44%] lg:shrink-0 xl:w-[42%]"
+        style={{ boxSizing: 'border-box' }}
       >
         {/* Soft glows */}
         <div aria-hidden className="absolute -start-24 -top-24 h-80 w-80 rounded-full bg-brand-500/15 blur-[100px]" />
@@ -76,14 +78,14 @@ export function StudentLoginShell({
 
       {/* RIGHT — clean premium form */}
       <main
-        className="relative z-10 flex w-full flex-col items-start justify-start overflow-y-auto overflow-x-hidden bg-[#f8f7f0] px-5 py-8 sm:px-6 sm:py-10 lg:w-[45%] lg:items-start lg:justify-start lg:px-10 lg:py-10 dark:bg-[#0b1122]"
-        style={{ overscrollBehavior: 'contain' }}
+        className="relative z-10 box-border flex w-full max-w-full min-w-0 flex-col items-stretch justify-start overflow-x-hidden bg-[#f8f7f0] px-5 py-8 sm:px-6 sm:py-10 lg:min-h-[100dvh] lg:h-[100dvh] lg:max-h-[100dvh] lg:flex-1 lg:w-auto lg:items-center lg:justify-start lg:overflow-y-auto lg:overflow-x-hidden lg:px-8 lg:py-10 xl:px-10 dark:bg-[#0b1122]"
+        style={{ overscrollBehavior: 'contain', boxSizing: 'border-box', scrollbarGutter: 'stable' } as React.CSSProperties}
       >
         <div aria-hidden className="pointer-events-none absolute -start-10 -top-10 h-56 w-56 rounded-full bg-brand-200/30 blur-3xl dark:bg-brand-900/20" />
 
-        <div className="relative z-10 mx-auto w-full max-w-[480px] lg:max-w-[540px]">
+        <div className="relative z-10 mx-auto box-border w-full min-w-0 max-w-[448px] sm:max-w-[440px] lg:max-w-[480px] xl:max-w-[520px] pb-6 lg:pb-8" style={{ boxSizing: 'border-box' }}>
           {/* Controls */}
-          <div className="mb-6 flex items-center justify-between gap-3">
+          <div className="mb-5 flex items-center justify-between gap-3">
             {back !== false ? <PageBackButton fallback="/" /> : <span />}
             <div className="flex items-center gap-2">
               {flipTo && flipLabel && (
@@ -99,12 +101,12 @@ export function StudentLoginShell({
             </div>
           </div>
 
-          {/* Form surface */}
-          <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white/90 shadow-[0_2px_30px_rgba(11,22,66,0.06)] backdrop-blur-xl transition-colors dark:border-slate-700/60 dark:bg-slate-900/80 dark:shadow-[0_2px_30px_rgba(11,22,66,0.2)] p-5 sm:p-7 lg:p-10">
-            <div aria-hidden className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-400 via-cyan-400 to-gold-400 opacity-60" />
+          {/* Form surface — reference card style */}
+          <div className="relative box-border w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200/70 bg-white p-5 shadow-[0_10px_40px_rgba(30,64,175,0.08)] sm:p-6 dark:border-slate-700/60 dark:bg-slate-900 dark:shadow-[0_10px_40px_rgba(0,0,0,0.4)]" style={{ boxSizing: 'border-box' }}>
+            <div aria-hidden className="absolute inset-x-0 top-0 h-0.5 rounded-t-[20px] bg-gradient-to-r from-brand-500 via-cyan-400 to-gold-400 opacity-50" />
 
-            <div className="text-center lg:text-start mb-6">
-              <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{title}</h2>
+            <div className="mb-6 text-center lg:text-start">
+              <h2 className="text-[26px] font-semibold tracking-tight text-brand-600 dark:text-brand-400">{title}</h2>
               <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
             </div>
 
