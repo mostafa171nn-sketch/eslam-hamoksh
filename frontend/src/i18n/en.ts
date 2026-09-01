@@ -868,6 +868,10 @@ export const en: Dict = {
   centerRatedToast: 'Center rating submitted. Thank you!',
   ratingsCount: '{count} rating(s)',
   noRatingsYet: 'No ratings yet',
+  priceRange: 'Price range',
+  capacityLabel: 'Capacity',
+  equipmentLabel: 'Equipment',
+  contactForPricing: 'Contact for pricing',
 
   // --- Packages (subscription plans) ------------------------------------------
   packagesNav: 'Packages',

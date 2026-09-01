@@ -865,6 +865,10 @@
   centerRatedToast: 'تم إرسال تقييم المركز. شكرًا لك!',
   ratingsCount: '{count} تقييم',
   noRatingsYet: 'لا توجد تقييمات بعد',
+  priceRange: 'نطاق السعر',
+  capacityLabel: 'السعة',
+  equipmentLabel: 'التجهيزات',
+  contactForPricing: 'تواصل لمعرفة السعر',
 
   // --- Packages (subscription plans) ------------------------------------------
   packagesNav: 'الباقات',
