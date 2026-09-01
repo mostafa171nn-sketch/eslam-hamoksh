@@ -1034,10 +1034,9 @@ body {
   box-sizing: border-box;
 }
 
-html,
-body {
+html {
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Ensure auth shells never cause horizontal overflow */
@@ -1065,14 +1064,14 @@ body {
     height: auto;
     min-height: 100%;
     max-height: none;
-    overflow-x: hidden;
+    overflow-x: clip;
     overflow-y: visible;
   }
   body {
     height: auto;
     min-height: 100dvh;
     max-height: none;
-    overflow-x: hidden;
+    overflow-x: clip;
     overflow-y: visible;
   }
 }
