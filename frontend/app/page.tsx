@@ -76,7 +76,7 @@ export default function HomePage() {
     if (selectedLocation) params.set('location', selectedLocation);
     if (selectedSubject) params.set('subject', selectedSubject);
     if (selectedDate) params.set('date', selectedDate);
-    router.push(`/search?${params.toString()}`);
+    router.push(`/teachers?${params.toString()}`);
   };
 
   return (

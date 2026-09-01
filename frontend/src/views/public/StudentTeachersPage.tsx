@@ -26,12 +26,26 @@ export default function StudentTeachersPage() {
   // When opened from a specific center, only that center's teachers are shown.
   const centerId = searchParams?.get('center') ?? '';
 
+  // Read landing page search params: q (text), location, subject, date
+  const landingQ = searchParams?.get('q') ?? '';
+  const landingLocation = searchParams?.get('location') ?? '';
+  const landingSubject = searchParams?.get('subject') ?? '';
+  const landingDate = searchParams?.get('date') ?? '';
+
   const [page, setPage] = useState(1);
-  const [name, setName] = useState('');
-  const [subjectId, setSubjectId] = useState('');
+  const [name, setName] = useState(landingQ);
+  const [subjectId, setSubjectId] = useState(landingSubject);
   const [gradeId, setGradeId] = useState('');
-  const [locationId, setLocationId] = useState('');
-  const [day, setDay] = useState('');
+  const [locationId, setLocationId] = useState(landingLocation);
+  const [day, setDay] = useState(() => {
+    if (!landingDate) return '';
+    try {
+      const dateObj = new Date(landingDate);
+      return isNaN(dateObj.getTime()) ? '' : String(dateObj.getDay());
+    } catch {
+      return '';
+    }
+  });
   const [maxPrice, setMaxPrice] = useState('');
 
   useEffect(() => {
