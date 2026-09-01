@@ -49,6 +49,12 @@ export function PublicNav() {
             {t('centers')}
           </Link>
           <Link
+            href="/search"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            {t('teachersNav')}
+          </Link>
+          <Link
             href="/packages"
             className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
           >
@@ -91,6 +97,13 @@ export function PublicNav() {
               className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               {t('centers')}
+            </Link>
+            <Link
+              href="/search"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              {t('teachersNav')}
             </Link>
             <Link
               href="/packages"
