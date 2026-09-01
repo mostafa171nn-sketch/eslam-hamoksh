@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   Search,
   ArrowRight,
@@ -18,14 +17,21 @@ import {
   BarChart3,
   TrendingUp,
   GraduationCap,
+  Star,
+  X,
 } from 'lucide-react';
 import { PublicNav } from '@/src/components/layout/PublicNav';
 import { Input } from '@/src/components/ui/Input';
 import { Select } from '@/src/components/ui/Select';
 import { Button } from '@/src/components/ui/Button';
 import { DatePicker } from '@/src/components/ui/DatePicker';
+import { Card } from '@/src/components/ui/Card';
+import { Badge } from '@/src/components/ui/Badge';
+import { EmptyState } from '@/src/components/ui/EmptyState';
+import { PencilLoader } from '@/src/components/ui/PencilLoader';
 import { api } from '@/src/lib/api';
-import type { Subject, Grade, Location } from '@/src/lib/types';
+import type { Subject, Grade, Location, PublicTeacher } from '@/src/lib/types';
+import { dayName, formatCurrency } from '@/src/lib/format';
 import { useT } from '@/src/i18n';
 import CenterSearchSection from '@/src/components/centers/CenterSearchSection';
 import {
@@ -44,8 +50,7 @@ const WHY = [
 ] as const;
 
 export default function HomePage() {
-  const { t } = useT();
-  const router = useRouter();
+  const { t, lang } = useT();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
@@ -55,6 +60,10 @@ export default function HomePage() {
     grades: [],
     locations: [],
   });
+
+  const [teacherResults, setTeacherResults] = useState<PublicTeacher[]>([]);
+  const [teacherLoading, setTeacherLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -70,13 +79,34 @@ export default function HomePage() {
     });
   }, []);
 
-  const handleSearch = () => {
-    const params = new URLSearchParams();
-    if (searchQuery) params.set('q', searchQuery);
-    if (selectedLocation) params.set('location', selectedLocation);
-    if (selectedSubject) params.set('subject', selectedSubject);
-    if (selectedDate) params.set('date', selectedDate);
-    router.push(`/teachers?${params.toString()}`);
+  const handleSearch = async () => {
+    setTeacherLoading(true);
+    setHasSearched(true);
+    try {
+      const res = await api.searchTeachers({
+        name: searchQuery || undefined,
+        locationId: selectedLocation || undefined,
+        subjectId: selectedSubject || undefined,
+        limit: 12,
+      });
+      setTeacherResults(res.data ?? []);
+    } catch {
+      setTeacherResults([]);
+    } finally {
+      setTeacherLoading(false);
+      setTimeout(() => {
+        document.getElementById('teacher-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedLocation('');
+    setSelectedSubject('');
+    setSelectedDate('');
+    setTeacherResults([]);
+    setHasSearched(false);
   };
 
   return (
@@ -192,6 +222,88 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Teacher Search Results — inline filter results */}
+      {hasSearched && (
+        <section id="teacher-results" className="border-b border-slate-200/70 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  {t('findTeacher')}
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {teacherLoading ? t('searchingTeachers') : `${teacherResults.length} ${t('teachersFound')}`}
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={clearFilters}>
+                <X className="h-4 w-4" />
+                {t('clearFilters')}
+              </Button>
+            </div>
+
+            {teacherLoading ? (
+              <div className="flex justify-center py-16">
+                <PencilLoader label={t('searchingTeachers')} />
+              </div>
+            ) : teacherResults.length === 0 ? (
+              <div className="py-12">
+                <EmptyState
+                  icon={GraduationCap}
+                  title={t('noTeachersMatch')}
+                  description={t('adjustFilters')}
+                />
+              </div>
+            ) : (
+              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {teacherResults.map(teacher => (
+                  <Link key={teacher.id} href={`/teachers/${teacher.id}`} className="group">
+                    <Card bodyClassName="p-5 transition group-hover:border-brand-300 group-hover:shadow dark:group-hover:border-brand-500/50">
+                      <div className="flex items-start gap-4">
+                        {teacher.photo ? (
+                          <img src={teacher.photo} alt={teacher.fullName} className="h-12 w-12 rounded-full object-cover" />
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white text-lg font-semibold">
+                            {teacher.fullName.charAt(0)}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-slate-900 group-hover:text-brand-700 dark:text-white">
+                            {teacher.fullName}
+                          </p>
+                          <div className="mt-1 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                            <span className="font-medium text-slate-700 dark:text-slate-200">{teacher.rating.toFixed(1)}</span>
+                            <span>({teacher.ratingCount})</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-1">
+                        {teacher.subjects.slice(0, 3).map(s => (
+                          <Badge key={s.id} tone="blue">{s.name}</Badge>
+                        ))}
+                        {teacher.subjects.length > 3 && <Badge tone="slate">+{teacher.subjects.length - 3}</Badge>}
+                      </div>
+                      <div className="mt-3 space-y-1 text-xs text-slate-500 dark:text-slate-400">
+                        <p>{formatCurrency(teacher.hourlyRate)} {t('perHour')} · {teacher.yearsExperience} {t('yrsExp')}</p>
+                        <p>
+                          {teacher.location ? teacher.location.name : t('anyBranch')} ·{' '}
+                          {teacher.availability.length > 0
+                            ? teacher.availability
+                                .slice(0, 2)
+                                .map((a) => dayName(a.day, lang))
+                                .join(', ')
+                            : t('noSetSchedule')}
+                        </p>
+                      </div>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Why Maarej — features */}
       <section className="border-b border-slate-200/70 bg-white dark:border-slate-800 dark:bg-slate-900">
