@@ -7,6 +7,7 @@ import { Card } from '../../../../src/components/ui/Card';
 import { Button } from '../../../../src/components/ui/Button';
 import { PencilLoader } from '../../../../src/components/ui/PencilLoader';
 import { Alert } from '../../../../src/components/ui/ErrorAlert';
+import { CenterCard } from '../../../../src/components/centers/CenterCard';
 import { api, type PublicCenter } from '../../../../src/lib/api';
 import { errorMessage } from '../../../../src/hooks/useApi';
 import { useToast } from '../../../../src/context/ToastContext';
@@ -65,18 +66,12 @@ export default function FollowedCentersPage() {
           </Link>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {centers.map((c) => (
-            <Card key={c.id} bodyClassName="p-4">
-              <h3 className="font-semibold text-slate-900 dark:text-white">{c.name}</h3>
-              <p className="text-xs text-slate-500">{c.city} {c.address ? `· ${c.address}` : ''}</p>
-              <div className="mt-3 flex gap-2">
-                <Link href={`/centers/${c.id}`} className="flex-1">
-                  <Button variant="outline" className="w-full">{t('view')}</Button>
-                </Link>
-                <Button variant="ghost" className="flex-1" onClick={() => unfollow(c.id)}>{t('unfollow')}</Button>
-              </div>
-            </Card>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {centers.map((c, i) => (
+            <div key={c.id} className="flex flex-col gap-2">
+              <CenterCard center={c} index={i} />
+              <Button variant="ghost" size="sm" className="w-full" onClick={() => unfollow(c.id)}>{t('unfollow')}</Button>
+            </div>
           ))}
         </div>
       )}

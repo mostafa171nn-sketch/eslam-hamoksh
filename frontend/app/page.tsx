@@ -1,14 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import dynamic from 'next/dynamic';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Search,
-  MapPin,
-  Users,
-  GraduationCap,
   ArrowRight,
   Shield,
   Clock,
@@ -21,17 +17,17 @@ import {
   ScanLine,
   BarChart3,
   TrendingUp,
+  GraduationCap,
 } from 'lucide-react';
 import { PublicNav } from '@/src/components/layout/PublicNav';
 import { Input } from '@/src/components/ui/Input';
 import { Select } from '@/src/components/ui/Select';
 import { Button } from '@/src/components/ui/Button';
-import { PencilLoader } from '@/src/components/ui/PencilLoader';
 import { DatePicker } from '@/src/components/ui/DatePicker';
-import { useApi } from '@/src/hooks/useApi';
 import { api } from '@/src/lib/api';
 import type { Subject, Grade, Location } from '@/src/lib/types';
 import { useT } from '@/src/i18n';
+import CenterSearchSection from '@/src/components/centers/CenterSearchSection';
 import {
   AscentScene,
   SearchIllustration,
@@ -39,20 +35,6 @@ import {
   LearnIllustration,
   ProgressIllustration,
 } from '@/src/components/illustrations/EducationArt';
-
-const CenterMap = dynamic(() => import('@/src/components/centers/CenterMap'), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full w-full items-center justify-center bg-slate-100 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-      <TinyLoader />
-    </div>
-  ),
-});
-
-function TinyLoader() {
-  const { t } = useT();
-  return <>{t('loadingMap')}</>;
-}
 
 const WHY = [
   { icon: ShieldCheck, key: 'homeWhyVerified', tint: 'bg-brand-100 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300' },
@@ -86,19 +68,6 @@ export default function HomePage() {
         locations: locations.data ?? [],
       });
     });
-  }, []);
-
-  const [activeCenterId, setActiveCenterId] = useState<string | null>(null);
-
-  const { data: centers, loading } = useApi(
-    () => api.searchCenters({ limit: 20 }),
-    [],
-  );
-
-  const featuredCenters = centers?.items ?? [];
-
-  const focusCenter = useCallback((id: string) => {
-    setActiveCenterId(id);
   }, []);
 
   const handleSearch = () => {
@@ -252,103 +221,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Centers + Map */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400">{t('centers')}</p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">{t('homeCentersTitle')}</h2>
-            <p className="mt-2 max-w-xl text-slate-500 dark:text-slate-400">{t('homeCentersSub')}</p>
-          </div>
-          <Link href="/centers" className="group inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300">
-            {t('homeExploreCenters')}
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Left: list of centers */}
-          <div className="order-2 lg:order-1 lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto lg:pe-2 lg:[scrollbar-width:thin]">
-            {loading ? (
-              <div className="flex justify-center py-16">
-                <PencilLoader />
-              </div>
-            ) : featuredCenters.length === 0 ? (
-              <div className="flex justify-center py-16 text-sm text-slate-500 dark:text-slate-400">{t('noCentersYet')}</div>
-            ) : (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {featuredCenters.map((center) => {
-                  const hasCoords = center.latitude != null && center.longitude != null;
-                  const active = center.id === activeCenterId;
-                  return (
-                    <button
-                      key={center.id}
-                      type="button"
-                      onClick={() => focusCenter(center.id)}
-                      className={`group rounded-xl border bg-white p-4 text-start transition-all duration-200 dark:bg-slate-800 ${
-                        active
-                          ? 'border-brand-400 shadow-brand ring-2 ring-brand-400/30 dark:border-brand-500'
-                          : 'border-slate-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-elevated dark:border-slate-700 dark:hover:border-brand-500/60'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        {center.photoUrl ? (
-                          <img src={center.photoUrl} alt={center.name} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
-                        ) : (
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-lg font-bold text-white">
-                            {center.name.charAt(0)}
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <h3 className="truncate text-sm font-semibold text-slate-900 group-hover:text-brand-700 dark:text-white">
-                            {center.name}
-                          </h3>
-                          {center.city && (
-                            <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                              <MapPin className="h-3.5 w-3.5" /> {center.city}
-                            </p>
-                          )}
-                          {(center.ratingCount ?? 0) > 0 && (
-                            <p className="mt-1 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                              <span className="text-amber-400">★</span>
-                              {(center.ratingAverage ?? 0).toFixed(1)}
-                              <span className="text-slate-400">({center.ratingCount})</span>
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                        <div className="flex items-center gap-3">
-                          <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {center.studentCount}</span>
-                          <span className="flex items-center gap-1"><GraduationCap className="h-3.5 w-3.5" /> {center.teacherCount}</span>
-                        </div>
-                        {hasCoords ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-medium text-brand-600 dark:bg-brand-900/40 dark:text-brand-300">
-                            <MapPin className="h-3 w-3" /> {t('onMap')}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400">
-                            {t('noLocation')}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Right: large map */}
-          <div className="order-1 lg:order-2">
-            <div className="lg:sticky lg:top-24 h-[420px] lg:h-[calc(100vh-14rem)]">
-              <div className="relative h-full w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm dark:border-slate-700">
-                <CenterMap centers={featuredCenters} focusCenterId={activeCenterId} onFocusCenter={focusCenter} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Centers + Search Section — integrated landing page experience */}
+      <CenterSearchSection />
 
       {/* How It Works — THE ASCENT steps */}
       <section className="relative overflow-hidden border-y border-slate-200/70 bg-white dark:border-slate-800 dark:bg-slate-900">

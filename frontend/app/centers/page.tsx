@@ -2,15 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
-import { Search, MapPin, Users, GraduationCap, SearchX, Star, MapIcon, X } from 'lucide-react';
+import { Search, SearchX, MapIcon, X } from 'lucide-react';
 import { PublicNav } from '../../src/components/layout/PublicNav';
 import { PencilLoader } from '../../src/components/ui/PencilLoader';
 import { Input } from '../../src/components/ui/Input';
-import { Card } from '../../src/components/ui/Card';
 import { Button } from '../../src/components/ui/Button';
 import { Alert } from '../../src/components/ui/ErrorAlert';
 import { EmptyState } from '../../src/components/ui/EmptyState';
+import { CenterCard } from '../../src/components/centers/CenterCard';
 import { api, type PublicCenter } from '../../src/lib/api';
 import { useApi } from '../../src/hooks/useApi';
 import { Select } from '../../src/components/ui/Select';
@@ -113,82 +112,12 @@ export default function CentersPage() {
       </div>
     ) : null;
 
-  /** A single center result card. */
-  const renderCard = (c: PublicCenter) => {
+  /** A single center result card – premium reusable design. */
+  const renderCard = (c: PublicCenter, idx: number) => {
     const isActive = c.id === activeCenterId;
     return (
-      <div key={c.id} ref={(el) => setCardRef(c.id, el)}>
-        <Card
-          bodyClassName="p-5"
-          className={`ecms-center-card transition-all duration-200 ${
-            isActive
-              ? 'border-brand-400 ring-2 ring-brand-100 dark:border-brand-500 dark:ring-brand-900/50'
-              : 'hover:shadow-md'
-          } dark:border-slate-700 dark:bg-slate-800`}
-        >
-          <div className="flex items-start gap-4">
-            {c.photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={c.photoUrl} alt={c.name} className="h-16 w-16 rounded-xl object-cover" />
-            ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-brand-50 text-xl font-bold text-brand-600 dark:bg-brand-900/40 dark:text-brand-300">
-                {c.name.charAt(0)}
-              </div>
-            )}
-            <div className="min-w-0 flex-1">
-              <Link
-                href={`/centers/${c.id}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  focusCenter(c.id);
-                }}
-                className="text-base font-semibold text-slate-900 hover:text-brand-600 dark:text-white transition-colors"
-              >
-                {c.name}
-              </Link>
-              {c.city && (
-                <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                  <MapPin className="h-3.5 w-3.5" /> {c.city}
-                </p>
-              )}
-              {(c.ratingCount ?? 0) > 0 && (
-                <p className="mt-1 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  {(c.ratingAverage ?? 0).toFixed(1)}
-                  <span className="text-slate-400 dark:text-slate-500">({c.ratingCount})</span>
-                </p>
-              )}
-            </div>
-          </div>
-          {c.description && (
-            <p className="mt-3 line-clamp-2 text-sm text-slate-600 dark:text-slate-300">{c.description}</p>
-          )}
-          <div className="mt-3 flex flex-wrap gap-1">
-            {c.subjects.slice(0, 4).map((s) => (
-              <span key={s.id} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-700 dark:text-slate-200">
-                {s.name}
-              </span>
-            ))}
-            {c.subjects.length > 4 && (
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-slate-700 dark:text-slate-300">
-                +{c.subjects.length - 4}
-              </span>
-            )}
-          </div>
-          <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-700">
-            <div className="flex gap-4 text-xs text-slate-500 dark:text-slate-400">
-              <span className="flex items-center gap-1">
-                <Users className="h-4 w-4" /> {c.studentCount}
-              </span>
-              <span className="flex items-center gap-1">
-                <GraduationCap className="h-4 w-4" /> {c.teacherCount}
-              </span>
-            </div>
-            <Link href={`/centers/${c.id}`} className="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-300 transition-colors">
-              {t('centerDetails')} →
-            </Link>
-          </div>
-        </Card>
+      <div key={c.id} ref={(el) => setCardRef(c.id, el)} className="min-w-0">
+        <CenterCard center={c} index={idx} isActive={isActive} onFocus={focusCenter} />
       </div>
     );
   };
@@ -269,7 +198,7 @@ export default function CentersPage() {
             <div className="hidden lg:grid lg:grid-cols-[1fr_1.2fr] lg:gap-6">
               {/* Left: scrollable center list */}
               <div ref={listRef} className="ecms-centers-list lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto lg:pe-2">
-                <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">{results.map(renderCard)}</div>
+                <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">{results.map((c, i) => renderCard(c, i))}</div>
                 <Pagination />
               </div>
               {/* Right: sticky, large map */}
@@ -287,7 +216,7 @@ export default function CentersPage() {
 
             {/* ── MOBILE: cards list only ── */}
             <div className="lg:hidden">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{results.map(renderCard)}</div>
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">{results.map((c, i) => renderCard(c, i))}</div>
               <Pagination />
             </div>
           </>
