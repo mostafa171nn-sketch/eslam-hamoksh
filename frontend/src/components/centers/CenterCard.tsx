@@ -245,7 +245,7 @@ export function CenterCard({ center, index, isActive, onFocus, onShowOnMap, imag
           </div>
 
           {/* Three-dot menu – top right (respects RTL via logical end) */}
-          <div className="absolute top-3 end-3 z-20" ref={menuRef}>
+          <div className="absolute top-3 end-3 z-20">
             <button
               type="button"
               onClick={(e) => {
@@ -258,38 +258,6 @@ export function CenterCard({ center, index, isActive, onFocus, onShowOnMap, imag
             >
               <MoreVertical className="h-4 w-4" />
             </button>
-            {menuOpen && (
-              <div
-                className={`absolute top-full mt-1.5 ${isRtl ? 'start-0' : 'end-0'} z-50 min-w-[160px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800 animate-slide-in`}
-              >
-                <Link
-                  href={centerUrl}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMenuOpen(false);
-                  }}
-                  className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50 transition-colors"
-                >
-                  <ExternalLink className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                  {ctaText}
-                </Link>
-                {onShowOnMap && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onShowOnMap(center.id);
-                      setMenuOpen(false);
-                    }}
-                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50 transition-colors"
-                  >
-                    <MapPinned className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                    {t('showOnMap')}
-                  </button>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Prev / Next – only if multiple */}
@@ -444,6 +412,42 @@ export function CenterCard({ center, index, isActive, onFocus, onShowOnMap, imag
             />
           </Link>
         </div>
+      </div>
+
+      {/* Dropdown menu – positioned at article level to avoid overflow clipping */}
+      <div ref={menuRef} className="absolute top-[18px] end-[18px] z-30">
+        {menuOpen && (
+          <div
+            className={`mt-1 ${isRtl ? 'start-0' : 'end-0'} min-w-[160px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800 animate-slide-in`}
+          >
+            <Link
+              href={centerUrl}
+              onClick={(e) => {
+                e.stopPropagation();
+                setMenuOpen(false);
+              }}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50 transition-colors"
+            >
+              <ExternalLink className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+              {ctaText}
+            </Link>
+            {onShowOnMap && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onShowOnMap(center.id);
+                  setMenuOpen(false);
+                }}
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50 transition-colors"
+              >
+                <MapPinned className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                {t('showOnMap')}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );
