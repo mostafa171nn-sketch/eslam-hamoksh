@@ -7,6 +7,7 @@ import { Star, GraduationCap } from 'lucide-react';
 import { Input } from '@/src/components/ui/Input';
 import { Select } from '@/src/components/ui/Select';
 import { Button } from '@/src/components/ui/Button';
+import { DatePicker } from '@/src/components/ui/DatePicker';
 import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { PencilLoader } from '@/src/components/ui/PencilLoader';
@@ -22,7 +23,7 @@ interface SearchFilters {
   q: string;
   subjectId?: string;
   gradeId?: string;
-  day?: string;
+  date?: string;
   maxPrice?: number;
   page: number;
 }
@@ -34,7 +35,7 @@ function SearchPageInner() {
     q: searchParams.get('q') || '',
     subjectId: searchParams.get('subject') || '',
     gradeId: searchParams.get('grade') || '',
-    day: searchParams.get('day') || '',
+    date: searchParams.get('date') || '',
     maxPrice: undefined,
     page: 1,
   });
@@ -71,11 +72,19 @@ function SearchPageInner() {
     setLoading(true);
     setError('');
     try {
+      let dayOfWeek: number | undefined;
+      if (debounced.date) {
+        const dateObj = new Date(debounced.date);
+        if (!isNaN(dateObj.getTime())) {
+          dayOfWeek = dateObj.getDay();
+        }
+      }
+
       const teacherRes = await api.searchTeachers({
         name: debounced.q || undefined,
         subjectId: debounced.subjectId || undefined,
         gradeId: debounced.gradeId || undefined,
-        day: debounced.day ? Number(debounced.day) : undefined,
+        day: dayOfWeek,
         maxPrice: debounced.maxPrice,
         page: debounced.page,
         limit: 12,
@@ -174,6 +183,12 @@ function SearchPageInner() {
               value={filters.gradeId}
               onChange={(e) => patchFilters({ gradeId: e.target.value })}
               placeholder={t('anyGrade')}
+            />
+            <DatePicker
+              value={filters.date}
+              onChange={(date) => patchFilters({ date })}
+              placeholder={t('selectDate')}
+              minDate={new Date()}
             />
             <Input
               type="number"
