@@ -82,8 +82,6 @@ export function PublicNav() {
 
         {/* Mobile hamburger */}
         <div className="flex items-center gap-2 sm:hidden">
-          <LangToggle />
-          <ThemeToggle />
           <button
             onClick={() => setMobileOpen((p) => !p)}
             className="relative z-50 flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -165,6 +163,11 @@ export function PublicNav() {
             >
               {t('login')}
             </Link>
+            <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+            <div className="flex items-center gap-3 px-3 py-2">
+              <LangToggle />
+              <ThemeToggle />
+            </div>
           </nav>
         </div>
       )}
