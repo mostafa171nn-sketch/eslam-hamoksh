@@ -35,6 +35,18 @@ function MapLoaderLabel() {
   return <>{t('loadingMap')}</>;
 }
 
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    setIsDesktop(mq.matches);
+    const onChange = () => setIsDesktop(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return isDesktop;
+}
+
 interface SearchFilters {
   q: string;
   location?: string;
@@ -82,6 +94,7 @@ function SearchPageInner() {
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
 
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const isDesktop = useIsDesktop();
 
   useEffect(() => {
     const id = window.setTimeout(() => setDebounced(filters), 300);
@@ -151,7 +164,9 @@ function SearchPageInner() {
     setFilters(prev => ({ ...prev, page }));
   };
 
-  const withCoords = centerResults.filter(c => c.latitude != null && c.longitude != null);
+  const withCoords = centerResults.filter(
+    c => typeof c.latitude === 'number' && typeof c.longitude === 'number' && Number.isFinite(c.latitude) && Number.isFinite(c.longitude),
+  );
 
   const focusCenter = useCallback((id: string) => {
     setActiveCenterId(id);
@@ -167,7 +182,6 @@ function SearchPageInner() {
   }, []);
 
   const handleShowMap = () => {
-    const isDesktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches;
     if (isDesktop) {
       setShowMapMode(true);
       setFitSignal(s => s + 1);
@@ -364,7 +378,7 @@ function SearchPageInner() {
                 ) : (
                   <>
                     {/* Desktop: map preview on the left, cards on the right */}
-                    {!showMapMode && (
+                    {isDesktop && !showMapMode && (
                     <div className="hidden lg:grid lg:grid-cols-[340px_1fr] lg:gap-6">
                       {/* Small map preview */}
                       <div className="flex flex-col gap-3">
@@ -392,6 +406,7 @@ function SearchPageInner() {
                     )}
 
                     {/* Mobile: cards + compact map preview */}
+                    {!isDesktop && (
                     <div className="lg:hidden">
                       {/* Compact map preview */}
                       {!mobileMapOpen && withCoords.length > 0 && (
@@ -411,6 +426,7 @@ function SearchPageInner() {
                       )}
                       {centerListContent(false)}
                     </div>
+                    )}
                   </>
                 )}
               </div>

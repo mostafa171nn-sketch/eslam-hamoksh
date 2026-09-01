@@ -73,8 +73,13 @@ function MapController({
   const map = useMap();
 
   useEffect(() => {
-    const visible = centers.filter((c) => visibleIds.has(c.id));
-    const coords = visible.filter((c) => c.latitude != null && c.longitude != null);
+    const coords = centers.filter(
+      (c) =>
+        typeof c.latitude === 'number' &&
+        typeof c.longitude === 'number' &&
+        Number.isFinite(c.latitude) &&
+        Number.isFinite(c.longitude),
+    );
     if (coords.length === 0) {
       map.setView([30.0444, 31.2357], 6);
       return;
@@ -87,7 +92,13 @@ function MapController({
   useEffect(() => {
     if (!focusCenterId) return;
     const c = centers.find((x) => x.id === focusCenterId);
-    if (c && c.latitude != null && c.longitude != null) {
+    if (
+      c &&
+      typeof c.latitude === 'number' &&
+      typeof c.longitude === 'number' &&
+      Number.isFinite(c.latitude) &&
+      Number.isFinite(c.longitude)
+    ) {
       map.flyTo([c.latitude, c.longitude], Math.max(map.getZoom(), 13), { duration: 0.8 });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -221,7 +232,14 @@ export default function CenterMap({ centers, focusCenterId, onFocusCenter, defau
   const effectiveFitKey = fitSignal && fitSignal > 0 ? fitSignal : fitKey;
 
   const withCoords = useMemo(
-    () => centers.filter((c) => c.latitude != null && c.longitude != null),
+    () =>
+      centers.filter(
+        (c) =>
+          typeof c.latitude === 'number' &&
+          typeof c.longitude === 'number' &&
+          Number.isFinite(c.latitude) &&
+          Number.isFinite(c.longitude),
+      ),
     [centers],
   );
 
