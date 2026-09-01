@@ -418,7 +418,7 @@ export function CenterCard({ center, index, isActive, onFocus, onShowOnMap, imag
       <div ref={menuRef} className="absolute top-[18px] end-[18px] z-30">
         {menuOpen && (
           <div
-            className={`mt-1 ${isRtl ? 'start-0' : 'end-0'} min-w-[160px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800 animate-slide-in`}
+            className={`mt-1 end-0 min-w-[160px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800 animate-slide-in`}
           >
             <Link
               href={centerUrl}
