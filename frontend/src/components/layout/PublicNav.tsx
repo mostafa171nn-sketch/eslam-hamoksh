@@ -82,17 +82,17 @@ export function PublicNav() {
 
         {/* Mobile hamburger */}
         <div className="flex items-center sm:hidden">
-          <input type="checkbox" id="checkbox" className="hidden" checked={mobileOpen} onChange={() => setMobileOpen((p) => !p)} />
-          <label
-            className={`toggle ${mobileOpen ? 'is-open' : ''}`}
-            htmlFor="checkbox"
+          <button
+            type="button"
+            className={`toggle ${mobileOpen ? 'open' : ''}`}
+            onClick={() => setMobileOpen((p) => !p)}
             aria-label="Toggle navigation menu"
             aria-expanded={mobileOpen}
           >
             <div id="bar1" className="bars" />
             <div id="bar2" className="bars" />
             <div id="bar3" className="bars" />
-          </label>
+          </button>
         </div>
       </div>
 
