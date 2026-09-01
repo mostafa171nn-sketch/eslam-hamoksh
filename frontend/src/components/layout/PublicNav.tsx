@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Menu, X } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { ThemeToggle } from '../ThemeToggle';
 import { LangToggle } from '../LangToggle';
 import { useT } from '../../i18n';
@@ -81,13 +81,17 @@ export function PublicNav() {
         </nav>
 
         {/* Mobile hamburger */}
-        <div className="flex items-center gap-2 sm:hidden">
+        <div className="flex items-center sm:hidden">
           <button
             onClick={() => setMobileOpen((p) => !p)}
-            className="relative z-50 flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            className={`hamburger-btn ${mobileOpen ? 'is-open' : ''}`}
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
+            type="button"
           >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <span className="hamburger-bar bar1" />
+            <span className="hamburger-bar bar2" />
+            <span className="hamburger-bar bar3" />
           </button>
         </div>
       </div>
