@@ -237,7 +237,7 @@ export default function CenterMap({ centers, focusCenterId, onFocusCenter, defau
   const startPos = defaultPos ?? { lat: 30.0444, lng: 31.2357, zoom: 6 };
 
   return (
-    <div className="ecms-map-box relative h-full min-h-[400px] w-full">
+    <div className="ecms-map-box relative h-full w-full">
       {/* Floating search */}
       <div className="pointer-events-none absolute start-3 top-3 z-[1000] w-[calc(100%-6rem)] max-w-xs">
         <div className="pointer-events-auto flex items-center gap-2 rounded-xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-800/95">
@@ -261,7 +261,7 @@ export default function CenterMap({ centers, focusCenterId, onFocusCenter, defau
         zoom={startPos.zoom ?? 6}
         scrollWheelZoom
         className="ecms-map"
-        style={{ height: '100%', width: '100%', minHeight: 400 }}
+        style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

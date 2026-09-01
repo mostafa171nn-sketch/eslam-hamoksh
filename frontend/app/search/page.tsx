@@ -99,7 +99,6 @@ function SearchPageInner() {
   }, []);
 
   useEffect(() => {
-    if (debounced.page <= 1) setDebounced(prev => ({ ...prev, page: 1 }));
     search();
   }, [debounced]);
 
@@ -146,6 +145,10 @@ function SearchPageInner() {
 
   const patchFilters = (patch: Partial<SearchFilters>) => {
     setFilters(prev => ({ ...prev, ...patch, page: 1 }));
+  };
+
+  const goToPage = (page: number) => {
+    setFilters(prev => ({ ...prev, page }));
   };
 
   const withCoords = centerResults.filter(c => c.latitude != null && c.longitude != null);
@@ -345,7 +348,7 @@ function SearchPageInner() {
                 <Pagination
                   page={debounced.page}
                   totalPages={meta.totalPages}
-                  onChange={(page) => patchFilters({ page })}
+                  onChange={goToPage}
                 />
               </div>
             </div>
@@ -361,6 +364,7 @@ function SearchPageInner() {
                 ) : (
                   <>
                     {/* Desktop: map preview on the left, cards on the right */}
+                    {!showMapMode && (
                     <div className="hidden lg:grid lg:grid-cols-[340px_1fr] lg:gap-6">
                       {/* Small map preview */}
                       <div className="flex flex-col gap-3">
@@ -385,11 +389,12 @@ function SearchPageInner() {
                       {/* Cards grid */}
                       <div>{centerListContent(true)}</div>
                     </div>
+                    )}
 
                     {/* Mobile: cards + compact map preview */}
                     <div className="lg:hidden">
                       {/* Compact map preview */}
-                      {withCoords.length > 0 && (
+                      {!mobileMapOpen && withCoords.length > 0 && (
                         <div className="mb-4">
                           <div className="relative h-[200px] w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm dark:border-slate-700">
                             <CenterMap
@@ -477,7 +482,7 @@ function SearchPageInner() {
           <Pagination
             page={debounced.page}
             totalPages={meta.totalPages}
-            onChange={(page) => patchFilters({ page })}
+            onChange={goToPage}
           />
         </div>
       </div>
@@ -578,13 +583,36 @@ function SearchPageInner() {
               <X className="h-4 w-4" /> {t('closeMap')}
             </Button>
           </div>
-          <div className="relative flex-1">
-            <CenterMap
-              centers={withCoords}
-              focusCenterId={activeCenterId}
-              onFocusCenter={focusCenter}
-              fitSignal={fitSignal}
-            />
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="relative min-h-0 flex-[1.15]">
+              <CenterMap
+                centers={withCoords}
+                focusCenterId={activeCenterId}
+                onFocusCenter={focusCenter}
+                fitSignal={fitSignal}
+              />
+            </div>
+            <div className="ecms-centers-list min-h-0 flex-1 shrink overflow-y-auto border-t border-slate-200 dark:border-slate-700">
+              <div className="flex flex-col gap-4 px-4 py-4">
+                {centerResults.map((center, i) => {
+                  const isActive = center.id === activeCenterId;
+                  return (
+                    <div
+                      key={center.id}
+                      ref={(el) => setCardRef(center.id, el)}
+                      className="min-w-0"
+                    >
+                      <CenterCard
+                        center={center}
+                        index={i}
+                        isActive={isActive}
+                        onFocus={focusCenter}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       )}
