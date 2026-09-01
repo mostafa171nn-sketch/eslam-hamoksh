@@ -178,6 +178,7 @@
   followedCenters: 'المراكز التي تتابعها',
   unfollowedCenterToast: 'تم إلغاء متابعة المركز.',
   followedCenterToast: 'جاري متابعة المركز — ستتلقى إشعارات بالجداول الجديدة.',
+  homeNav: 'الرئيسية',
   teachersNav: 'المعلمون',
   gradesNav: 'الصفوف',
   branches: 'الفروع',

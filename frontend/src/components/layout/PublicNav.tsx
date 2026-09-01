@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { BookOpen, Menu, X } from 'lucide-react';
 import { ThemeToggle } from '../ThemeToggle';
 import { LangToggle } from '../LangToggle';
@@ -9,8 +10,11 @@ import { useT } from '../../i18n';
 
 export function PublicNav() {
   const { t } = useT();
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -43,20 +47,26 @@ export function PublicNav() {
         {/* Desktop nav */}
         <nav className="hidden sm:flex items-center gap-1">
           <Link
+            href="/"
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive('/') ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
+          >
+            {t('homeNav')}
+          </Link>
+          <Link
             href="/centers"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive('/centers') ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
           >
             {t('centers')}
           </Link>
           <Link
             href="/search"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive('/search') ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
           >
             {t('teachersNav')}
           </Link>
           <Link
             href="/packages"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive('/packages') ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
           >
             {t('packagesNav')}
           </Link>
@@ -92,23 +102,30 @@ export function PublicNav() {
         >
           <nav className="flex flex-col gap-1 px-4 py-3">
             <Link
+              href="/"
+              onClick={() => setMobileOpen(false)}
+              className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive('/') ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
+            >
+              {t('homeNav')}
+            </Link>
+            <Link
               href="/centers"
               onClick={() => setMobileOpen(false)}
-              className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive('/centers') ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
             >
               {t('centers')}
             </Link>
             <Link
               href="/search"
               onClick={() => setMobileOpen(false)}
-              className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive('/search') ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
             >
               {t('teachersNav')}
             </Link>
             <Link
               href="/packages"
               onClick={() => setMobileOpen(false)}
-              className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive('/packages') ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
             >
               {t('packagesNav')}
             </Link>

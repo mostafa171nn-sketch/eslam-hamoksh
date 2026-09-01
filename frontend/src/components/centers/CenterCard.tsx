@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Star,
@@ -15,6 +15,9 @@ import {
   ChevronRight,
   Image as ImageIcon,
   ArrowRight,
+  MoreVertical,
+  ExternalLink,
+  MapPinned,
 } from 'lucide-react';
 import { useT } from '../../i18n';
 import type { PublicCenter } from '../../lib/api';
@@ -69,7 +72,6 @@ function hashString(str: string): number {
 
 function getAccent(centerId: string, index?: number): AccentVariant {
   const h = index != null ? index : hashString(centerId);
-  // Mix id hash with index to get deterministic but varied distribution
   const combined = typeof centerId === 'string' ? hashString(centerId) + (index ?? 0) * 7 : h;
   return ACCENTS[combined % ACCENTS.length];
 }
@@ -78,17 +80,14 @@ function getAccent(centerId: string, index?: number): AccentVariant {
 // Equipment / subjects → chips
 // ---------------------------------------------------------------------------
 const EQUIPMENT_POOL = ['Wi-Fi', 'Projector', 'Smart Board', 'AC', 'Whiteboard'] as const;
+const MAX_VISIBLE_CHIPS = 3;
 
 function getEquipmentForCenter(center: PublicCenter, index?: number): string[] {
-  // Prefer subjects if available (preserve real data) – show first 3 subjects as chips
-  // Otherwise deterministic mock based on id hash so cards have variation but stable
   if (center.subjects && center.subjects.length > 0) {
-    // Map subjects to equipment-style display – keep original names
-    return center.subjects.slice(0, 3).map((s) => s.name);
+    return center.subjects.map((s) => s.name);
   }
-  // Fallback deterministic mock
   const h = hashString(center.id + String(index ?? 0));
-  const count = 2 + (h % 2); // 2 or 3 chips
+  const count = 2 + (h % 2);
   const start = h % EQUIPMENT_POOL.length;
   const res: string[] = [];
   for (let i = 0; i < count; i++) res.push(EQUIPMENT_POOL[(start + i) % EQUIPMENT_POOL.length]);
@@ -112,6 +111,7 @@ export interface CenterCardProps {
   index?: number;
   isActive?: boolean;
   onFocus?: (id: string) => void;
+  onShowOnMap?: (id: string) => void;
   images?: string[];
   priceRange?: { min: number; max: number; currency?: string } | null;
   className?: string;
@@ -120,9 +120,30 @@ export interface CenterCardProps {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export function CenterCard({ center, index, isActive, onFocus, images: imagesProp, priceRange, className = '' }: CenterCardProps) {
+export function CenterCard({ center, index, isActive, onFocus, onShowOnMap, images: imagesProp, priceRange, className = '' }: CenterCardProps) {
   const { t, dir } = useT();
   const isRtl = dir === 'rtl';
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleEsc);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, [menuOpen]);
 
   const images = useMemo(() => {
     if (imagesProp && imagesProp.length > 0) return imagesProp.filter(Boolean);
@@ -153,13 +174,13 @@ export function CenterCard({ center, index, isActive, onFocus, images: imagesPro
 
   const accent = useMemo(() => getAccent(center.id, index), [center.id, index]);
   const equipment = useMemo(() => getEquipmentForCenter(center, index), [center, index]);
+  const visibleChips = equipment.slice(0, MAX_VISIBLE_CHIPS);
+  const overflowCount = equipment.length - MAX_VISIBLE_CHIPS;
 
   const ratingAvg = center.ratingAverage ?? 0;
   const ratingCount = center.ratingCount ?? 0;
   const showRating = ratingCount > 0;
 
-  // Price display – if priceRange prop supplied use it, otherwise show capacity-derived fallback placeholder
-  // Keeps visual hierarchy even when no pricing data exists
   const priceLabel = useMemo(() => {
     const val = t('priceRange');
     if (val && !val.startsWith('[MISSING')) return val;
@@ -172,9 +193,6 @@ export function CenterCard({ center, index, isActive, onFocus, images: imagesPro
       if (priceRange.min === priceRange.max) return `${priceRange.min} ${cur}`;
       return `${priceRange.min} – ${priceRange.max} ${cur}`;
     }
-    // No real pricing in API – show a visually strong but non-misleading placeholder
-    // Do not invent numbers; show subtle placeholder that still occupies space
-    // We keep it translatable via existing keys
     return null;
   }, [priceRange]);
 
@@ -184,10 +202,11 @@ export function CenterCard({ center, index, isActive, onFocus, images: imagesPro
     return isRtl ? 'عرض السنتر' : 'View Center';
   }, [t, isRtl]);
 
+  const centerUrl = `/centers/${center.id}`;
+
   return (
     <article
-      className={`group relative flex flex-col overflow-hidden rounded-[28px] border bg-white dark:bg-slate-800 transition-all duration-300 hover:-translate-y-[4px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08),0_16px_40px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.25),0_16px_40px_rgba(0,0,0,0.2)] ${isActive ? 'border-brand-300 ring-2 ring-brand-100 dark:border-brand-500 dark:ring-brand-900/40 shadow-[0_8px_24px_rgba(79,70,229,0.12)]' : 'border-slate-200/70 dark:border-slate-700/60 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)]'} ${className}`}
-      style={{}}
+      className={`group relative flex h-full flex-col overflow-hidden rounded-[28px] border bg-white dark:bg-slate-800 transition-all duration-300 hover:-translate-y-[4px] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08),0_16px_40px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.25),0_16px_40px_rgba(0,0,0,0.2)] ${isActive ? 'border-brand-300 ring-2 ring-brand-100 dark:border-brand-500 dark:ring-brand-900/40 shadow-[0_8px_24px_rgba(79,70,229,0.12)]' : 'border-slate-200/70 dark:border-slate-700/60 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)]'} ${className}`}
     >
       {/* Accent vertical stripe – logical inline-start */}
       <div
@@ -197,9 +216,9 @@ export function CenterCard({ center, index, isActive, onFocus, images: imagesPro
       />
 
       {/* Inner padding wrapper – leaves space for stripe */}
-      <div className="flex flex-col p-3 sm:p-4 ps-[14px] sm:ps-[18px]">
+      <div className="flex flex-1 flex-col p-3 sm:p-4 ps-[14px] sm:ps-[18px]">
         {/* ---------- IMAGE SECTION ---------- */}
-        <div className="relative overflow-hidden rounded-[20px] bg-slate-100 dark:bg-slate-700/40 aspect-[16/11] sm:aspect-[16/10] isolate">
+        <div className="relative overflow-hidden rounded-[20px] bg-slate-100 dark:bg-slate-700/40 aspect-[16/10] isolate">
           {images.length > 0 ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -214,7 +233,7 @@ export function CenterCard({ center, index, isActive, onFocus, images: imagesPro
             </div>
           )}
 
-          {/* Gradient overlay for better badge legibility if needed */}
+          {/* Gradient overlay */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-60" />
 
           {/* Image counter badge – logical start */}
@@ -223,6 +242,54 @@ export function CenterCard({ center, index, isActive, onFocus, images: imagesPro
             <span>
               {total > 0 ? `${current + 1}/${total}` : '1/1'}
             </span>
+          </div>
+
+          {/* Three-dot menu – top right (respects RTL via logical end) */}
+          <div className="absolute top-3 end-3 z-20" ref={menuRef}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setMenuOpen((p) => !p);
+              }}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md border border-white/10 hover:bg-black/70 transition-colors"
+              aria-label="More options"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+            {menuOpen && (
+              <div
+                className={`absolute top-full mt-1.5 ${isRtl ? 'start-0' : 'end-0'} z-50 min-w-[160px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800 animate-slide-in`}
+              >
+                <Link
+                  href={centerUrl}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50 transition-colors"
+                >
+                  <ExternalLink className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                  {ctaText}
+                </Link>
+                {onShowOnMap && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onShowOnMap(center.id);
+                      setMenuOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50 transition-colors"
+                  >
+                    <MapPinned className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                    {t('showOnMap')}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Prev / Next – only if multiple */}
@@ -281,20 +348,19 @@ export function CenterCard({ center, index, isActive, onFocus, images: imagesPro
                 {t('noRatingsYet')}
               </span>
             )}
-            {/* Optional active dot */}
             {isActive && <span className={`ms-auto inline-flex h-2 w-2 rounded-full ${accent.dot} animate-pulse`} aria-hidden />}
           </div>
 
-          {/* Center name – large bold */}
+          {/* Center name – clamped to 2 lines */}
           <Link
-            href={`/centers/${center.id}`}
+            href={centerUrl}
             onClick={(e) => {
               if (onFocus) {
                 e.preventDefault();
                 onFocus(center.id);
               }
             }}
-            className="mt-3 block text-[18px] sm:text-[19px] font-bold leading-tight tracking-tight text-slate-900 hover:text-brand-700 dark:text-white dark:hover:text-brand-300 transition-colors line-clamp-2"
+            className="mt-3 block text-[18px] sm:text-[19px] font-bold leading-tight tracking-tight text-slate-900 hover:text-brand-700 dark:text-white dark:hover:text-brand-300 transition-colors line-clamp-2 min-h-[2.5rem]"
           >
             {center.name}
           </Link>
@@ -324,10 +390,10 @@ export function CenterCard({ center, index, isActive, onFocus, images: imagesPro
             </span>
           </div>
 
-          {/* Equipment chips */}
+          {/* Equipment chips – max 3 visible + overflow count */}
           {equipment.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {equipment.map((eq) => (
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              {visibleChips.map((eq) => (
                 <span
                   key={eq}
                   className="inline-flex items-center gap-1 rounded-full border bg-[#fffbeb] px-2.5 py-1 text-xs font-medium text-amber-800 border-amber-200/60 dark:bg-amber-900/15 dark:text-amber-300 dark:border-amber-800/30"
@@ -336,10 +402,18 @@ export function CenterCard({ center, index, isActive, onFocus, images: imagesPro
                   {eq}
                 </span>
               ))}
+              {overflowCount > 0 && (
+                <span className="inline-flex items-center rounded-full border bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500 border-slate-200 dark:bg-slate-700/60 dark:text-slate-400 dark:border-slate-600">
+                  +{overflowCount}
+                </span>
+              )}
             </div>
           )}
 
-          {/* Divider + Price */}
+          {/* Spacer to push bottom content down */}
+          <div className="flex-1" />
+
+          {/* Divider + Price + CTA – always pinned to bottom */}
           <div className="mt-4 border-t border-slate-100 dark:border-slate-700/50 pt-4">
             <div className="flex items-end justify-between gap-3">
               <div>
@@ -352,7 +426,6 @@ export function CenterCard({ center, index, isActive, onFocus, images: imagesPro
                   </p>
                 )}
               </div>
-              {/* Optional capacity hint on right if price missing? Keep symmetrical */}
               <span className="hidden sm:inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
                 <Users className="h-3.5 w-3.5" />
                 {center.studentCount ?? 0}
@@ -362,7 +435,7 @@ export function CenterCard({ center, index, isActive, onFocus, images: imagesPro
 
           {/* CTA Button */}
           <Link
-            href={`/centers/${center.id}`}
+            href={centerUrl}
             className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[16px] border px-4 py-3.5 text-sm font-semibold transition-all duration-200 group/cta ${accent.cta}`}
           >
             <span>{ctaText}</span>

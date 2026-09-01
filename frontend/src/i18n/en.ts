@@ -181,6 +181,7 @@ export const en: Dict = {
   followedCenters: 'Followed Centers',
   unfollowedCenterToast: 'Unfollowed center',
   followedCenterToast: 'Following center - you will be notified of new schedules',
+  homeNav: 'Home',
   teachersNav: 'Teachers',
   gradesNav: 'Grades',
   branches: 'Branches',
