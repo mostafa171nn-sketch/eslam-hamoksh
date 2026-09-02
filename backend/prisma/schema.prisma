@@ -732,6 +732,11 @@ model Center {
   website               String?
   logoUrl               String?
   description           String?
+  facebook              String?
+  instagram             String?
+  youtube               String?
+  linkedin              String?
+  whatsapp              String?
   status                CenterStatus                @default(PENDING)
   subscriptionStatus    SubscriptionStatus          @default(PENDING)
   planId                String?

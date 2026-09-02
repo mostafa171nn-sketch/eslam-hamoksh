@@ -8,3 +8,15 @@ dist/
 *.log
 .DS_Store
 Thumbs.db
+/logos/
+*.tsbuildinfo
+.playwright-mcp/
+commitmsg.txt
+dedupe.js
+deployment-events-*.json
+opencode.json
+test.txt
+vercel-*.mjs
+verify-*.mjs
+
+

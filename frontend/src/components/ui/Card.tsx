@@ -7,16 +7,21 @@ export function Card({
   children,
   className = '',
   bodyClassName = '',
+  onClick,
 }: {
-  title?: string;
+  title?: ReactNode;
   subtitle?: string;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
   bodyClassName?: string;
+  onClick?: () => void;
 }) {
   return (
-    <div className={`rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800 transition-shadow duration-200 hover:shadow-md ${className}`}>
+    <div
+      onClick={onClick}
+      className={`rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800 transition-shadow duration-200 ${onClick ? 'cursor-pointer hover:shadow-md' : 'hover:shadow-md'} ${className}`}
+    >
       {(title || action) && (
         <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-700">
           <div>
