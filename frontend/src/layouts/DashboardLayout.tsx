@@ -7,6 +7,7 @@ import { Sidebar } from '../../src/components/layout/Sidebar';
 import { Topbar } from '../../src/components/layout/Topbar';
 import { BottomNav } from '../../src/components/layout/BottomNav';
 import { PageBackButton } from '../../src/components/layout/PageBackButton';
+import { CenterDashboardShell } from '../../src/views/center/dashboard/CenterDashboardShell';
 
 const SIDEBAR_STORAGE_KEY = 'maarech-sidebar';
 
@@ -46,6 +47,13 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   const pathname = usePathname();
   const showBack = pathname ? !NO_BACK.has(pathname) : false;
+
+  // The Center account dashboard uses its own scoped shell (right-side teal
+  // sidebar + custom header). Only /center routes are affected; every other
+  // role continues to render the shared layout below unchanged.
+  if (pathname?.startsWith('/center')) {
+    return <CenterDashboardShell>{children}</CenterDashboardShell>;
+  }
 
   const toggleCollapse = () => {
     setCollapsed((c) => {

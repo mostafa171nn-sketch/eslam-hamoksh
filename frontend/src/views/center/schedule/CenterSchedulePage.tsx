@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Calendar,
   Plus,
@@ -57,16 +57,25 @@ export default function CenterSchedulePage() {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  const [branchFilter, setBranchFilter] = useState<string>('');
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const { data: lessons, loading } = useApi<Lesson[]>(
-    () => api.get<Lesson[]>('/center/lessons', {
+    () => api.get<Lesson[]>('/center/account/schedule', {
       date: currentDate.toISOString().split('T')[0],
       view: viewMode,
+      branchId: branchFilter || undefined,
     }),
-    [currentDate, viewMode]
+    [currentDate, viewMode, branchFilter, refreshKey]
   );
 
   const { data: stats } = useApi<ScheduleStats>(
-    () => api.get<ScheduleStats>('/center/schedule/stats'),
+    () => api.get<ScheduleStats>('/center/account/schedule/stats'),
+    [refreshKey]
+  );
+
+  const { data: branches } = useApi<FormBranch[]>(
+    () => api.get<ScheduleFormData>('/center/account/schedule/form-data').then((res) => ({ ...res, data: res.data.branches || [] })),
     []
   );
 
@@ -191,20 +200,34 @@ export default function CenterSchedulePage() {
               {t('today')}
             </Button>
           </div>
-          <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
-            {(['day', 'week', 'month'] as ViewMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  viewMode === mode
-                    ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
-                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-                }`}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
+              {(['day', 'week', 'month'] as ViewMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    viewMode === mode
+                      ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                  }`}
+                >
+                  {t(mode as DictKey)}
+                </button>
+              ))}
+            </div>
+            {branches && branches.length > 0 && (
+              <select
+                value={branchFilter}
+                onChange={(e) => setBranchFilter(e.target.value)}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800"
               >
-                {t(mode as DictKey)}
-              </button>
-            ))}
+                <option value="">{t('allBranches')}</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
       </Card>
@@ -280,6 +303,7 @@ export default function CenterSchedulePage() {
       <CreateLessonModal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
+        onCreated={() => setRefreshKey((k) => k + 1)}
       />
     </div>
   );
@@ -358,74 +382,217 @@ function LessonDetailModal({ lesson, open, onClose }: LessonDetailModalProps) {
   );
 }
 
+interface FormSubject { id: string; name: string }
+interface FormTeacher { id: string; userId: string; name: string }
+interface FormRoom { id: string; name: string; capacity: number | null }
+interface FormBranch { id: string; name: string }
+interface ScheduleFormData {
+  subjects: FormSubject[];
+  teachers: FormTeacher[];
+  rooms: FormRoom[];
+  branches: FormBranch[];
+}
+
 interface CreateLessonModalProps {
   open: boolean;
   onClose: () => void;
+  onCreated?: () => void;
 }
 
-function CreateLessonModal({ open, onClose }: CreateLessonModalProps) {
+function CreateLessonModal({ open, onClose, onCreated }: CreateLessonModalProps) {
   const { t } = useT();
+  const [formData, setFormData] = useState<ScheduleFormData>({ subjects: [], teachers: [], rooms: [], branches: [] });
+  const [formLoading, setFormLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const [subjectId, setSubjectId] = useState('');
+  const [teacherId, setTeacherId] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('10:00');
+  const [roomId, setRoomId] = useState('');
+  const [locationId, setLocationId] = useState('');
+  const [capacity, setCapacity] = useState('');
+  const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    setFormLoading(true);
+    api.get<ScheduleFormData>('/center/account/schedule/form-data')
+      .then((res) => setFormData(res.data))
+      .catch(() => {})
+      .finally(() => setFormLoading(false));
+  }, [open]);
+
+  const resetForm = () => {
+    setSubjectId('');
+    setTeacherId('');
+    setDate(new Date().toISOString().split('T')[0]);
+    setStartTime('09:00');
+    setEndTime('10:00');
+    setRoomId('');
+    setLocationId('');
+    setCapacity('');
+    setNotes('');
+    setError('');
+  };
+
+  const handleSubmit = async () => {
+    if (!teacherId || !date || !startTime || !endTime) {
+      setError(t('requiredFields'));
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    try {
+      await api.post('/center/account/schedule/lessons', {
+        subjectId: subjectId || undefined,
+        teacherId,
+        date,
+        startTime,
+        endTime,
+        roomId: roomId || undefined,
+        locationId: locationId || undefined,
+        capacity: capacity ? parseInt(capacity) : undefined,
+        notes: notes || undefined,
+      });
+      resetForm();
+      onClose();
+      onCreated?.();
+    } catch (err: any) {
+      setError(err?.message || t('errorOccurred'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={() => { resetForm(); onClose(); }}
       title={t('createLesson')}
       size="lg"
       footer={
         <>
-          <Button variant="outline" onClick={onClose}>{t('cancel')}</Button>
-          <Button>{t('create')}</Button>
+          <Button variant="outline" onClick={() => { resetForm(); onClose(); }}>{t('cancel')}</Button>
+          <Button onClick={handleSubmit} disabled={submitting}>
+            {submitting ? t('creating') : t('create')}
+          </Button>
         </>
       }
     >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <label className="mb-1 block text-sm font-medium">{t('subject')}</label>
-          <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800">
-            <option value="">{t('select')}</option>
-          </select>
+      {formLoading ? (
+        <PencilLoader label={t('loading')} />
+      ) : (
+        <div className="space-y-4">
+          {error && (
+            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-500/10 dark:text-red-400">
+              {error}
+            </div>
+          )}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-sm font-medium">{t('teacher')} *</label>
+              <select
+                value={teacherId}
+                onChange={(e) => setTeacherId(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+              >
+                <option value="">{t('selectTeacher')}</option>
+                {formData.teachers.map((te) => (
+                  <option key={te.id} value={te.id}>{te.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-sm font-medium">{t('subject')}</label>
+              <select
+                value={subjectId}
+                onChange={(e) => setSubjectId(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+              >
+                <option value="">{t('select')}</option>
+                {formData.subjects.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">{t('date')} *</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">{t('branch')}</label>
+              <select
+                value={locationId}
+                onChange={(e) => setLocationId(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+              >
+                <option value="">{t('select')}</option>
+                {formData.branches.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">{t('room')}</label>
+              <select
+                value={roomId}
+                onChange={(e) => setRoomId(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+              >
+                <option value="">{t('select')}</option>
+                {formData.rooms.map((r) => (
+                  <option key={r.id} value={r.id}>{r.name}{r.capacity ? ` (${r.capacity})` : ''}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">{t('capacity')}</label>
+              <input
+                type="number"
+                value={capacity}
+                onChange={(e) => setCapacity(e.target.value)}
+                placeholder="30"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">{t('startTime')} *</label>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">{t('endTime')} *</label>
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-sm font-medium">{t('notes')}</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+              />
+            </div>
+          </div>
         </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">{t('teacher')}</label>
-          <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800">
-            <option value="">{t('select')}</option>
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">{t('grade')}</label>
-          <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800">
-            <option value="">{t('select')}</option>
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">{t('date')}</label>
-          <input
-            type="date"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">{t('room')}</label>
-          <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800">
-            <option value="">{t('select')}</option>
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">{t('startTime')}</label>
-          <input
-            type="time"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">{t('endTime')}</label>
-          <input
-            type="time"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
-          />
-        </div>
-      </div>
+      )}
     </Modal>
   );
 }

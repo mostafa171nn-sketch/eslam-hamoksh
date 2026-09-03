@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Bell,
   Globe,
@@ -12,15 +12,35 @@ import { PageHeader } from '../../../components/layout/PageHeader';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
+import { PencilLoader } from '../../../components/ui/PencilLoader';
 import { useToast } from '../../../context/ToastContext';
+import { api } from '../../../lib/api';
 import { useT } from '../../../i18n';
+
+interface CenterSettings {
+  emailNotifications: boolean;
+  smsNotifications: boolean;
+  pushNotifications: boolean;
+  whatsappNotifications: boolean;
+  language: string;
+  timezone: string;
+  dateFormat: string;
+  currency: string;
+  autoAttendance: boolean;
+  lateThreshold: number;
+  paymentReminder: boolean;
+  paymentReminderDays: number;
+  radiusMeters: number;
+  attendanceGraceMinutes: number;
+}
 
 export default function CenterSettingsPage() {
   const { t } = useT();
   const toast = useToast();
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<CenterSettings>({
     emailNotifications: true,
     smsNotifications: false,
     pushNotifications: true,
@@ -33,14 +53,30 @@ export default function CenterSettingsPage() {
     lateThreshold: 15,
     paymentReminder: true,
     paymentReminderDays: 3,
+    radiusMeters: 100,
+    attendanceGraceMinutes: 10,
   });
+
+  useEffect(() => {
+    api.get<Partial<CenterSettings>>('/center/account/settings')
+      .then((res) => {
+        if (res.data) setForm((prev) => ({ ...prev, ...res.data }));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      // Save to localStorage for now
-      localStorage.setItem('centerSettings', JSON.stringify(form));
+      await api.put('/center/account/settings', {
+        timezone: form.timezone,
+        currency: form.currency,
+        radiusMeters: form.radiusMeters,
+        attendanceGraceMinutes: form.attendanceGraceMinutes,
+        name: form.language,
+      });
       toast.success(t('settingsSaved'));
     } catch (err) {
       toast.error(t('error'));
@@ -53,7 +89,10 @@ export default function CenterSettingsPage() {
     <div className="space-y-6">
       <PageHeader title={t('settings')} subtitle={t('settingsSub')} />
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      {loading ? (
+        <PencilLoader label={t('loading')} />
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-6">
         {/* Notifications */}
         <Card title={
           <div className="flex items-center gap-2">
@@ -191,7 +230,8 @@ export default function CenterSettingsPage() {
             {t('saveAllSettings')}
           </Button>
         </div>
-      </form>
+        </form>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -80,14 +81,23 @@ export default function CenterDashboardPage() {
   const { user, center } = useAuth();
   const Arrow = dir === 'rtl' ? ArrowLeft : ArrowRight;
 
+  const [branchFilter, setBranchFilter] = useState<string>('');
+  const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    api.get<{ id: string; name: string }[]>('/center/account/branches')
+      .then((res) => setBranches(res.data || []))
+      .catch(() => {});
+  }, []);
+
   const { data: stats, loading: statsLoading, error: statsError } = useApi<CenterStats>(
-    () => api.get<CenterStats>('/center/account/stats'),
-    []
+    () => api.get<CenterStats>('/center/account/stats', branchFilter ? { branchId: branchFilter } : undefined),
+    [branchFilter]
   );
 
   const { data: todayLessons, loading: lessonsLoading } = useApi<TodayLesson[]>(
-    () => api.get<TodayLesson[]>('/center/account/lessons/today'),
-    []
+    () => api.get<TodayLesson[]>('/center/account/lessons/today', branchFilter ? { branchId: branchFilter } : undefined),
+    [branchFilter]
   );
 
   const { data: alerts } = useApi<Alert[]>(
@@ -149,6 +159,18 @@ export default function CenterDashboardPage() {
               {center?.name || t('centerDashboardSubGeneric')}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
+              {branches.length > 0 && (
+                <select
+                  value={branchFilter}
+                  onChange={(e) => setBranchFilter(e.target.value)}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                >
+                  <option value="">{t('allBranches')}</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              )}
               <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-200 dark:bg-slate-900/40 dark:text-slate-300 dark:ring-slate-700">
                 <Calendar className="h-3.5 w-3.5" />
                 {t('lessonsTodayCount', { count: stats?.todayLessons || 0 })}
