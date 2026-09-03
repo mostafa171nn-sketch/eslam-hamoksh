@@ -10,10 +10,9 @@ export interface AccessTokenPayload {
 }
 
 // Resolve ACCESS_TOKEN_TTL (e.g. "30m", "2h", "1800") to a positive number of
-// milliseconds. A bare number like "210" would otherwise be treated by
-// jsonwebtoken as 210 *milliseconds* (expiring instantly), which permanently
-// logged users out in production. Clamp to a sane minimum so a misconfigured
-// or zero/empty value can never produce an already-expired token.
+// milliseconds. The caller divides by 1000 before passing to jsonwebtoken,
+// which interprets numeric expiresIn as *seconds*. Clamp to a sane minimum so
+// a misconfigured or zero/empty value can never produce an already-expired token.
 export function accessTokenLifetimeMs(raw: string): number {
   const MIN_MS = 60_000; // 1 minute
   const value = String(raw ?? '').trim();
@@ -38,7 +37,7 @@ export function accessTokenLifetimeMs(raw: string): number {
 export function signAccessToken(userId: string, role: string): string {
   const payload: AccessTokenPayload = { sub: userId, role };
   return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
-    expiresIn: Math.max(accessTokenLifetimeMs(env.ACCESS_TOKEN_TTL), 60_000),
+    expiresIn: Math.max(accessTokenLifetimeMs(env.ACCESS_TOKEN_TTL) / 1000, 60),
     issuer: 'ecms',
   });
 }
