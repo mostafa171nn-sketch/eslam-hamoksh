@@ -31,6 +31,13 @@ const PERMISSIONS: PermissionSeed[] = [
   { name: 'centers.delete',     description: 'Delete centers',       domain: 'centers' },
   { name: 'centers.approve',    description: 'Approve center registrations', domain: 'centers' },
   { name: 'centers.suspend',    description: 'Suspend centers',      domain: 'centers' },
+  // Rooms
+  { name: 'rooms.view',         description: 'View rooms',           domain: 'rooms' },
+  { name: 'rooms.create',       description: 'Create rooms',         domain: 'rooms' },
+  { name: 'rooms.update',       description: 'Update rooms',         domain: 'rooms' },
+  { name: 'rooms.delete',       description: 'Delete rooms',         domain: 'rooms' },
+  // Analytics
+  { name: 'analytics.view',     description: 'View analytics',       domain: 'analytics' },
   // Teachers
   { name: 'teachers.view',      description: 'View teachers',        domain: 'teachers' },
   { name: 'teachers.create',    description: 'Create teachers',      domain: 'teachers' },
@@ -90,6 +97,7 @@ const PERMISSIONS: PermissionSeed[] = [
   { name: 'reports.attendance.view', description: 'View attendance reports', domain: 'reports' },
   { name: 'reports.student.view', description: 'View student reports', domain: 'reports' },
   { name: 'reports.teacher.view', description: 'View teacher reports', domain: 'reports' },
+  { name: 'reports.create',    description: 'Generate reports',        domain: 'reports' },
   // Settings
   { name: 'settings.view',      description: 'View center settings', domain: 'settings' },
   { name: 'settings.update',    description: 'Update center settings', domain: 'settings' },
@@ -133,6 +141,8 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   SUPER_ADMIN: [
     'centers.view', 'centers.create', 'centers.update', 'centers.delete',
     'centers.approve', 'centers.suspend',
+    'rooms.view', 'rooms.create', 'rooms.update', 'rooms.delete',
+    'analytics.view',
     'teachers.view', 'teachers.create', 'teachers.update', 'teachers.delete',
     'students.view', 'students.create', 'students.update', 'students.delete',
     'parents.view', 'parents.create', 'parents.update', 'parents.delete',
@@ -144,6 +154,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     'wallets.view', 'wallets.deposit', 'wallets.withdraw',
     'subscriptions.view', 'subscriptions.create', 'subscriptions.update', 'subscriptions.cancel',
     'reports.view', 'reports.export',
+    'reports.create',
     'reports.financial.view', 'reports.attendance.view', 'reports.student.view', 'reports.teacher.view',
     'settings.view', 'settings.update',
     'chat.view', 'chat.send',
@@ -155,6 +166,9 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     'documents.view', 'documents.create', 'documents.update', 'documents.delete', 'documents.verify',
   ],
   CENTER_ADMIN: [
+    'centers.view', 'centers.update',
+    'rooms.view', 'rooms.create', 'rooms.update', 'rooms.delete',
+    'analytics.view',
     'teachers.view', 'teachers.create', 'teachers.update', 'teachers.delete',
     'students.view', 'students.create', 'students.update', 'students.delete',
     'parents.view', 'parents.create', 'parents.update', 'parents.delete',
@@ -166,6 +180,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     'wallets.view', 'wallets.deposit', 'wallets.withdraw',
     'subscriptions.view', 'subscriptions.create', 'subscriptions.update', 'subscriptions.cancel',
     'reports.view', 'reports.export',
+    'reports.create',
     'reports.financial.view', 'reports.attendance.view', 'reports.student.view', 'reports.teacher.view',
     'settings.view', 'settings.update',
     'chat.view', 'chat.send',
