@@ -21,22 +21,22 @@ export function CenterDashboardShell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="mj-shell">
-      <CenterSidebar
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        onLogout={doLogout}
-      />
-      <div className="lg:ps-[280px]">
-        <CenterBranchProvider>
+    <CenterBranchProvider>
+      <div className="mj-shell">
+        <CenterSidebar
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          onLogout={doLogout}
+        />
+        <div className="lg:ps-[280px]">
           <CenterHeader onOpenSidebar={() => setSidebarOpen(true)} />
           <main className="mj-main">
             <div key={pathname} className="animate-fade-in">
               {children}
             </div>
           </main>
-        </CenterBranchProvider>
+        </div>
       </div>
-    </div>
+    </CenterBranchProvider>
   );
 }
