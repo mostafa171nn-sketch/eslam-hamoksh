@@ -12,8 +12,15 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ok, created } from '../utils/response';
 
 export const listEmployeesHandler = asyncHandler(async (req: Request, res: Response) => {
-  const { role, status, search, page, limit } = req.validatedQuery as any;
-  const result = await listEmployees({ role, status, search, page, limit });
+  const { role, status, search, page, limit } =
+    (req as Request & { validatedQuery?: Record<string, unknown> }).validatedQuery ?? (req.query as Record<string, any>);
+  const result = await listEmployees({
+    role,
+    status,
+    search,
+    page: page !== undefined && page !== '' ? Number(page) : 1,
+    limit: limit !== undefined && limit !== '' ? Number(limit) : 20,
+  });
   return ok(res, result.items, 'Employees loaded.', {
     page: result.page,
     limit: result.limit,
