@@ -68,11 +68,38 @@ app.use(
 );
 
 // CORS: only the configured client origin is allowed for credentialed requests.
+// The frontend is deployed on Vercel (app domain + *.vercel.app project/preview
+// URLs) and proxies /api/* to this backend, so any Vercel-hosted origin is
+// treated as a trusted client. Direct API calls without an Origin header are
+// also allowed (server-to-server / curl).
 app.use(
   cors({
     origin(origin, callback) {
       const allowed = env.CLIENT_URL.split(',').map((o) => o.trim());
-      if (!origin || allowed.includes(origin) || env.isDev) {
+      const allowedHosts = allowed
+        .map((o) => {
+          try {
+            return new URL(o).hostname;
+          } catch {
+            return '';
+          }
+        })
+        .filter(Boolean);
+      if (
+        !origin ||
+        allowed.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        env.isDev
+      ) {
+        return callback(null, true);
+      }
+      let originHost = '';
+      try {
+        originHost = new URL(origin).hostname;
+      } catch {
+        originHost = '';
+      }
+      if (originHost && allowedHosts.includes(originHost)) {
         return callback(null, true);
       }
       return callback(new Error('Origin not allowed by CORS.'));
