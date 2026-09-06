@@ -2,25 +2,45 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Menu, Settings, User as UserIcon, LogOut } from 'lucide-react';
+import { Menu, Settings, User as UserIcon, LogOut, ChevronDown, GraduationCap } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useT } from '../../../i18n';
+import { useCenterBranch } from './CenterBranchContext';
 import { Avatar } from '../../../components/ui/Avatar';
 import { NotificationsBell } from '../../../components/layout/NotificationsBell';
 
 export function CenterHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   const { user, center, logout } = useAuth();
   const { t, lang } = useT();
+  const { branches, branchId, setBranches, setBranchId } = useCenterBranch();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [branchOpen, setBranchOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const branchRef = useRef<HTMLDivElement>(null);
+  const loadedBranches = useRef(false);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (loadedBranches.current) return;
+    loadedBranches.current = true;
+    import('../../../lib/api').then(({ api }) => {
+      api
+        .get<{ id: string; name: string }[]>('/center/account/branches')
+        .then((res) => setBranches(res.data))
+        .catch(() => setBranches([]));
+    });
+  }, [setBranches]);
+
+  useEffect(() => {
+    if (!menuOpen && !branchOpen) return;
     const onClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (branchRef.current && !branchRef.current.contains(e.target as Node)) setBranchOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMenuOpen(false);
+      if (e.key === 'Escape') {
+        setMenuOpen(false);
+        setBranchOpen(false);
+      }
     };
     document.addEventListener('mousedown', onClick);
     document.addEventListener('keydown', onKey);
@@ -28,7 +48,7 @@ export function CenterHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
       document.removeEventListener('mousedown', onClick);
       document.removeEventListener('keydown', onKey);
     };
-  }, [menuOpen]);
+  }, [menuOpen, branchOpen]);
 
   const dateLabel = new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', {
     weekday: 'long',
@@ -36,6 +56,8 @@ export function CenterHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
     month: 'long',
     year: 'numeric',
   });
+
+  const selectedBranch = branches.find((b) => b.id === branchId);
 
   const doLogout = async () => {
     await logout();
@@ -52,15 +74,62 @@ export function CenterHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
         >
           <Menu className="h-5 w-5" />
         </button>
+
+        {/* Branch selector */}
+        <div ref={branchRef} className="relative min-w-0">
+          <button
+            onClick={() => setBranchOpen((o) => !o)}
+            aria-haspopup="menu"
+            aria-expanded={branchOpen}
+            className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-600/10 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">
+              <GraduationCap className="h-[18px] w-[18px]" />
+            </span>
+            <span className="min-w-0 max-w-[11rem] truncate text-start">
+              {center?.name || 'المركز'}
+            </span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+          </button>
+          {branchOpen && (
+            <div className="animate-scale-in absolute start-0 top-full z-[60] mt-2 w-64 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-elevated-lg dark:border-slate-700 dark:bg-slate-800">
+              <p className="px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                {selectedBranch ? selectedBranch.name : t('allBranches')}
+              </p>
+              <button
+                onClick={() => {
+                  setBranchId('');
+                  setBranchOpen(false);
+                }}
+                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/60"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-400" aria-hidden />
+                {t('allBranches')}
+              </button>
+              {branches.map((b) => (
+                <button
+                  key={b.id}
+                  onClick={() => {
+                    setBranchId(b.id);
+                    setBranchOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/60"
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${b.id === branchId ? 'bg-teal-600' : 'bg-slate-300'}`}
+                    aria-hidden
+                  />
+                  {b.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="hidden items-center gap-2 md:flex">
           <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
           <span className="text-sm text-slate-600 dark:text-slate-300">{dateLabel}</span>
         </div>
-        {center && (
-          <span className="me-2 hidden rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 ring-1 ring-inset ring-teal-600/20 lg:inline-flex dark:bg-teal-500/15 dark:text-teal-300 dark:ring-teal-500/25">
-            {center?.name}
-          </span>
-        )}
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5">

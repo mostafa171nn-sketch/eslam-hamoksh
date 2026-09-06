@@ -1063,6 +1063,261 @@ async function ensurePayments() {
   console.log(`Payments ensured: ${idx}`);
 }
 
+// ---------------------------------------------------------------------------
+// Center operations modules (groups, bookings, transport, complaints,
+// broadcasts, messages, expenses, internal tasks)
+// ---------------------------------------------------------------------------
+
+const GROUP_TEMPLATES = [
+  { name: 'مجموعة الرياضيات', subject: 'Mathematics', stage: 'اعدادي', day: WD_SAT, start: '10:00', end: '12:00', capacity: 25 },
+  { name: 'مجموعة الفيزياء', subject: 'Physics', stage: 'ثانوي', day: WD_MON, start: '16:00', end: '18:00', capacity: 20 },
+  { name: 'مجموعة اللغة الإنجليزية', subject: 'English', stage: 'ابتدائي', day: WD_WED, start: '14:00', end: '16:00', capacity: 15 },
+];
+
+const TRANSPORT_TEMPLATES = [
+  { name: 'الخط الأول - مدينة نصر', areas: 'مدينة نصر – النزهة – الحى السابع', driver: 'سيد محمد', phone: '+20 100 111 2233', vehicle: 'ميني باص 14 راكب', capacity: 14, pickup: '06:30', dropoff: '15:30' },
+  { name: 'الخط الثاني - مصر الجديدة', areas: 'مصر الجديدة – هليوبوليس – روكسي', driver: 'خالد إبراهيم', phone: '+20 100 222 3344', vehicle: 'ميكروباص 12 راكب', capacity: 12, pickup: '06:45', dropoff: '15:15' },
+  { name: 'الخط الثالث - النخيل', areas: 'أرض الجولف – النخيل – اللوتس', driver: 'أحمد فتحي', phone: '+20 100 333 4455', vehicle: 'مينى فان 8 راكب', capacity: 8, pickup: '07:00', dropoff: '15:00' },
+];
+
+const COMPLAINT_TEMPLATES = [
+  { subject: 'ارتفاع صوت التكييف داخل القاعة يؤثر على الشرح', severity: 'CRITICAL', source: 'PARENT', status: 'OPEN', score: 90 },
+  { subject: 'تأخر إرسال كشوف الدرجات الشهرية لأولياء الأمور', severity: 'HIGH', source: 'PARENT', status: 'IN_PROGRESS', score: 70 },
+  { subject: 'طلب تعديل موعد جلسة المراجعة النهائية', severity: 'MEDIUM', source: 'STUDENT', status: 'RESOLVED', score: 45 },
+  { subject: 'استفسار عن توفير مكان للانتظار بعد انتهاء الحصص', severity: 'LOW', source: 'EXTERNAL', status: 'CLOSED', score: 20 },
+];
+
+const BROADCAST_TEMPLATES = [
+  { subject: 'حفل تكريم الطلاب المتفوقين', audience: 'STUDENTS', channel: 'APP', status: 'SENT', recipients: 29, read: 18, scheduledAgoDays: 2 },
+  { subject: 'اجتماع أولياء الأمور الشهري', audience: 'EMPLOYEES', channel: 'WHATSAPP', status: 'SENT', recipients: 37, read: 31, scheduledAgoDays: 5 },
+  { subject: 'جدول الاختبارات الشهري للفصل الجديد', audience: 'TEACHERS', channel: 'APP', status: 'SCHEDULED', recipients: 40, read: 0, scheduledAgoDays: -3 },
+];
+
+const EXPENSE_TEMPLATES = [
+  { title: 'إيجار المقر الشهري', category: 'إيجار', amount: 1500000, agoDays: 2 },
+  { title: 'فاتورة الكهرباء', category: 'مرافق', amount: 185000, agoDays: 1 },
+  { title: 'رواتب موظفي الاستقبال', category: 'رواتب', amount: 420000, agoDays: 3 },
+  { title: 'صيانة أجهزة العرض', category: 'صيانة', amount: 95000, agoDays: 4 },
+];
+
+const TASK_TEMPLATES = [
+  { title: 'مراجعة سجل حضور الطلاب اليوم', status: 'OPEN' },
+  { title: 'تجهيز قاعة المراجعة النهائية', status: 'IN_PROGRESS' },
+  { title: 'تحديث كشوف المصروفات الشهرية', status: 'OPEN' },
+  { title: 'ترتيب ملفات اختبارات الشهر', status: 'DONE' },
+];
+
+async function ensureCenterModules() {
+  let groupsCount = 0, enrollCount = 0, bookingsCount = 0, complaintsCount = 0,
+    broadcastsCount = 0, messagesCount = 0, expensesCount = 0, tasksCount = 0,
+    transportCount = 0, transportSubs = 0;
+
+  for (const centerKey of Object.keys(centerById)) {
+    const center = centerById[centerKey];
+    const centerDef = CENTERS.find((cd) => cd.slug === center.slug);
+    const locs = locationByCenterName[center.name] ?? {};
+    const branch = Object.values(locs)[0] ?? null;
+    const adminUser = centerDef ? (userByUsername[centerDef.admin.username] ?? null) : null;
+
+    // ---- Rooms (4 per center, idempotent via @@unique([centerId, name])) ----
+    const roomDefs = [
+      { name: 'Room A1', capacity: 30, floor: '1', building: 'Main Building' },
+      { name: 'Room A2', capacity: 25, floor: '1', building: 'Main Building' },
+      { name: 'Room B1', capacity: 20, floor: '2', building: 'Main Building' },
+      { name: 'Lecture Hall', capacity: 60, floor: 'Ground', building: 'Main Building' },
+    ];
+    const rooms: any[] = [];
+    for (const r of roomDefs) {
+      const room = await prisma.room.upsert({
+        where: { centerId_name: { centerId: center.id, name: r.name } },
+        create: { centerId: center.id, name: r.name, locationId: branch?.id ?? null, capacity: r.capacity, floor: r.floor, building: r.building, status: 'ACTIVE' },
+        update: { capacity: r.capacity },
+      });
+      rooms.push(room);
+    }
+
+    // ---- Group teachers / students for this center ----
+    const teachers = await prisma.teacher.findMany({
+      where: { centerId: center.id },
+      include: { user: { select: { id: true, fullName: true } } },
+    });
+    const students = await prisma.student.findMany({
+      where: { centerId: center.id },
+      include: { user: { select: { fullName: true } } },
+    });
+    if (!teachers.length || !students.length) continue;
+
+    // ---- Groups (idempotent via @@unique([centerId, name])) ----
+    for (let i = 0; i < GROUP_TEMPLATES.length; i++) {
+      const t = GROUP_TEMPLATES[i];
+      const subject = subjectByName[t.subject];
+      const teacher = teachers[i % teachers.length];
+      const group = await prisma.group.upsert({
+        where: { centerId_name: { centerId: center.id, name: t.name } },
+        create: {
+          centerId: center.id, name: t.name, slug: `${center.slug}-g${i + 1}`,
+          stage: t.stage, subjectId: subject?.id ?? null, teacherId: teacher.id,
+          roomId: rooms[i % rooms.length].id, branchId: branch?.id ?? null,
+          capacity: t.capacity, dayOfWeek: t.day, startTime: t.start, endTime: t.end,
+          status: i === 0 ? 'NEEDS_ROOM' : 'ACTIVE',
+        },
+        update: { status: i === 0 ? 'NEEDS_ROOM' : 'ACTIVE' },
+      });
+      groupsCount++;
+
+      // Enroll students: distribute round-robin (group 1 gets the most).
+      const groupStudents = students.filter((_, si) => si % GROUP_TEMPLATES.length === i);
+      for (const s of groupStudents) {
+        await prisma.groupEnrollment.upsert({
+          where: { groupId_studentId: { groupId: group.id, studentId: s.id } },
+          create: { groupId: group.id, studentId: s.id, status: 'ACTIVE' },
+          update: {},
+        });
+        enrollCount++;
+      }
+
+      // Recurring weekly bookings for each group (guarded by tuple).
+      const bookingExists = await prisma.roomBooking.findFirst({
+        where: { centerId: center.id, groupId: group.id, dayOfWeek: t.day, startTime: t.start, endTime: t.end },
+      });
+      if (!bookingExists) {
+        await prisma.roomBooking.create({
+          data: {
+            centerId: center.id, roomId: rooms[i % rooms.length].id, teacherId: teacher.id, groupId: group.id,
+            date: nextWeekday(t.day, 2), dayOfWeek: t.day, startTime: t.start, endTime: t.end,
+            recurrence: 'WEEKLY', status: i === 1 ? 'APPROVED' : 'PENDING',
+            note: i === 0 ? 'بانتظار تخصيص قاعة' : 'حجز أسبوعي متكرر',
+          },
+        });
+        bookingsCount++;
+      }
+    }
+
+    // ---- Transport routes + students ----
+    for (let i = 0; i < TRANSPORT_TEMPLATES.length; i++) {
+      const t = TRANSPORT_TEMPLATES[i];
+      const route = await prisma.transportRoute.upsert({
+        where: { centerId_name: { centerId: center.id, name: t.name } },
+        create: {
+          centerId: center.id, name: t.name, areas: t.areas, driverName: t.driver, driverPhone: t.phone,
+          vehicle: t.vehicle, capacity: t.capacity, pickupTime: t.pickup, dropoffTime: t.dropoff,
+        },
+        update: { driverName: t.driver },
+      });
+      transportCount++;
+      for (let si = i; si < Math.min(students.length, i + 3); si += 3) {
+        const s = students[si];
+        await prisma.transportStudent.upsert({
+          where: { routeId_studentId: { routeId: route.id, studentId: s.id } },
+          create: { routeId: route.id, studentId: s.id, active: true },
+          update: {},
+        });
+        transportSubs++;
+      }
+    }
+
+    // ---- Complaints ----
+    for (let i = 0; i < COMPLAINT_TEMPLATES.length; i++) {
+      const c = COMPLAINT_TEMPLATES[i];
+      const assignee = adminUser?.id ?? teachers[0]?.user?.id;
+      const existing = await prisma.complaint.findFirst({
+        where: { centerId: center.id, subject: c.subject },
+      });
+      if (!existing) {
+        await prisma.complaint.create({
+          data: {
+            centerId: center.id, code: `${center.slug.slice(0, 3).toUpperCase()}-CMP-${i + 1}`,
+            source: c.source as any, severity: c.severity as any, status: c.status as any, score: c.score,
+            subject: c.subject, description: `${c.subject} – شكوى تجريبية مسجلة بواسطة سكرتارية السنتر.`,
+            reporterName: students[i % students.length]?.user?.fullName ?? 'أولياء الأمور',
+            assigneeId: assignee ?? null,
+            resolvedAt: c.status === 'RESOLVED' || c.status === 'CLOSED' ? new Date(Date.now() - 86400000) : null,
+          },
+        });
+        complaintsCount++;
+      }
+    }
+
+    // ---- Broadcasts ----
+    for (let i = 0; i < BROADCAST_TEMPLATES.length; i++) {
+      const b = BROADCAST_TEMPLATES[i];
+      const existing = await prisma.broadcast.findFirst({
+        where: { centerId: center.id, subject: b.subject },
+      });
+      if (!existing) {
+        const sentAt = b.status === 'SENT' ? new Date(Date.now() - b.scheduledAgoDays * 86400000) : null;
+        await prisma.broadcast.create({
+          data: {
+            centerId: center.id, audience: b.audience as any, channel: b.channel as any, status: b.status as any,
+            subject: b.subject, message: `${b.subject} – نرجو الالتزام بالمواعيد المعلنة والتواصل مع الإدارة لأي استفسارات. شكراً لتعاونكم.`,
+            sentAt,
+            scheduledFor: b.status === 'SCHEDULED' ? new Date(Date.now() + b.scheduledAgoDays * 86400000 * -1) : null,
+            recipientCount: b.recipients, readCount: b.read,
+          },
+        });
+        broadcastsCount++;
+      }
+    }
+
+    // ---- Expenses (cents) ----
+    for (const e of EXPENSE_TEMPLATES) {
+      const existing = await prisma.expense.findFirst({
+        where: { centerId: center.id, title: e.title },
+      });
+      if (!existing) {
+        await prisma.expense.create({
+          data: { centerId: center.id, title: e.title, category: e.category, amount: e.amount, date: new Date(Date.now() - e.agoDays * 86400000), note: 'مصروف تجريبي', createdBy: adminUser?.id ?? null },
+        });
+        expensesCount++;
+      }
+    }
+
+    // ---- Internal tasks ----
+    for (let i = 0; i < TASK_TEMPLATES.length; i++) {
+      const t = TASK_TEMPLATES[i];
+      const existing = await prisma.employeeTask.findFirst({ where: { centerId: center.id, title: t.title } });
+      if (!existing) {
+        await prisma.employeeTask.create({
+          data: {
+            centerId: center.id, title: t.title, description: `${t.title} – مهمة داخلية مجدولة بواسطة مدير السنتر.`,
+            status: t.status as any, assigneeId: teachers[i % teachers.length]?.user?.id ?? null,
+            dueAt: new Date(Date.now() + ((i % 2 === 0 ? 2 : 5)) * 86400000),
+            completedAt: t.status === 'DONE' ? new Date(Date.now() - 86400000) : null,
+          },
+        });
+        tasksCount++;
+      }
+    }
+
+    // ---- Internal messages ----
+    if (adminUser) {
+      const recipients = teachers.slice(0, 3);
+      const msgTemplates = [
+        { subject: 'تذكير بموعد اجتماع المراجعة الأسبوعي', to: recipients[0]?.user?.fullName ?? null },
+        { subject: 'مرفق كشف حضور الطلاب لهذا الأسبوع', to: recipients[1]?.user?.fullName ?? null },
+        { subject: 'طلب رفع درجات الاختبار الشهري قبل يوم الخميس', to: recipients[2]?.user?.fullName ?? null },
+      ];
+      for (let i = 0; i < msgTemplates.length; i++) {
+        const m = msgTemplates[i];
+        const existing = await prisma.centerMessage.findFirst({ where: { centerId: center.id, subject: m.subject } });
+        if (!existing) {
+          await prisma.centerMessage.create({
+            data: {
+              centerId: center.id, senderId: adminUser.id,
+              recipientId: recipients[i]?.user?.id ?? null,
+              subject: m.subject, message: `${m.subject}. مع خالص الشكر, إدارة السنتر.`,
+              read: i % 2 === 0, readAt: i % 2 === 0 ? new Date(Date.now() - 86400000) : null,
+            },
+          });
+          messagesCount++;
+        }
+      }
+    }
+  }
+
+  console.log(`Center modules ensured: groups=${groupsCount} enroll=${enrollCount} bookings=${bookingsCount} transport=${transportCount} subs=${transportSubs} complaints=${complaintsCount} broadcasts=${broadcastsCount} messages=${messagesCount} expenses=${expensesCount} tasks=${tasksCount}`);
+}
+
 async function ensureNotificationsAndBroadcasts() {
   let count = 0;
   const helper = async (username: string, type: string, title: string, message: string) => {
@@ -1203,6 +1458,7 @@ async function main() {
   await ensureExams();
   await ensureAttendance();
   await ensurePayments();
+  await ensureCenterModules();
   await ensureRatings();
   await ensureConversations();
   await ensureNotificationsAndBroadcasts();
@@ -1228,6 +1484,15 @@ async function main() {
     ['Attendance records', () => prisma.attendance.count()],
     ['Notifications', () => prisma.notification.count()],
     ['Payments', () => prisma.payment.count()],
+    ['Groups', () => prisma.group.count()],
+    ['Room bookings', () => prisma.roomBooking.count()],
+    ['Transport routes', () => prisma.transportRoute.count()],
+    ['Transport subscriptions', () => prisma.transportStudent.count()],
+    ['Complaints', () => prisma.complaint.count()],
+    ['Broadcasts', () => prisma.broadcast.count()],
+    ['Center messages', () => prisma.centerMessage.count()],
+    ['Expenses', () => prisma.expense.count()],
+    ['Tasks', () => prisma.employeeTask.count()],
   ];
   for (const [label, count] of tally) {
     try { counts[label] = await count(); } catch { counts[label] = -1; }
@@ -1238,7 +1503,12 @@ async function main() {
     slots = counts['Availability slots'], lessons = counts['Lessons (bookings)'],
     assignments = counts['Assignments'], submissions = counts['Submissions'],
     exams = counts['Exams'], attendance = counts['Attendance records'],
-    notifications = counts['Notifications'], payments = counts['Payments'];
+    notifications = counts['Notifications'], payments = counts['Payments'],
+    groups = counts['Groups'], bookings = counts['Room bookings'],
+    transport = counts['Transport routes'], transportSubs = counts['Transport subscriptions'],
+    complaints = counts['Complaints'], broadcasts = counts['Broadcasts'],
+    messages = counts['Center messages'], expenses = counts['Expenses'],
+    tasks = counts['Tasks'];
 
   console.log('\n==================================================');
   console.log('DEMO DATA CREATED SUCCESSFULLY');
@@ -1272,6 +1542,15 @@ async function main() {
   console.log(`Attendance records: ${attendance}`);
   console.log(`Notifications: ${notifications}`);
   console.log(`Payments: ${payments}`);
+  console.log(`Groups: ${groups}`);
+  console.log(`Room bookings: ${bookings}`);
+  console.log(`Transport routes: ${transport}`);
+  console.log(`Transport subscriptions: ${transportSubs}`);
+  console.log(`Complaints: ${complaints}`);
+  console.log(`Broadcasts: ${broadcasts}`);
+  console.log(`Center messages: ${messages}`);
+  console.log(`Expenses: ${expenses}`);
+  console.log(`Tasks: ${tasks}`);
   console.log('==================================================');
 }
 

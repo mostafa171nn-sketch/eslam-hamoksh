@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   Search,
   Edit,
@@ -199,9 +200,13 @@ export default function CenterStudentsPage() {
                   <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <Avatar name={student.fullName} src={student.photo} size="sm" />
+                        <Link href={`/center/students/${student.id}`}>
+                          <Avatar name={student.fullName} src={student.photo} size="sm" />
+                        </Link>
                         <div>
-                          <p className="font-medium text-slate-900 dark:text-white">{student.fullName}</p>
+                          <Link href={`/center/students/${student.id}`} className="font-medium text-slate-900 hover:text-brand-600 dark:text-white">
+                            {student.fullName}
+                          </Link>
                           <p className="text-xs text-slate-400">@{student.username}</p>
                         </div>
                       </div>

@@ -5,17 +5,19 @@ import Link from 'next/link';
 import {
   LayoutDashboard,
   DoorOpen,
-  Coins,
-  Users,
   GraduationCap,
   Group,
+  Users,
+  ContactRound,
+  Wallet,
+  Bus,
+  MessagesSquare,
+  Radio,
   FileBarChart,
+  Globe,
   Settings,
   LogOut,
   X,
-  Calendar,
-  TrendingUp,
-  CalendarCheck,
 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useT, type DictKey } from '../../../i18n';
@@ -28,45 +30,21 @@ interface NavItem {
   end?: boolean;
 }
 
-type NavGroup =
-  | 'general'
-  | 'management'
-  | 'operations'
-  | 'system';
-
-const NAV_GROUPS: Record<NavGroup, { titleKey: DictKey; items: NavItem[] }> = {
-  general: {
-    titleKey: 'general',
-    items: [
-      { to: '/center', labelKey: 'dashboard', icon: LayoutDashboard, end: true },
-      { to: '/center/classrooms', labelKey: 'classrooms', icon: DoorOpen },
-      { to: '/center/schedule', labelKey: 'schedule', icon: Calendar },
-      { to: '/center/analytics', labelKey: 'analytics', icon: TrendingUp },
-    ],
-  },
-  management: {
-    titleKey: 'management',
-    items: [
-      { to: '/center/students', labelKey: 'students', icon: Users },
-      { to: '/center/teachers', labelKey: 'teachers', icon: GraduationCap },
-      { to: '/center/employees', labelKey: 'employees', icon: Group },
-    ],
-  },
-  operations: {
-    titleKey: 'operations',
-    items: [
-      { to: '/center/payments', labelKey: 'payments', icon: Coins },
-      { to: '/center/attendance', labelKey: 'attendance', icon: CalendarCheck },
-      { to: '/center/reports', labelKey: 'reports', icon: FileBarChart },
-    ],
-  },
-  system: {
-    titleKey: 'system',
-    items: [
-      { to: '/center/profile', labelKey: 'centerSettings', icon: Settings },
-    ],
-  },
-};
+const NAV_ITEMS: NavItem[] = [
+  { to: '/center', labelKey: 'dashboard', icon: LayoutDashboard, end: true },
+  { to: '/center/classrooms', labelKey: 'classrooms', icon: DoorOpen },
+  { to: '/center/teachers', labelKey: 'teachers', icon: GraduationCap },
+  { to: '/center/groups', labelKey: 'groups', icon: Group },
+  { to: '/center/students', labelKey: 'students', icon: Users },
+  { to: '/center/employees', labelKey: 'employees', icon: ContactRound },
+  { to: '/center/finance', labelKey: 'finance', icon: Wallet },
+  { to: '/center/transport', labelKey: 'transport', icon: Bus },
+  { to: '/center/communications', labelKey: 'communications', icon: MessagesSquare },
+  { to: '/center/broadcast', labelKey: 'broadcast', icon: Radio },
+  { to: '/center/reports', labelKey: 'reports', icon: FileBarChart },
+  { to: '/center/profile', labelKey: 'centerPage', icon: Globe },
+  { to: '/center/settings', labelKey: 'settings', icon: Settings },
+];
 
 function isActive(pathname: string | null, item: NavItem): boolean {
   return item.end ? pathname === item.to : (pathname ?? '').startsWith(item.to);
@@ -127,45 +105,38 @@ export function CenterSidebar({
 
         {/* Nav */}
         <nav className="relative flex-1 overflow-y-auto overflow-x-hidden px-3 py-4">
-          {Object.entries(NAV_GROUPS).map(([groupKey, group]) => (
-            <div key={groupKey} className="mb-4">
-              <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-teal-300/60">
-                {t(group.titleKey)}
-              </p>
-              <div className="space-y-1">
-                {group.items.map((item) => {
-                  const active = isActive(pathname, item);
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.to}
-                      href={item.to}
-                      onClick={onClose}
-                      aria-current={active ? 'page' : undefined}
-                      className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
-                        active
-                          ? 'bg-white/15 text-white shadow-sm'
-                          : 'text-teal-100/80 hover:bg-white/10 hover:text-white'
-                      }`}
-                    >
-                      {active && (
-                        <span
-                          aria-hidden
-                          className="absolute inset-y-2 start-0 w-1 rounded-full bg-teal-300"
-                        />
-                      )}
-                      <Icon
-                        className={`h-[18px] w-[18px] shrink-0 ${
-                          active ? 'text-teal-200' : 'text-teal-300/70'
-                        }`}
-                      />
-                      <span className="truncate">{t(item.labelKey)}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+          <div className="space-y-1">
+            {NAV_ITEMS.map((item) => {
+              const active = isActive(pathname, item);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.to}
+                  href={item.to}
+                  onClick={onClose}
+                  aria-current={active ? 'page' : undefined}
+                  className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
+                    active
+                      ? 'bg-white/15 text-white shadow-sm'
+                      : 'text-teal-100/80 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  {active && (
+                    <span
+                      aria-hidden
+                      className="absolute inset-y-2 start-0 w-1 rounded-full bg-teal-300"
+                    />
+                  )}
+                  <Icon
+                    className={`h-[18px] w-[18px] shrink-0 ${
+                      active ? 'text-teal-200' : 'text-teal-300/70'
+                    }`}
+                  />
+                  <span className="truncate">{t(item.labelKey)}</span>
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
         {/* Footer */}

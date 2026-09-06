@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -35,6 +35,7 @@ import { StatCard } from '../../components/ui/StatCard';
 import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { api } from '../../lib/api';
+import { useCenterBranch } from './dashboard/CenterBranchContext';
 
 interface CenterStats {
   totalStudents: number;
@@ -81,14 +82,13 @@ export default function CenterDashboardPage() {
   const { user, center } = useAuth();
   const Arrow = dir === 'rtl' ? ArrowLeft : ArrowRight;
 
-  const [branchFilter, setBranchFilter] = useState<string>('');
-  const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
+  const { branches, branchId: branchFilter, setBranches, setBranchId: setBranchFilter } = useCenterBranch();
 
   useEffect(() => {
     api.get<{ id: string; name: string }[]>('/center/account/branches')
       .then((res) => setBranches(res.data || []))
       .catch(() => {});
-  }, []);
+  }, [setBranches]);
 
   const { data: stats, loading: statsLoading, error: statsError } = useApi<CenterStats>(
     () => api.get<CenterStats>('/center/account/stats', branchFilter ? { branchId: branchFilter } : undefined),
@@ -113,7 +113,7 @@ export default function CenterDashboardPage() {
     : 0;
 
   const quickActions = [
-    { label: t('addEmployee'), icon: UserPlus, href: '/center/employees/new', color: 'bg-brand-500' },
+    { label: t('addEmployee'), icon: UserPlus, href: '/center/employees', color: 'bg-brand-500' },
     { label: t('addTeacher'), icon: GraduationCap, href: '/center/teachers', color: 'bg-violet-500' },
     { label: t('addStudent'), icon: UserCog, href: '/center/students', color: 'bg-teal-500' },
     { label: t('createLesson'), icon: BookMarked, href: '/center/schedule', color: 'bg-amber-500' },
@@ -372,7 +372,7 @@ export default function CenterDashboardPage() {
                     <td className="py-3 pe-4 text-slate-600 dark:text-slate-300">{lesson.enrolledCount}/{lesson.studentCount}</td>
                     <td className="py-3 pe-4">{getStatusBadge(lesson.status)}</td>
                     <td className="py-3">
-                      <Link href={`/center/schedule/${lesson.id}`}><Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button></Link>
+                      <Link href="/center/schedule"><Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button></Link>
                     </td>
                   </tr>
                 ))}

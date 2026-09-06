@@ -58,8 +58,8 @@ export function RoleDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    if (user?.role === 'SUPER_ADMIN' || user?.role === 'CENTER_ADMIN' || user?.role === 'ADMIN')
-      router.replace('/admin');
+    if (user?.role === 'SUPER_ADMIN') router.replace('/admin');
+    else if (user?.role === 'CENTER_ADMIN' || user?.role === 'ADMIN') router.replace('/center');
     else if (user?.role === 'TEACHER') router.replace('/teacher');
     else if (user?.role === 'STUDENT') router.replace('/student');
     else if (user?.role === 'PARENT') router.replace('/parent');

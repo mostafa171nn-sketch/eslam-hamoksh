@@ -37,6 +37,10 @@ model User {
   assistantAssignments TeacherAssistant[]
   center               Center?                     @relation(fields: [centerId], references: [id])
   wallet               Wallet?
+  assignedComplaints   Complaint[]                  @relation("ComplaintAssignee")
+  tasks                EmployeeTask[]
+  sentCenterMessages   CenterMessage[]              @relation("CenterMessageSender")
+  receivedCenterMessages CenterMessage[]            @relation("CenterMessageRecipient")
 
   @@index([role])
   @@index([status])
@@ -94,6 +98,8 @@ model Teacher {
   paymentSettings      TeacherPaymentSettings?
   students             TeacherStudent[]
   subjects             TeacherSubject[]
+  groups               Group[]
+  bookings             RoomBooking[]
 
   @@index([hourlyRate])
   @@index([locationId])
@@ -127,6 +133,8 @@ model Student {
   studentSubjects      StudentSubject[]
   teachers             TeacherStudent[]
   centerFollows        StudentCenterFollow[]
+  groupEnrollments     GroupEnrollment[]
+  transportSubscriptions TransportStudent[]
 
   @@index([gradeId])
   @@index([centerId])
@@ -160,6 +168,7 @@ model Subject {
   lessons         Lesson[]
   studentSubjects StudentSubject[]
   teachers        TeacherSubject[]
+  groups          Group[]
 
   @@index([name])
 }
@@ -186,6 +195,7 @@ model Location {
   rooms        Room[]
   teachers     Teacher[]
   availability TeacherAvailability[]
+  groups       Group[]
 
   @@unique([centerId, name])
   @@index([name])
@@ -369,11 +379,217 @@ model Room {
   lessons    Lesson[]
   center     Center     @relation(fields: [centerId], references: [id], onDelete: Cascade)
   location   Location?  @relation(fields: [locationId], references: [id])
+  bookings   RoomBooking[]
+  groups     Group[]
 
   @@unique([centerId, name])
   @@index([centerId])
   @@index([locationId])
   @@index([status])
+}
+
+model Group {
+  id          String               @id @default(uuid())
+  centerId    String
+  name        String
+  slug        String?              @unique
+  stage       String?
+  subjectId   String?
+  teacherId   String?
+  roomId      String?
+  branchId    String?
+  capacity    Int?
+  dayOfWeek   Int?
+  startTime   String?
+  endTime     String?
+  status      GroupStatus          @default(ACTIVE)
+  notes       String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  branch      Location?            @relation(fields: [branchId], references: [id])
+  center      Center               @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  bookings    RoomBooking[]
+  enrollments GroupEnrollment[]
+  room        Room?                @relation(fields: [roomId], references: [id])
+  subject     Subject?             @relation(fields: [subjectId], references: [id])
+  teacher     Teacher?             @relation(fields: [teacherId], references: [id])
+
+  @@unique([centerId, name])
+  @@index([centerId])
+  @@index([teacherId])
+  @@index([status])
+}
+
+model GroupEnrollment {
+  id         String                @id @default(uuid())
+  groupId    String
+  studentId  String
+  status     GroupEnrollmentStatus @default(ACTIVE)
+  notes      String?
+  enrolledAt DateTime              @default(now())
+  group      Group                 @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  student    Student               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, studentId])
+  @@index([studentId])
+}
+
+model RoomBooking {
+  id         String            @id @default(uuid())
+  centerId   String
+  roomId     String
+  teacherId  String
+  groupId    String?
+  date       DateTime?
+  dayOfWeek  Int?
+  startTime  String
+  endTime    String
+  recurrence BookingRecurrence @default(ONE_TIME)
+  status     BookingStatus     @default(PENDING)
+  note       String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  center     Center            @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  group      Group?            @relation(fields: [groupId], references: [id])
+  room       Room              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  teacher    Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([centerId])
+  @@index([roomId, dayOfWeek])
+  @@index([status])
+}
+
+model Complaint {
+  id                 String           @id @default(uuid())
+  centerId           String
+  code               String?          @unique
+  source             ComplaintSource  @default(EXTERNAL)
+  severity           ComplaintSeverity @default(MEDIUM)
+  score              Int              @default(0)
+  subject            String
+  description        String?
+  reporterName       String?
+  assigneeId         String?
+  status             ComplaintStatus  @default(OPEN)
+  internalAssessment String?
+  resolvedAt         DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  assignee           User?            @relation("ComplaintAssignee", fields: [assigneeId], references: [id])
+  center             Center           @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@index([centerId])
+  @@index([status])
+  @@index([severity])
+}
+
+model Broadcast {
+  id             String            @id @default(uuid())
+  centerId       String
+  audience       BroadcastAudience @default(EMPLOYEES)
+  channel        BroadcastChannel  @default(APP)
+  subject        String
+  message        String
+  status         BroadcastStatus   @default(SCHEDULED)
+  scheduledFor   DateTime?
+  sentAt         DateTime?
+  recipientCount Int              @default(0)
+  readCount      Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  center         Center           @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@index([centerId])
+  @@index([status])
+}
+
+model TransportRoute {
+  id          String            @id @default(uuid())
+  centerId    String
+  name        String
+  areas       String?
+  driverName  String?
+  driverPhone String?
+  vehicle     String?
+  capacity    Int               @default(0)
+  pickupTime  String?
+  dropoffTime String?
+  status      TransportStatus   @default(ACTIVE)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  center      Center            @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  students    TransportStudent[]
+
+  @@unique([centerId, name])
+  @@index([centerId])
+}
+
+model TransportStudent {
+  id        String         @id @default(uuid())
+  routeId   String
+  studentId String
+  active    Boolean        @default(true)
+  joinedAt  DateTime       @default(now())
+  route     TransportRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  student   Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([routeId, studentId])
+  @@index([studentId])
+}
+
+model Expense {
+  id        String   @id @default(uuid())
+  centerId  String
+  title     String
+  category  String?
+  amount    Int
+  date      DateTime @default(now())
+  note      String?
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  center    Center   @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@index([centerId])
+  @@index([date])
+}
+
+model EmployeeTask {
+  id          String    @id @default(uuid())
+  centerId    String
+  assigneeId  String?
+  title       String
+  description String?
+  status      TaskStatus @default(OPEN)
+  dueAt       DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  assignee    User?     @relation(fields: [assigneeId], references: [id])
+  center      Center    @relation(fields: [centerId], references: [id], onDelete: Cascade)
+
+  @@index([centerId])
+  @@index([assigneeId])
+  @@index([status])
+}
+
+model CenterMessage {
+  id          String   @id @default(uuid())
+  centerId    String
+  senderId    String
+  recipientId String?
+  subject     String
+  message     String
+  read        Boolean  @default(false)
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+  center      Center   @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  recipient   User?    @relation("CenterMessageRecipient", fields: [recipientId], references: [id])
+  sender      User     @relation("CenterMessageSender", fields: [senderId], references: [id])
+
+  @@index([centerId])
+  @@index([recipientId])
+  @@index([createdAt])
 }
 
 model LessonEnrollment {
@@ -774,6 +990,14 @@ model Center {
   users                 User[]
   wallets               Wallet[]
   studentCenterFollows  StudentCenterFollow[]
+  groups                Group[]
+  roomBookings          RoomBooking[]
+  complaints            Complaint[]
+  broadcasts            Broadcast[]
+  transportRoutes       TransportRoute[]
+  expenses              Expense[]
+  employeeTasks         EmployeeTask[]
+  centerMessages        CenterMessage[]
 
   @@index([status])
   @@index([subscriptionStatus])
@@ -1237,4 +1461,78 @@ enum DocumentStatus {
   APPROVED
   REJECTED
   EXPIRED
+}
+
+enum GroupStatus {
+  ACTIVE
+  NEEDS_ROOM
+  INACTIVE
+}
+
+enum GroupEnrollmentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum BookingRecurrence {
+  ONE_TIME
+  WEEKLY
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  CANCELLED
+  COMPLETED
+}
+
+enum ComplaintSource {
+  STUDENT
+  PARENT
+  TEACHER
+  EMPLOYEE
+  EXTERNAL
+}
+
+enum ComplaintSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum BroadcastAudience {
+  EMPLOYEES
+  TEACHERS
+  STUDENTS
+}
+
+enum BroadcastChannel {
+  APP
+  WHATSAPP
+  SMS
+}
+
+enum BroadcastStatus {
+  SCHEDULED
+  SENT
+  CANCELLED
+}
+
+enum TransportStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
 }

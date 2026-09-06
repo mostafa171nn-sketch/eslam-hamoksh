@@ -92,7 +92,7 @@ export default function CenterProfilePage() {
     setLoading(true);
     setError('');
     try {
-      const res = await api.get<CenterProfile>('/center/profile');
+      const res = await api.get<CenterProfile>('/center/account/profile');
       setProfile(res.data);
       setForm(res.data);
     } catch (err: any) {
@@ -105,7 +105,7 @@ export default function CenterProfilePage() {
   const handleSave = async (_section: string) => {
     setSaving(true);
     try {
-      await api.put('/center/profile', form);
+      await api.put('/center/account/profile', form);
       toast.success(t('profileSaved'));
       setEditingSection(null);
       loadProfile();

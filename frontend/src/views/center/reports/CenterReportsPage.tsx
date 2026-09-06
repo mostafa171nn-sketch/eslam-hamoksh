@@ -39,7 +39,7 @@ const REPORT_TYPES = [
 ];
 
 export default function CenterReportsPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
 
   const [type, setType] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -149,7 +149,7 @@ export default function CenterReportsPage() {
                   <div>
                     <p className="font-medium text-slate-900 dark:text-white">{report.name}</p>
                     <p className="text-xs text-slate-500">
-                      {new Date(report.generatedAt).toLocaleString('en-GB')}
+                      {new Date(report.generatedAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
                   </div>
                 </div>

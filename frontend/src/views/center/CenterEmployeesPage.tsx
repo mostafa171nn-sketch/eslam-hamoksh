@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   Search,
   Plus,
@@ -258,7 +259,9 @@ export default function CenterEmployeesPage() {
                         <div className="flex items-center gap-3">
                           <Avatar name={emp.fullName} src={emp.photo} size="sm" />
                           <div>
-                            <p className="font-medium text-slate-900 dark:text-white">{emp.fullName}</p>
+                            <Link href={`/center/employees/${emp.id}`} className="font-medium text-slate-900 hover:text-brand-600 dark:text-white">
+                              {emp.fullName}
+                            </Link>
                             <p className="text-xs text-slate-400">@{emp.username}</p>
                           </div>
                         </div>

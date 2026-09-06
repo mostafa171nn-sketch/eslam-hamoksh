@@ -26,6 +26,16 @@ export const TENANT_MODELS = new Set<string>([
   'Room',
   'Document',
   'ActivityLog',
+  'Group',
+  'GroupEnrollment',
+  'RoomBooking',
+  'Complaint',
+  'Broadcast',
+  'TransportRoute',
+  'TransportStudent',
+  'Expense',
+  'EmployeeTask',
+  'CenterMessage',
 ]);
 
 // Single Prisma client instance reused across the whole app.

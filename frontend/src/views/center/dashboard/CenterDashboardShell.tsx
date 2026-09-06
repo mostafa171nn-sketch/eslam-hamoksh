@@ -7,6 +7,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { CenterSidebar } from './CenterSidebar';
 import { CenterHeader } from './CenterHeader';
+import { CenterBranchProvider } from './CenterBranchContext';
 
 export function CenterDashboardShell({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -27,12 +28,14 @@ export function CenterDashboardShell({ children }: { children: ReactNode }) {
         onLogout={doLogout}
       />
       <div className="lg:ps-72">
-        <CenterHeader onOpenSidebar={() => setSidebarOpen(true)} />
-        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-          <div key={pathname} className="animate-fade-in pb-24 lg:pb-0">
-            {children}
-          </div>
-        </main>
+        <CenterBranchProvider>
+          <CenterHeader onOpenSidebar={() => setSidebarOpen(true)} />
+          <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+            <div key={pathname} className="animate-fade-in pb-24 lg:pb-0">
+              {children}
+            </div>
+          </main>
+        </CenterBranchProvider>
       </div>
     </div>
   );

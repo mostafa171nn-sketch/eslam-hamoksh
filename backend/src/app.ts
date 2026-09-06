@@ -46,6 +46,13 @@ import documentRoutes from './routes/document.routes';
 import otpRoutes from './routes/otp.routes';
 import notificationTemplateRoutes from './routes/notification-template.routes';
 import centerAccountRoutes from './routes/center-account.routes';
+import centerGroupsRoutes from './routes/center-groups.routes';
+import centerBookingsRoutes from './routes/center-bookings.routes';
+import centerTransportRoutes from './routes/center-transport.routes';
+import centerFinanceRoutes from './routes/center-finance.routes';
+import centerCommunicationsRoutes from './routes/center-communications.routes';
+import centerBroadcastRoutes from './routes/center-broadcast.routes';
+import centerTasksRoutes from './routes/center-tasks.routes';
 import { prisma } from './lib/prisma';
 
 export const app = express();
@@ -135,6 +142,13 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/notification-templates', notificationTemplateRoutes);
 app.use('/api/auth/otp', otpRoutes);
 app.use('/api/center/account', centerAccountRoutes);
+app.use('/api/center/groups', centerGroupsRoutes);
+app.use('/api/center/bookings', centerBookingsRoutes);
+app.use('/api/center/transport', centerTransportRoutes);
+app.use('/api/center/account/finance', centerFinanceRoutes);
+app.use('/api/center/account/communications', centerCommunicationsRoutes);
+app.use('/api/center/account/broadcast', centerBroadcastRoutes);
+app.use('/api/center/account/tasks', centerTasksRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

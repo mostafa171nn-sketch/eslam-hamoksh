@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   Search,
   Edit,
   Star,
   Users,
   Calendar,
+  Eye,
   X,
   Filter,
 } from 'lucide-react';
@@ -229,9 +231,11 @@ export default function CenterTeachersPage() {
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => { setSelectedTeacher(teacher); setShowEditModal(true); }}>
                     <Edit className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Calendar className="h-3.5 w-3.5" />
-                  </Button>
+                  <Link href={`/center/teachers/${teacher.id}`} className="flex-1">
+                    <Button variant="outline" size="sm" className="w-full">
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </Card>
