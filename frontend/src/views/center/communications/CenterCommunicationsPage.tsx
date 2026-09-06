@@ -1,9 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import {
-  MessagesSquare, Plus, UserRound, CheckCheck,
-} from 'lucide-react';
+import { useRef, useState } from 'react';
+import { MessagesSquare, Plus, UserRound, CheckCheck, Eye } from 'lucide-react';
 import { PageHeader } from '../../../components/layout/PageHeader';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -18,7 +16,10 @@ import { Tabs } from '../../../components/ui/Tabs';
 import { useApi, errorMessage } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
 import { useToast } from '../../../context/ToastContext';
-import { useT, type DictKey } from '../../../i18n';
+import { useT, type DictKey, type TranslateParams } from '../../../i18n';
+
+const COMPLAINTS_API = '/center/account/communications/complaints';
+const MESSAGES_API = '/center/account/communications/messages';
 
 interface ComplaintsSummary {
   total: number;
@@ -34,7 +35,7 @@ interface ComplaintRow {
   code: string;
   source: string;
   severity: string;
-  score: number;
+  score: number | null;
   subject: string;
   description: string | null;
   reporterName: string | null;
@@ -63,23 +64,46 @@ interface MessageRow {
 }
 
 const SEVERITIES = [
-  { value: 'LOW', label: 'منخفضة' },
-  { value: 'MEDIUM', label: 'متوسطة' },
-  { value: 'HIGH', label: 'عالية' },
-  { value: 'CRITICAL', label: 'حرجة' },
-];
+  { value: 'CRITICAL', labelKey: 'complaintCritical' },
+  { value: 'HIGH', labelKey: 'complaintHigh' },
+  { value: 'MEDIUM', labelKey: 'complaintMedium' },
+  { value: 'LOW', labelKey: 'complaintLow' },
+] as const;
+
 const SOURCES = [
-  { value: 'EXTERNAL', label: 'خارجي' },
-  { value: 'INTERNAL', label: 'داخلي' },
-  { value: 'PHONE', label: 'هاتف' },
-  { value: 'WHATSAPP', label: 'واتساب' },
-  { value: 'SOCIAL', label: 'سوشيال ميديا' },
-  { value: 'OTHER', label: 'أخرى' },
-];
-const STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
+  { value: 'STUDENT', labelKey: 'complaintSourceStudent' },
+  { value: 'PARENT', labelKey: 'complaintSourceParent' },
+  { value: 'TEACHER', labelKey: 'complaintSourceTeacher' },
+  { value: 'EMPLOYEE', labelKey: 'complaintSourceEmployee' },
+  { value: 'EXTERNAL', labelKey: 'complaintSourceExternal' },
+] as const;
+
+const STATUSES = [
+  { value: 'OPEN', labelKey: 'complaintStatusOpen' },
+  { value: 'IN_PROGRESS', labelKey: 'complaintStatusInProgress' },
+  { value: 'RESOLVED', labelKey: 'complaintStatusResolved' },
+  { value: 'CLOSED', labelKey: 'complaintStatusClosed' },
+] as const;
 
 const severityTone = (s: string) =>
   s === 'CRITICAL' ? 'red' : s === 'HIGH' ? 'amber' : s === 'MEDIUM' ? 'blue' : 'slate';
+const statusTone = (s: string) =>
+  s === 'OPEN' ? 'red' : s === 'IN_PROGRESS' ? 'amber' : s === 'RESOLVED' ? 'green' : 'slate';
+
+type TFunc = (k: DictKey, params?: TranslateParams) => string;
+
+function severityLabel(t: TFunc, s: string | null | undefined): string {
+  const found = SEVERITIES.find((x) => x.value === s);
+  return found ? t(found.labelKey) : (s ?? '—');
+}
+function sourceLabel(t: TFunc, s: string | null | undefined): string {
+  const found = SOURCES.find((x) => x.value === s);
+  return found ? t(found.labelKey) : (s ?? '—');
+}
+function statusLabel(t: TFunc, s: string | null | undefined): string {
+  const found = STATUSES.find((x) => x.value === s);
+  return found ? t(found.labelKey) : (s ?? '—');
+}
 
 export function CenterCommunicationsPage() {
   const { t, lang } = useT();
@@ -105,30 +129,32 @@ export function CenterCommunicationsPage() {
   );
 }
 
-function ComplaintsTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
-  const toast = useToast();
+function ComplaintsTab({ t, lang }: { t: TFunc; lang: string }) {
   const [showAdd, setShowAdd] = useState(false);
+  const [detail, setDetail] = useState<ComplaintRow | null>(null);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
+  const [severity, setSeverity] = useState('');
   const [debounced, setDebounced] = useState('');
-  const { data: summary } = useApi<ComplaintsSummary>(() => api.get<ComplaintsSummary>('/center/communications/complaints/summary'), []);
+  const debounceRef = useRef<number | undefined>(undefined);
+  const { data: summary } = useApi<ComplaintsSummary>(
+    () => api.get<ComplaintsSummary>(`${COMPLAINTS_API}/summary`),
+    [],
+  );
   const { data: complaints, loading, error, reload } = useApi<ComplaintRow[]>(
-    () => api.get<ComplaintRow[]>('/center/communications/complaints', status ? { search: debounced || undefined, status } : { search: debounced || undefined }),
-    [debounced, status]
+    () =>
+      api.get<ComplaintRow[]>(COMPLAINTS_API, {
+        ...(debounced ? { search: debounced } : {}),
+        ...(status ? { status } : {}),
+        ...(severity ? { severity } : {}),
+      }),
+    [debounced, status, severity],
   );
 
-  const setStatusNow = async (id: string, next: string) => {
-    try {
-      await api.patch(`/center/communications/complaints/${id}`, { status: next });
-      toast.success(t('complaintUpdatedToast'));
-      reload();
-    } catch (err) {
-      toast.error(errorMessage(err));
-    }
-  };
-
   const fmtDate = (iso: string | null) =>
-    iso ? new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' }) : '—';
+    iso
+      ? new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' })
+      : '—';
 
   return (
     <div className="space-y-4">
@@ -142,28 +168,41 @@ function ComplaintsTab({ t, lang }: { t: (k: DictKey) => string; lang: string })
       </div>
 
       <Card bodyClassName="p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <Input
-            className="sm:max-w-sm"
+            className="lg:max-w-sm"
             placeholder={t('search') + '...'}
             value={search}
             onChange={(e) => {
-              setSearch(e.target.value);
-              clearTimeout((window as any).__c_s_t);
-              (window as any).__c_s_t = setTimeout(() => setDebounced(e.target.value), 300);
+              const value = e.target.value;
+              setSearch(value);
+              window.clearTimeout(debounceRef.current);
+              debounceRef.current = window.setTimeout(() => setDebounced(value), 300);
             }}
           />
-          <div className="sm:w-44">
-            <Select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              options={[
-                { value: '', label: t('selectBranch') },
-                ...STATUSES.map((s) => ({ value: s, label: s.replace(/_/g, ' ') })),
-              ]}
-            />
+          <div className="grid grid-cols-2 gap-3 lg:flex lg:items-center">
+            <div className="w-full lg:w-44">
+              <Select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                options={[
+                  { value: '', label: t('allStatuses') },
+                  ...STATUSES.map((s) => ({ value: s.value, label: t(s.labelKey) })),
+                ]}
+              />
+            </div>
+            <div className="w-full lg:w-44">
+              <Select
+                value={severity}
+                onChange={(e) => setSeverity(e.target.value)}
+                options={[
+                  { value: '', label: t('allSeverities') },
+                  ...SEVERITIES.map((s) => ({ value: s.value, label: t(s.labelKey) })),
+                ]}
+              />
+            </div>
           </div>
-          <Button size="sm" className="sm:ms-auto" onClick={() => setShowAdd(true)}>
+          <Button size="sm" className="lg:ms-auto" onClick={() => setShowAdd(true)}>
             <Plus className="h-4 w-4" />
             {t('addComplaint')}
           </Button>
@@ -171,34 +210,63 @@ function ComplaintsTab({ t, lang }: { t: (k: DictKey) => string; lang: string })
       </Card>
 
       {loading && <PencilLoader label={t('loading')} />}
-      {error && <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>}
+      {error && (
+        <div className="rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-500/10 dark:text-red-300">{error}</div>
+      )}
 
       {!loading && complaints && complaints.length > 0 && (
         <Card bodyClassName="p-0">
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3 dark:border-slate-700">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t('showingResults', { count: complaints.length })}
+            </p>
+          </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-700">
             {complaints.map((c) => (
-              <div key={c.id} className="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+              <div
+                key={c.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setDetail(c)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setDetail(c);
+                  }
+                }}
+                className="group flex cursor-pointer flex-col gap-3 px-5 py-4 transition-colors focus:outline-none focus-visible:bg-slate-50 hover:bg-slate-50 dark:focus-visible:bg-slate-700/40 dark:hover:bg-slate-700/40 lg:flex-row lg:items-center lg:justify-between"
+              >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-mono text-xs font-semibold text-slate-400">{c.code}</span>
-                    <Badge tone={severityTone(c.severity)}>{c.severity}</Badge>
-                    <Badge tone={c.status === 'OPEN' ? 'red' : c.status === 'IN_PROGRESS' ? 'amber' : 'green'}>{c.status?.replace(/_/g, ' ')}</Badge>
-                    <span className="flex items-center gap-1 text-xs text-slate-400">
+                    <Badge tone={severityTone(c.severity)}>{severityLabel(t, c.severity)}</Badge>
+                    <Badge tone={statusTone(c.status)}>{statusLabel(t, c.status)}</Badge>
+                    <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
                       <UserRound className="h-3.5 w-3.5" />
-                      {lang === 'ar' ? c.reporterName : c.reporterName}
+                      {sourceLabel(t, c.source)}
                     </span>
                   </div>
                   <p className="mt-1.5 text-sm font-semibold text-slate-900 dark:text-white">{c.subject}</p>
-                  {c.description && <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{c.description}</p>}
-                  <p className="mt-1 text-xs text-slate-400">{fmtDate(c.createdAt)} · {t('complaintAssignee')}: {c.assignee ?? '—'}</p>
+                  {c.description && (
+                    <p className="mt-0.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{c.description}</p>
+                  )}
+                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                    {fmtDate(c.createdAt)} · {t('complaintReporter')}: {c.reporterName ?? '—'} ·{' '}
+                    {t('complaintAssignee')}: {c.assignee ?? '—'}
+                  </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <Select
-                    value={c.status}
-                    onChange={(e) => setStatusNow(c.id, e.target.value)}
-                    options={STATUSES.map((s) => ({ value: s, label: s.replace(/_/g, ' ') }))}
-                    className="w-36"
-                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDetail(c);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                    {t('viewDetails')}
+                  </Button>
                 </div>
               </div>
             ))}
@@ -210,22 +278,150 @@ function ComplaintsTab({ t, lang }: { t: (k: DictKey) => string; lang: string })
         <EmptyState icon={MessagesSquare} title={t('noComplaints')} />
       )}
 
-      {showAdd && <AddComplaintModal t={t} onClose={() => setShowAdd(false)} onDone={() => { setShowAdd(false); reload(); }} />}
+      {showAdd && (
+        <AddComplaintModal t={t} onClose={() => setShowAdd(false)} onDone={() => { setShowAdd(false); reload(); }} />
+      )}
+      {detail && (
+        <ComplaintDetailModal
+          t={t}
+          lang={lang}
+          complaint={detail}
+          onClose={() => setDetail(null)}
+          onUpdated={reload}
+        />
+      )}
     </div>
   );
 }
 
-function AddComplaintModal({ t, onClose, onDone }: { t: (k: DictKey) => string; onClose: () => void; onDone: () => void }) {
+function ComplaintDetailModal({
+  t,
+  lang,
+  complaint,
+  onClose,
+  onUpdated,
+}: {
+  t: TFunc;
+  lang: string;
+  complaint: ComplaintRow;
+  onClose: () => void;
+  onUpdated: () => void;
+}) {
+  const toast = useToast();
+  const [local, setLocal] = useState(complaint);
+  const [status, setStatus] = useState(complaint.status);
+  const [saving, setSaving] = useState(false);
+
+  const fmtDate = (iso: string | null) =>
+    iso
+      ? new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+      : '—';
+
+  const saveStatus = async () => {
+    if (status === local.status) {
+      onClose();
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.patch(`${COMPLAINTS_API}/${local.id}`, { status });
+      toast.success(t('complaintUpdatedToast'));
+      setLocal((c) => ({ ...c, status }));
+      onUpdated();
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={t('complaintDetails')}
+      size="lg"
+      footer={
+        <>
+          <div className="flex items-center gap-2">
+            <Select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              options={STATUSES.map((s) => ({ value: s.value, label: t(s.labelKey) }))}
+              className="w-40"
+            />
+            <Button onClick={saveStatus} loading={saving}>
+              {t('saveStatus')}
+            </Button>
+          </div>
+          <Button variant="outline" onClick={onClose}>
+            {t('cancel')}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-mono text-xs font-semibold text-slate-400">{local.code}</span>
+          <Badge tone={severityTone(local.severity)}>{severityLabel(t, local.severity)}</Badge>
+          <Badge tone={statusTone(local.status)}>{statusLabel(t, local.status)}</Badge>
+        </div>
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white">{local.subject}</h3>
+
+        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <InfoItem label={t('complaintSource')} value={sourceLabel(t, local.source)} />
+          <InfoItem label={t('complaintSeverity')} value={severityLabel(t, local.severity)} />
+          <InfoItem label={t('complaintScore')} value={local.score != null ? String(local.score) : '—'} />
+          <InfoItem label={t('complaintReporter')} value={local.reporterName ?? '—'} />
+          <InfoItem label={t('complaintAssignee')} value={local.assignee ?? '—'} />
+          <InfoItem label={t('reportedOn')} value={fmtDate(local.createdAt)} />
+          {local.resolvedAt && <InfoItem label={t('resolvedOn')} value={fmtDate(local.resolvedAt)} />}
+        </dl>
+
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            {t('complaintDescription')}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+            {local.description || t('noDescription')}
+          </p>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            {t('complaintAssessment')}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+            {local.internalAssessment || t('noAssessment')}
+          </p>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function AddComplaintModal({
+  t,
+  onClose,
+  onDone,
+}: {
+  t: TFunc;
+  onClose: () => void;
+  onDone: () => void;
+}) {
   const toast = useToast();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ source: 'EXTERNAL', severity: 'MEDIUM', subject: '', description: '', reporterName: '' });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.subject.trim()) { toast.error(t('requiredFields')); return; }
+    if (!form.subject.trim()) {
+      toast.error(t('requiredFields'));
+      return;
+    }
     setSaving(true);
     try {
-      await api.post('/center/communications/complaints', form);
+      await api.post(COMPLAINTS_API, form);
       toast.success(t('complaintCreatedToast'));
       onDone();
     } catch (err) {
@@ -236,30 +432,67 @@ function AddComplaintModal({ t, onClose, onDone }: { t: (k: DictKey) => string; 
   };
 
   return (
-    <Modal open onClose={onClose} title={t('addComplaint')} size="md"
-      footer={<><Button variant="outline" onClick={onClose}>{t('cancel')}</Button><Button onClick={submit} loading={saving}>{t('save')}</Button></>}>
+    <Modal
+      open
+      onClose={onClose}
+      title={t('addComplaint')}
+      size="md"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            {t('cancel')}
+          </Button>
+          <Button onClick={submit} loading={saving}>
+            {t('save')}
+          </Button>
+        </>
+      }
+    >
       <form onSubmit={submit} className="space-y-4" noValidate>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Select label={t('complaintSource')} value={form.source} onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))} options={SOURCES} />
-          <Select label={t('complaintSeverity')} value={form.severity} onChange={(e) => setForm((f) => ({ ...f, severity: e.target.value }))} options={SEVERITIES} />
+          <Select
+            label={t('complaintSource')}
+            value={form.source}
+            onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))}
+            options={SOURCES.map((s) => ({ value: s.value, label: t(s.labelKey) }))}
+          />
+          <Select
+            label={t('complaintSeverity')}
+            value={form.severity}
+            onChange={(e) => setForm((f) => ({ ...f, severity: e.target.value }))}
+            options={SEVERITIES.map((s) => ({ value: s.value, label: t(s.labelKey) }))}
+          />
         </div>
-        <Input label={t('complaintSubject')} required value={form.subject} onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))} />
-        <Textarea label={t('complaintDescription')} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
-        <Input label={t('complaintReporter')} value={form.reporterName} onChange={(e) => setForm((f) => ({ ...f, reporterName: e.target.value }))} />
+        <Input
+          label={t('complaintSubject')}
+          required
+          value={form.subject}
+          onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
+        />
+        <Textarea
+          label={t('complaintDescription')}
+          value={form.description}
+          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+        />
+        <Input
+          label={t('complaintReporter')}
+          value={form.reporterName}
+          onChange={(e) => setForm((f) => ({ ...f, reporterName: e.target.value }))}
+        />
       </form>
     </Modal>
   );
 }
 
-function MessagesTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
+function MessagesTab({ t, lang }: { t: TFunc; lang: string }) {
   const toast = useToast();
   const [showNew, setShowNew] = useState(false);
-  const { data: summary } = useApi<MessagesSummary>(() => api.get<MessagesSummary>('/center/communications/messages/summary'), []);
-  const { data: messages, loading, error, reload } = useApi<MessageRow[]>(() => api.get<MessageRow[]>('/center/communications/messages'), []);
+  const { data: summary } = useApi<MessagesSummary>(() => api.get<MessagesSummary>(`${MESSAGES_API}/summary`), []);
+  const { data: messages, loading, error, reload } = useApi<MessageRow[]>(() => api.get<MessageRow[]>(MESSAGES_API), []);
 
   const markRead = async (id: string) => {
     try {
-      await api.patch(`/center/communications/messages/${id}/read`);
+      await api.patch(`${MESSAGES_API}/${id}/read`);
       reload();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -267,7 +500,11 @@ function MessagesTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
   };
 
   const fmtDate = (iso: string) =>
-    new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
 
   return (
     <div className="space-y-4">
@@ -280,7 +517,7 @@ function MessagesTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
 
       <Card bodyClassName="p-0">
         <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3 dark:border-slate-700">
-          <p className="text-sm text-slate-500">{t('messagesTitle')}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('messagesTitle')}</p>
           <Button size="sm" onClick={() => setShowNew(true)}>
             <Plus className="h-4 w-4" />
             {t('sendMessage')}
@@ -288,20 +525,30 @@ function MessagesTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
         </div>
 
         {loading && <PencilLoader label={t('loading')} />}
-        {error && <div className="m-4 rounded-lg bg-red-50 p-4 text-red-600">{error}</div>}
+        {error && (
+          <div className="m-4 rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-500/10 dark:text-red-300">{error}</div>
+        )}
 
         {!loading && messages && messages.length > 0 ? (
           <div className="divide-y divide-slate-100 dark:divide-slate-700">
             {messages.map((m) => (
               <div key={m.id} className="flex items-start gap-3 px-5 py-4">
-                <div className={`mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full ${m.read ? 'bg-slate-200 dark:bg-slate-600' : 'bg-brand-500'}`} />
+                <div
+                  className={`mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full ${
+                    m.read ? 'bg-slate-200 dark:bg-slate-600' : 'bg-brand-500'
+                  }`}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className={`text-sm font-semibold ${m.read ? 'text-slate-600 dark:text-slate-300' : 'text-slate-900 dark:text-white'}`}>{m.subject}</p>
-                    <Badge tone={m.recipient ? 'blue' : 'slate'}>{m.recipient ?? t('messageTo') + ': ' + (m.recipientRole ?? '—')}</Badge>
+                    <p className={`text-sm font-semibold ${m.read ? 'text-slate-600 dark:text-slate-300' : 'text-slate-900 dark:text-white'}`}>
+                      {m.subject}
+                    </p>
+                    <Badge tone={m.recipient ? 'blue' : 'slate'}>{m.recipient ?? t('toAllCenter')}</Badge>
                   </div>
-                  <p className={`mt-0.5 text-sm ${m.read ? 'text-slate-500' : 'text-slate-700 dark:text-slate-200'}`}>{m.message}</p>
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className={`mt-0.5 text-sm ${m.read ? 'text-slate-500 dark:text-slate-400' : 'text-slate-700 dark:text-slate-200'}`}>
+                    {m.message}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                     {fmtDate(m.createdAt)} · {t('messageFrom')}: {m.sender}
                   </p>
                 </div>
@@ -319,22 +566,35 @@ function MessagesTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
         )}
       </Card>
 
-      {showNew && <NewMessageModal t={t} onClose={() => setShowNew(false)} onDone={() => { setShowNew(false); reload(); }} />}
+      {showNew && (
+        <NewMessageModal t={t} onClose={() => setShowNew(false)} onDone={() => { setShowNew(false); reload(); }} />
+      )}
     </div>
   );
 }
 
-function NewMessageModal({ t, onClose, onDone }: { t: (k: DictKey) => string; onClose: () => void; onDone: () => void }) {
+function NewMessageModal({
+  t,
+  onClose,
+  onDone,
+}: {
+  t: TFunc;
+  onClose: () => void;
+  onDone: () => void;
+}) {
   const toast = useToast();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ subject: '', message: '' });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.subject.trim() || !form.message.trim()) { toast.error(t('requiredFields')); return; }
+    if (!form.subject.trim() || !form.message.trim()) {
+      toast.error(t('requiredFields'));
+      return;
+    }
     setSaving(true);
     try {
-      await api.post('/center/communications/messages', form);
+      await api.post(MESSAGES_API, form);
       toast.success(t('messageSentToast'));
       onDone();
     } catch (err) {
@@ -345,25 +605,71 @@ function NewMessageModal({ t, onClose, onDone }: { t: (k: DictKey) => string; on
   };
 
   return (
-    <Modal open onClose={onClose} title={t('sendMessage')} size="md"
-      footer={<><Button variant="outline" onClick={onClose}>{t('cancel')}</Button><Button onClick={submit} loading={saving}>{t('send')}</Button></>}>
+    <Modal
+      open
+      onClose={onClose}
+      title={t('sendMessage')}
+      size="md"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            {t('cancel')}
+          </Button>
+          <Button onClick={submit} loading={saving}>
+            {t('send')}
+          </Button>
+        </>
+      }
+    >
       <form onSubmit={submit} className="space-y-4" noValidate>
-        <Input label={t('messageSubject')} required value={form.subject} onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))} />
-        <Textarea label={t('messageText')} required rows={5} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} />
+        <Input
+          label={t('messageSubject')}
+          required
+          value={form.subject}
+          onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
+        />
+        <Textarea
+          label={t('messageText')}
+          required
+          rows={5}
+          value={form.message}
+          onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+        />
       </form>
     </Modal>
   );
 }
 
-function SummaryChip({ label, value, tone }: { label: string; value: number | undefined; tone: 'brand' | 'red' | 'amber' | 'blue' | 'slate' | 'violet' }) {
+function InfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-700/40">
+      <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">{label}</p>
+      <p className="mt-0.5 text-sm font-medium text-slate-700 dark:text-slate-200">{value}</p>
+    </div>
+  );
+}
+
+function SummaryChip({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number | undefined;
+  tone: 'brand' | 'red' | 'amber' | 'blue' | 'slate' | 'violet';
+}) {
   const tones: Record<string, string> = {
-    brand: 'text-brand-700 dark:text-brand-300', red: 'text-red-600 dark:text-red-400', amber: 'text-amber-600 dark:text-amber-400',
-    blue: 'text-blue-600 dark:text-blue-400', slate: 'text-slate-700 dark:text-slate-200', violet: 'text-violet-600 dark:text-violet-400',
+    brand: 'text-brand-700 dark:text-brand-300',
+    red: 'text-red-600 dark:text-red-400',
+    amber: 'text-amber-600 dark:text-amber-400',
+    blue: 'text-blue-600 dark:text-blue-400',
+    slate: 'text-slate-700 dark:text-slate-200',
+    violet: 'text-violet-600 dark:text-violet-400',
   };
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
       <p className={`text-xl font-bold ${tones[tone]}`}>{value ?? '—'}</p>
-      <p className="mt-0.5 text-[11px] text-slate-500">{label}</p>
+      <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{label}</p>
     </div>
   );
 }

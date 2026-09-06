@@ -57,8 +57,8 @@ export function CenterBroadcastPage() {
   const { t, lang } = useT();
   const toast = useToast();
   const [showNew, setShowNew] = useState(false);
-  const { data: summary } = useApi<BroadcastSummary>(() => api.get<BroadcastSummary>('/center/broadcast/summary'), []);
-  const { data: broadcasts, loading, error, reload } = useApi<BroadcastRow[]>(() => api.get<BroadcastRow[]>('/center/broadcast'), []);
+  const { data: summary } = useApi<BroadcastSummary>(() => api.get<BroadcastSummary>('/center/account/broadcast/summary'), []);
+  const { data: broadcasts, loading, error, reload } = useApi<BroadcastRow[]>(() => api.get<BroadcastRow[]>('/center/account/broadcast'), []);
 
   const act = async (url: string, msg: string) => {
     try {
@@ -73,7 +73,7 @@ export function CenterBroadcastPage() {
   const remove = async (id: string) => {
     if (!confirm(t('confirmDelete'))) return;
     try {
-      await api.delete(`/center/broadcast/${id}`);
+      await api.delete(`/center/account/broadcast/${id}`);
       toast.success(t('broadcastDeletedToast'));
       reload();
     } catch (err) {
@@ -127,13 +127,13 @@ export function CenterBroadcastPage() {
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-2">
                   {b.status === 'SCHEDULED' && (
-                    <Button size="sm" variant="outline" onClick={() => act(`/center/broadcast/${b.id}/send`, t('broadcastSentToast'))}>
+                    <Button size="sm" variant="outline" onClick={() => act(`/center/account/broadcast/${b.id}/send`, t('broadcastSentToast'))}>
                       <Send className="h-4 w-4" />
                       {t('broadcastSendNow')}
                     </Button>
                   )}
                   {b.status !== 'SENT' && b.status !== 'CANCELLED' && (
-                    <Button size="sm" variant="outline" onClick={() => act(`/center/broadcast/${b.id}/cancel`, t('broadcastCancelledToast'))}>
+                    <Button size="sm" variant="outline" onClick={() => act(`/center/account/broadcast/${b.id}/cancel`, t('broadcastCancelledToast'))}>
                       <XCircle className="h-4 w-4" />
                       {t('broadcastCancel')}
                     </Button>
@@ -165,7 +165,7 @@ function NewBroadcastModal({ t, onClose, onDone }: { t: (k: DictKey) => string; 
     if (!form.subject.trim() || !form.message.trim()) { toast.error(t('requiredFields')); return; }
     setSaving(true);
     try {
-      await api.post('/center/broadcast', form);
+      await api.post('/center/account/broadcast', form);
       toast.success(t('broadcastCreatedToast'));
       onDone();
     } catch (err) {

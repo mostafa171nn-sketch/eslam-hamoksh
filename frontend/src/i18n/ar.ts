@@ -1633,7 +1633,25 @@
   noGrades: 'لا يوجد صفوف',
   noReviews: 'لا توجد تقييمات',
   noParents: 'لا يوجد أولياء أمور',
-  noSubjects: 'لا يوجد مواد'
+  noSubjects: 'لا يوجد مواد',
+  allStatuses: 'كل الحالات',
+  allSeverities: 'كل المستويات',
+  complaintSourceStudent: 'طالب',
+  complaintSourceParent: 'ولي أمر',
+  complaintSourceTeacher: 'مدرس',
+  complaintSourceEmployee: 'موظف',
+  complaintStatusOpen: 'مفتوحة',
+  complaintStatusInProgress: 'قيد المعالجة',
+  complaintStatusResolved: 'محلولة',
+  complaintStatusClosed: 'مغلقة',
+  complaintDetails: 'تفاصيل الشكوى',
+  reportedOn: 'تاريخ التقديم',
+  resolvedOn: 'تاريخ الحل',
+  noDescription: 'لا يوجد وصف',
+  noAssessment: 'لا يوجد تقييم',
+  showingResults: 'عدد النتائج: {count}',
+  saveStatus: 'حفظ الحالة',
+  toAllCenter: 'كل السنتر'
 } as const;
 
 export type Dict = Record<keyof typeof ar, string>;
