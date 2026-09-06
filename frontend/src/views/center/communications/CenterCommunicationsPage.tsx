@@ -2,17 +2,12 @@
 
 import { useRef, useState } from 'react';
 import { MessagesSquare, Plus, UserRound, CheckCheck, Eye } from 'lucide-react';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { Card } from '../../../components/ui/Card';
-import { Button } from '../../../components/ui/Button';
-import { Badge } from '../../../components/ui/Badge';
+import { CenterPageHeader } from '../ui/CenterPageHeader';
+import { CenterStatCard } from '../ui/CenterStatCard';
+import { CenterPill, type CenterPillTone } from '../ui/CenterPill';
+import { CenterSearchInput } from '../ui/CenterSearchInput';
+import { CenterModal } from '../ui/CenterModal';
 import { PencilLoader } from '../../../components/ui/PencilLoader';
-import { Modal } from '../../../components/ui/Modal';
-import { Input } from '../../../components/ui/Input';
-import { Select } from '../../../components/ui/Select';
-import { Textarea } from '../../../components/ui/Textarea';
-import { EmptyState } from '../../../components/ui/EmptyState';
-import { Tabs } from '../../../components/ui/Tabs';
 import { useApi, errorMessage } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
 import { useToast } from '../../../context/ToastContext';
@@ -85,9 +80,9 @@ const STATUSES = [
   { value: 'CLOSED', labelKey: 'complaintStatusClosed' },
 ] as const;
 
-const severityTone = (s: string) =>
+const severityTone = (s: string): CenterPillTone =>
   s === 'CRITICAL' ? 'red' : s === 'HIGH' ? 'amber' : s === 'MEDIUM' ? 'blue' : 'slate';
-const statusTone = (s: string) =>
+const statusTone = (s: string): CenterPillTone =>
   s === 'OPEN' ? 'red' : s === 'IN_PROGRESS' ? 'amber' : s === 'RESOLVED' ? 'green' : 'slate';
 
 type TFunc = (k: DictKey, params?: TranslateParams) => string;
@@ -105,26 +100,42 @@ function statusLabel(t: TFunc, s: string | null | undefined): string {
   return found ? t(found.labelKey) : (s ?? '—');
 }
 
+const STAT_TONE: Record<string, string> = {
+  brand: 'text-[color:var(--mj-accent)]',
+  red: 'text-[color:var(--mj-danger)]',
+  amber: 'text-[color:var(--mj-amber)]',
+  blue: 'text-[color:var(--mj-link)]',
+  slate: 'text-[color:var(--mj-muted)]',
+  violet: 'text-[color:var(--mj-accent)]',
+};
+
 export function CenterCommunicationsPage() {
   const { t, lang } = useT();
   const [tab, setTab] = useState('complaints');
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={t('moduleCommunications')} subtitle={t('communicationsSub')} />
-      <Tabs
-        tabs={[
-          { key: 'complaints', label: t('complaintsTab') },
-          { key: 'messages', label: t('messagesTab') },
-        ]}
-        activeKey={tab}
-        onChange={setTab}
-      >
-        <div className="pt-1">
-          {tab === 'complaints' && <ComplaintsTab t={t} lang={lang} />}
-          {tab === 'messages' && <MessagesTab t={t} lang={lang} />}
-        </div>
-      </Tabs>
+    <div className="space-y-5">
+      <CenterPageHeader title={t('moduleCommunications')} description={t('communicationsSub')} />
+      <nav className="mj-tabs">
+        <button
+          type="button"
+          className={`mj-tab ${tab === 'complaints' ? 'mj-tab--active' : ''}`}
+          onClick={() => setTab('complaints')}
+        >
+          {t('complaintsTab')}
+        </button>
+        <button
+          type="button"
+          className={`mj-tab ${tab === 'messages' ? 'mj-tab--active' : ''}`}
+          onClick={() => setTab('messages')}
+        >
+          {t('messagesTab')}
+        </button>
+      </nav>
+      <div className="pt-1">
+        {tab === 'complaints' && <ComplaintsTab t={t} lang={lang} />}
+        {tab === 'messages' && <MessagesTab t={t} lang={lang} />}
+      </div>
     </div>
   );
 }
@@ -158,56 +169,59 @@ function ComplaintsTab({ t, lang }: { t: TFunc; lang: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <SummaryChip label={t('complaintTotal')} value={summary?.total} tone="brand" />
-        <SummaryChip label={t('complaintCritical')} value={summary?.critical} tone="red" />
-        <SummaryChip label={t('complaintHigh')} value={summary?.high} tone="amber" />
-        <SummaryChip label={t('complaintMedium')} value={summary?.medium} tone="blue" />
-        <SummaryChip label={t('complaintLow')} value={summary?.low} tone="slate" />
-        <SummaryChip label={t('complaintOpenCount')} value={summary?.open} tone="violet" />
-      </div>
+      {summary && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <CenterStatCard value={<span className={STAT_TONE.brand}>{summary.total ?? '—'}</span>} label={t('complaintTotal')} />
+          <CenterStatCard value={<span className={STAT_TONE.red}>{summary.critical ?? '—'}</span>} label={t('complaintCritical')} />
+          <CenterStatCard value={<span className={STAT_TONE.amber}>{summary.high ?? '—'}</span>} label={t('complaintHigh')} />
+          <CenterStatCard value={<span className={STAT_TONE.blue}>{summary.medium ?? '—'}</span>} label={t('complaintMedium')} />
+          <CenterStatCard value={<span className={STAT_TONE.slate}>{summary.low ?? '—'}</span>} label={t('complaintLow')} />
+          <CenterStatCard value={<span className={STAT_TONE.violet}>{summary.open ?? '—'}</span>} label={t('complaintOpenCount')} />
+        </div>
+      )}
 
-      <Card bodyClassName="p-4">
+      <div className="mj-card mj-card--padding">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <Input
-            className="lg:max-w-sm"
-            placeholder={t('search') + '...'}
-            value={search}
-            onChange={(e) => {
-              const value = e.target.value;
-              setSearch(value);
-              window.clearTimeout(debounceRef.current);
-              debounceRef.current = window.setTimeout(() => setDebounced(value), 300);
-            }}
-          />
+          <div className="min-w-0 flex-1 lg:max-w-sm">
+            <CenterSearchInput
+              value={search}
+              placeholder={t('search') + '...'}
+              aria-label={t('search')}
+              onChange={(value) => {
+                setSearch(value);
+                window.clearTimeout(debounceRef.current);
+                debounceRef.current = window.setTimeout(() => setDebounced(value), 300);
+              }}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-3 lg:flex lg:items-center">
             <div className="w-full lg:w-44">
-              <Select
+              <select
+                className="mj-select"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                options={[
-                  { value: '', label: t('allStatuses') },
-                  ...STATUSES.map((s) => ({ value: s.value, label: t(s.labelKey) })),
-                ]}
-              />
+              >
+                <option value="">{t('allStatuses')}</option>
+                {STATUSES.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
+              </select>
             </div>
             <div className="w-full lg:w-44">
-              <Select
+              <select
+                className="mj-select"
                 value={severity}
                 onChange={(e) => setSeverity(e.target.value)}
-                options={[
-                  { value: '', label: t('allSeverities') },
-                  ...SEVERITIES.map((s) => ({ value: s.value, label: t(s.labelKey) })),
-                ]}
-              />
+              >
+                <option value="">{t('allSeverities')}</option>
+                {SEVERITIES.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
+              </select>
             </div>
           </div>
-          <Button size="sm" className="lg:ms-auto" onClick={() => setShowAdd(true)}>
+          <button type="button" className="mj-btn mj-btn--primary mj-btn--sm lg:ms-auto" onClick={() => setShowAdd(true)}>
             <Plus className="h-4 w-4" />
             {t('addComplaint')}
-          </Button>
+          </button>
         </div>
-      </Card>
+      </div>
 
       {loading && <PencilLoader label={t('loading')} />}
       {error && (
@@ -215,13 +229,13 @@ function ComplaintsTab({ t, lang }: { t: TFunc; lang: string }) {
       )}
 
       {!loading && complaints && complaints.length > 0 && (
-        <Card bodyClassName="p-0">
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3 dark:border-slate-700">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+        <div className="mj-card overflow-hidden">
+          <div className="flex items-center justify-between border-b border-[color:var(--mj-border-soft)] px-5 py-3">
+            <p className="text-sm text-[color:var(--mj-muted)]">
               {t('showingResults', { count: complaints.length })}
             </p>
           </div>
-          <div className="divide-y divide-slate-100 dark:divide-slate-700">
+          <div className="divide-y divide-[color:var(--mj-border-soft)]">
             {complaints.map((c) => (
               <div
                 key={c.id}
@@ -234,31 +248,31 @@ function ComplaintsTab({ t, lang }: { t: TFunc; lang: string }) {
                     setDetail(c);
                   }
                 }}
-                className="group flex cursor-pointer flex-col gap-3 px-5 py-4 transition-colors focus:outline-none focus-visible:bg-slate-50 hover:bg-slate-50 dark:focus-visible:bg-slate-700/40 dark:hover:bg-slate-700/40 lg:flex-row lg:items-center lg:justify-between"
+                className="group flex cursor-pointer flex-col gap-3 px-5 py-4 transition-colors hover:bg-[color:var(--mj-wash)] focus:outline-none lg:flex-row lg:items-center lg:justify-between"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs font-semibold text-slate-400">{c.code}</span>
-                    <Badge tone={severityTone(c.severity)}>{severityLabel(t, c.severity)}</Badge>
-                    <Badge tone={statusTone(c.status)}>{statusLabel(t, c.status)}</Badge>
-                    <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                    <span className="font-mono text-xs font-semibold text-[color:var(--mj-muted-2)]">{c.code}</span>
+                    <CenterPill tone={severityTone(c.severity)}>{severityLabel(t, c.severity)}</CenterPill>
+                    <CenterPill tone={statusTone(c.status)}>{statusLabel(t, c.status)}</CenterPill>
+                    <span className="flex items-center gap-1 text-xs text-[color:var(--mj-muted-2)]">
                       <UserRound className="h-3.5 w-3.5" />
                       {sourceLabel(t, c.source)}
                     </span>
                   </div>
-                  <p className="mt-1.5 text-sm font-semibold text-slate-900 dark:text-white">{c.subject}</p>
+                  <p className="mt-1.5 text-sm font-semibold text-[color:var(--mj-ink-strong)]">{c.subject}</p>
                   {c.description && (
-                    <p className="mt-0.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{c.description}</p>
+                    <p className="mt-0.5 line-clamp-2 text-xs text-[color:var(--mj-muted)]">{c.description}</p>
                   )}
-                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                  <p className="mt-1 text-xs text-[color:var(--mj-muted-2)]">
                     {fmtDate(c.createdAt)} · {t('complaintReporter')}: {c.reporterName ?? '—'} ·{' '}
                     {t('complaintAssignee')}: {c.assignee ?? '—'}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
+                  <button
+                    type="button"
+                    className="mj-btn mj-btn--ghost mj-btn--sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       setDetail(c);
@@ -266,16 +280,21 @@ function ComplaintsTab({ t, lang }: { t: TFunc; lang: string }) {
                   >
                     <Eye className="h-4 w-4" />
                     {t('viewDetails')}
-                  </Button>
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-        </Card>
+        </div>
       )}
 
       {!loading && complaints?.length === 0 && (
-        <EmptyState icon={MessagesSquare} title={t('noComplaints')} />
+        <div className="mj-card">
+          <div className="mj-empty">
+            <MessagesSquare className="mj-empty-icon" />
+            <p className="text-sm">{t('noComplaints')}</p>
+          </div>
+        </div>
       )}
 
       {showAdd && (
@@ -336,37 +355,33 @@ function ComplaintDetailModal({
   };
 
   return (
-    <Modal
+    <CenterModal
       open
       onClose={onClose}
       title={t('complaintDetails')}
-      size="lg"
       footer={
         <>
           <div className="flex items-center gap-2">
-            <Select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              options={STATUSES.map((s) => ({ value: s.value, label: t(s.labelKey) }))}
-              className="w-40"
-            />
-            <Button onClick={saveStatus} loading={saving}>
+            <select className="mj-select w-40" value={status} onChange={(e) => setStatus(e.target.value)}>
+              {STATUSES.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
+            </select>
+            <button type="button" className="mj-btn mj-btn--primary" onClick={saveStatus} disabled={saving}>
               {t('saveStatus')}
-            </Button>
+            </button>
           </div>
-          <Button variant="outline" onClick={onClose}>
+          <button type="button" className="mj-btn mj-btn--ghost" onClick={onClose}>
             {t('cancel')}
-          </Button>
+          </button>
         </>
       }
     >
       <div className="space-y-5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-xs font-semibold text-slate-400">{local.code}</span>
-          <Badge tone={severityTone(local.severity)}>{severityLabel(t, local.severity)}</Badge>
-          <Badge tone={statusTone(local.status)}>{statusLabel(t, local.status)}</Badge>
+          <span className="font-mono text-xs font-semibold text-[color:var(--mj-muted-2)]">{local.code}</span>
+          <CenterPill tone={severityTone(local.severity)}>{severityLabel(t, local.severity)}</CenterPill>
+          <CenterPill tone={statusTone(local.status)}>{statusLabel(t, local.status)}</CenterPill>
         </div>
-        <h3 className="text-base font-semibold text-slate-900 dark:text-white">{local.subject}</h3>
+        <h3 className="text-base font-semibold text-[color:var(--mj-ink-strong)]">{local.subject}</h3>
 
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <InfoItem label={t('complaintSource')} value={sourceLabel(t, local.source)} />
@@ -379,24 +394,24 @@ function ComplaintDetailModal({
         </dl>
 
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--mj-muted-2)]">
             {t('complaintDescription')}
           </p>
-          <p className="mt-1 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+          <p className="mt-1 text-sm leading-relaxed text-[color:var(--mj-ink)]">
             {local.description || t('noDescription')}
           </p>
         </div>
 
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--mj-muted-2)]">
             {t('complaintAssessment')}
           </p>
-          <p className="mt-1 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+          <p className="mt-1 text-sm leading-relaxed text-[color:var(--mj-ink)]">
             {local.internalAssessment || t('noAssessment')}
           </p>
         </div>
       </div>
-    </Modal>
+    </CenterModal>
   );
 }
 
@@ -432,55 +447,50 @@ function AddComplaintModal({
   };
 
   return (
-    <Modal
+    <CenterModal
       open
       onClose={onClose}
       title={t('addComplaint')}
-      size="md"
       footer={
         <>
-          <Button variant="outline" onClick={onClose}>
+          <button type="button" className="mj-btn mj-btn--ghost" onClick={onClose}>
             {t('cancel')}
-          </Button>
-          <Button onClick={submit} loading={saving}>
+          </button>
+          <button type="button" className="mj-btn mj-btn--primary" onClick={submit} disabled={saving}>
             {t('save')}
-          </Button>
+          </button>
         </>
       }
     >
-      <form onSubmit={submit} className="space-y-4" noValidate>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Select
-            label={t('complaintSource')}
-            value={form.source}
-            onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))}
-            options={SOURCES.map((s) => ({ value: s.value, label: t(s.labelKey) }))}
-          />
-          <Select
-            label={t('complaintSeverity')}
-            value={form.severity}
-            onChange={(e) => setForm((f) => ({ ...f, severity: e.target.value }))}
-            options={SEVERITIES.map((s) => ({ value: s.value, label: t(s.labelKey) }))}
-          />
+      <form onSubmit={submit} className="space-y-0" noValidate>
+        <div className="grid grid-cols-1 gap-x-4 gap-y-0 sm:grid-cols-2">
+          <div className="mj-field">
+            <label className="mj-label">{t('complaintSource')}</label>
+            <select className="mj-select" value={form.source} onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))}>
+              {SOURCES.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
+            </select>
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('complaintSeverity')}</label>
+            <select className="mj-select" value={form.severity} onChange={(e) => setForm((f) => ({ ...f, severity: e.target.value }))}>
+              {SEVERITIES.map((s) => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
+            </select>
+          </div>
         </div>
-        <Input
-          label={t('complaintSubject')}
-          required
-          value={form.subject}
-          onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
-        />
-        <Textarea
-          label={t('complaintDescription')}
-          value={form.description}
-          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-        />
-        <Input
-          label={t('complaintReporter')}
-          value={form.reporterName}
-          onChange={(e) => setForm((f) => ({ ...f, reporterName: e.target.value }))}
-        />
+        <div className="mj-field">
+          <label className="mj-label">{t('complaintSubject')}</label>
+          <input type="text" className="mj-input" required value={form.subject} onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('complaintDescription')}</label>
+          <textarea className="mj-textarea" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('complaintReporter')}</label>
+          <input type="text" className="mj-input" value={form.reporterName} onChange={(e) => setForm((f) => ({ ...f, reporterName: e.target.value }))} />
+        </div>
       </form>
-    </Modal>
+    </CenterModal>
   );
 }
 
@@ -510,18 +520,18 @@ function MessagesTab({ t, lang }: { t: TFunc; lang: string }) {
     <div className="space-y-4">
       {(summary?.total ?? 0) > 0 && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:max-w-md">
-          <SummaryChip label={t('messagesTitle')} value={summary?.total} tone="brand" />
-          <SummaryChip label={t('messageUnread')} value={summary?.unread} tone="amber" />
+          <CenterStatCard value={<span className={STAT_TONE.brand}>{summary?.total ?? '—'}</span>} label={t('messagesTitle')} />
+          <CenterStatCard value={<span className={STAT_TONE.amber}>{summary?.unread ?? '—'}</span>} label={t('messageUnread')} />
         </div>
       )}
 
-      <Card bodyClassName="p-0">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3 dark:border-slate-700">
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t('messagesTitle')}</p>
-          <Button size="sm" onClick={() => setShowNew(true)}>
+      <div className="mj-card overflow-hidden">
+        <div className="flex items-center justify-between gap-3 border-b border-[color:var(--mj-border-soft)] px-5 py-3">
+          <p className="text-sm font-semibold text-[color:var(--mj-ink-strong)]">{t('messagesTitle')}</p>
+          <button type="button" className="mj-btn mj-btn--primary mj-btn--sm" onClick={() => setShowNew(true)}>
             <Plus className="h-4 w-4" />
             {t('sendMessage')}
-          </Button>
+          </button>
         </div>
 
         {loading && <PencilLoader label={t('loading')} />}
@@ -530,41 +540,46 @@ function MessagesTab({ t, lang }: { t: TFunc; lang: string }) {
         )}
 
         {!loading && messages && messages.length > 0 ? (
-          <div className="divide-y divide-slate-100 dark:divide-slate-700">
+          <div className="divide-y divide-[color:var(--mj-border-soft)]">
             {messages.map((m) => (
               <div key={m.id} className="flex items-start gap-3 px-5 py-4">
                 <div
                   className={`mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full ${
-                    m.read ? 'bg-slate-200 dark:bg-slate-600' : 'bg-brand-500'
+                    m.read ? 'bg-[color:var(--mj-line-bg)]' : 'bg-[color:var(--mj-accent)]'
                   }`}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className={`text-sm font-semibold ${m.read ? 'text-slate-600 dark:text-slate-300' : 'text-slate-900 dark:text-white'}`}>
+                    <p className={`text-sm font-semibold ${m.read ? 'text-[color:var(--mj-muted)]' : 'text-[color:var(--mj-ink-strong)]'}`}>
                       {m.subject}
                     </p>
-                    <Badge tone={m.recipient ? 'blue' : 'slate'}>{m.recipient ?? t('toAllCenter')}</Badge>
+                    <CenterPill tone={m.recipient ? 'blue' : 'slate'}>{m.recipient ?? t('toAllCenter')}</CenterPill>
                   </div>
-                  <p className={`mt-0.5 text-sm ${m.read ? 'text-slate-500 dark:text-slate-400' : 'text-slate-700 dark:text-slate-200'}`}>
+                  <p className={`mt-0.5 text-sm ${m.read ? 'text-[color:var(--mj-muted)]' : 'text-[color:var(--mj-ink)]'}`}>
                     {m.message}
                   </p>
-                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                  <p className="mt-1 text-xs text-[color:var(--mj-muted-2)]">
                     {fmtDate(m.createdAt)} · {t('messageFrom')}: {m.sender}
                   </p>
                 </div>
                 {!m.read && (
-                  <Button size="sm" variant="outline" onClick={() => markRead(m.id)}>
+                  <button type="button" className="mj-btn mj-btn--ghost mj-btn--sm" onClick={() => markRead(m.id)}>
                     <CheckCheck className="h-4 w-4" />
                     {t('read')}
-                  </Button>
+                  </button>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          !loading && <EmptyState icon={MessagesSquare} title={t('noMessages')} />
+          !loading && (
+            <div className="mj-empty">
+              <MessagesSquare className="mj-empty-icon" />
+              <p className="text-sm">{t('noMessages')}</p>
+            </div>
+          )
         )}
-      </Card>
+      </div>
 
       {showNew && (
         <NewMessageModal t={t} onClose={() => setShowNew(false)} onDone={() => { setShowNew(false); reload(); }} />
@@ -605,71 +620,52 @@ function NewMessageModal({
   };
 
   return (
-    <Modal
+    <CenterModal
       open
       onClose={onClose}
       title={t('sendMessage')}
-      size="md"
       footer={
         <>
-          <Button variant="outline" onClick={onClose}>
+          <button type="button" className="mj-btn mj-btn--ghost" onClick={onClose}>
             {t('cancel')}
-          </Button>
-          <Button onClick={submit} loading={saving}>
+          </button>
+          <button type="button" className="mj-btn mj-btn--primary" onClick={submit} disabled={saving}>
             {t('send')}
-          </Button>
+          </button>
         </>
       }
     >
-      <form onSubmit={submit} className="space-y-4" noValidate>
-        <Input
-          label={t('messageSubject')}
-          required
-          value={form.subject}
-          onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
-        />
-        <Textarea
-          label={t('messageText')}
-          required
-          rows={5}
-          value={form.message}
-          onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-        />
+      <form onSubmit={submit} className="space-y-0" noValidate>
+        <div className="mj-field">
+          <label className="mj-label">{t('messageSubject')}</label>
+          <input
+            type="text"
+            className="mj-input"
+            required
+            value={form.subject}
+            onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
+          />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('messageText')}</label>
+          <textarea
+            className="mj-textarea"
+            required
+            rows={5}
+            value={form.message}
+            onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+          />
+        </div>
       </form>
-    </Modal>
+    </CenterModal>
   );
 }
 
 function InfoItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-700/40">
-      <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">{label}</p>
-      <p className="mt-0.5 text-sm font-medium text-slate-700 dark:text-slate-200">{value}</p>
-    </div>
-  );
-}
-
-function SummaryChip({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number | undefined;
-  tone: 'brand' | 'red' | 'amber' | 'blue' | 'slate' | 'violet';
-}) {
-  const tones: Record<string, string> = {
-    brand: 'text-brand-700 dark:text-brand-300',
-    red: 'text-red-600 dark:text-red-400',
-    amber: 'text-amber-600 dark:text-amber-400',
-    blue: 'text-blue-600 dark:text-blue-400',
-    slate: 'text-slate-700 dark:text-slate-200',
-    violet: 'text-violet-600 dark:text-violet-400',
-  };
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
-      <p className={`text-xl font-bold ${tones[tone]}`}>{value ?? '—'}</p>
-      <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{label}</p>
+    <div className="rounded-lg bg-[color:var(--mj-wash)] px-3 py-2">
+      <p className="text-[11px] font-medium text-[color:var(--mj-muted-2)]">{label}</p>
+      <p className="mt-0.5 text-sm font-medium text-[color:var(--mj-ink)]">{value}</p>
     </div>
   );
 }

@@ -2,17 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Group, DoorOpen, UserRound, MapPin, Clock, Users, CalendarDays, Search } from 'lucide-react';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { Card } from '../../../components/ui/Card';
-import { Button } from '../../../components/ui/Button';
-import { Badge, statusTone } from '../../../components/ui/Badge';
-import { StatCard } from '../../../components/ui/StatCard';
+import { Plus } from 'lucide-react';
+import { CenterPageHeader } from '../ui/CenterPageHeader';
+import { CenterStatCard } from '../ui/CenterStatCard';
+import { CenterPill } from '../ui/CenterPill';
+import { CenterSearchInput } from '../ui/CenterSearchInput';
+import { CenterModal } from '../ui/CenterModal';
 import { PencilLoader } from '../../../components/ui/PencilLoader';
-import { Progress } from '../../../components/ui/Progress';
-import { Input } from '../../../components/ui/Input';
-import { Modal } from '../../../components/ui/Modal';
-import { Select } from '../../../components/ui/Select';
 import { useApi, errorMessage } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
 import { useToast } from '../../../context/ToastContext';
@@ -76,125 +72,121 @@ export function CenterGroupsPage() {
 
   const dayLabel = (d: number | null) => (d == null ? '—' : DAY_NAMES[d]);
 
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title={t('groupsTitle')}
-        subtitle={t('groupsSub')}
-        action={
-          <Button onClick={() => setShowAdd(true)}>
-            <Plus className="h-4 w-4" />
-            {t('addGroup')}
-          </Button>
-        }
-      />
+  const timeRange = (s: string | null, e: string | null) => {
+    if (!s && !e) return '—';
+    return `${s ?? ''}–${e ?? ''}`;
+  };
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label={t('groupStatus') + ' — ' + t('groupActive')} value={summary?.total ?? '—'} icon={Group} tone="teal" />
-        <StatCard label={t('groupActive')} value={summary?.active ?? '—'} icon={CalendarDays} tone="emerald" />
-        <StatCard label={t('groupNeedsRoom')} value={summary?.needsRoom ?? '—'} icon={DoorOpen} tone="amber" />
-        <StatCard label={t('groupStudents')} value={summary?.students ?? '—'} icon={Users} tone="violet" />
+  const pillFor = (s: string) => {
+    if (s === 'ACTIVE') return 'green' as const;
+    if (s === 'NEEDS_ROOM') return 'amber' as const;
+    return 'slate' as const;
+  };
+
+  return (
+    <div className="space-y-5">
+      <CenterPageHeader
+        title={t('groupsTitle')}
+        description={t('groupsSub')}
+      >
+        <button type="button" className="mj-btn mj-btn--primary" onClick={() => setShowAdd(true)}>
+          <Plus className="h-4 w-4" />
+          {t('addGroup')}
+        </button>
+      </CenterPageHeader>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <CenterStatCard value={summary?.active ?? '—'} label={t('groupActive')} />
+        <CenterStatCard value={summary?.needsRoom ?? '—'} label={t('groupNeedsRoom')} />
+        <CenterStatCard value={summary?.students ?? '—'} label={t('groupStudents')} />
       </div>
 
-      <Card bodyClassName="p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input
-              className="ps-9"
-              placeholder={t('search') + '...'}
+      <div className="mj-card mj-card--padding">
+        <div className="mj-toolbar">
+          <div className="min-w-0 flex-1 sm:max-w-xs">
+            <CenterSearchInput
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={setSearch}
+              placeholder={t('searchPlaceholder')}
             />
           </div>
-          <div className="sm:w-52">
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              options={[
-                { value: '', label: t('allBranches') },
-                { value: 'ACTIVE', label: t('groupActive') },
-                { value: 'NEEDS_ROOM', label: t('groupNeedsRoom') },
-                { value: 'INACTIVE', label: t('groupInactive') },
-              ]}
-            />
-          </div>
+          <select
+            className="mj-select sm:w-48"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">{t('allStatuses')}</option>
+            <option value="ACTIVE">{t('groupActive')}</option>
+            <option value="NEEDS_ROOM">{t('groupNeedsRoom')}</option>
+            <option value="INACTIVE">{t('groupInactive')}</option>
+          </select>
         </div>
-      </Card>
+      </div>
 
       {loading && <PencilLoader label={t('loading')} />}
       {error && <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>}
 
       {!loading && groups && groups.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {groups.map((g) => {
-            const pct = g.capacity && g.capacity > 0 ? Math.min(Math.round((g.studentCount / g.capacity) * 100), 100) : 0;
-            return (
-              <Link key={g.id} href={`/center/groups/${g.slug ?? g.id}`}>
-                <Card bodyClassName="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-600/10 dark:bg-teal-500/15 dark:text-teal-300">
-                        <Group className="h-6 w-6" />
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="truncate font-semibold text-slate-900 dark:text-white">{g.name}</h3>
-                        <p className="truncate text-xs text-slate-500">{g.subject || g.stage || '—'}</p>
-                      </div>
-                    </div>
-                    <Badge tone={g.status === 'ACTIVE' ? statusTone('COMPLETED') : g.status === 'NEEDS_ROOM' ? 'amber' : 'slate'}>
-                      {g.status === 'ACTIVE' ? t('groupActive') : g.status === 'NEEDS_ROOM' ? t('groupNeedsRoom') : t('groupInactive')}
-                    </Badge>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300">
-                    <span className="flex items-center gap-1.5">
-                      <UserRound className="h-3.5 w-3.5 text-slate-400" />
-                      {g.teacher || '—'}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <DoorOpen className="h-3.5 w-3.5 text-slate-400" />
-                      {g.room || t('groupNeedsRoom')}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
-                      {dayLabel(g.dayOfWeek)}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-slate-400" />
-                      {g.startTime ?? ''} — {g.endTime ?? ''}
-                    </span>
-                    {g.branch && (
-                      <span className="col-span-2 flex items-center gap-1.5">
-                        <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                        {g.branch}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-700">
-                    <div className="mb-1.5 flex items-center justify-between text-xs font-medium">
-                      <span className="text-slate-500">{t('groupStudents')}</span>
-                      <span className={pct >= 90 ? 'text-amber-600' : 'text-slate-700 dark:text-slate-200'}>
+        <div className="mj-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="mj-table">
+              <thead>
+                <tr>
+                  <th>{t('groupGeneric')}</th>
+                  <th>{t('teacher')}</th>
+                  <th>{t('groupStudents')}</th>
+                  <th>{t('groupRoom')}</th>
+                  <th>{t('status')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {groups.map((g) => (
+                  <tr key={g.id}>
+                    <td>
+                      <Link
+                        href={`/center/groups/${g.slug ?? g.id}`}
+                        className="block"
+                      >
+                        <span className="font-bold text-[color:var(--mj-ink-strong)]">{g.name}</span>
+                        {g.stage && (
+                          <span className="mt-0.5 block text-xs text-[color:var(--mj-muted)]">{g.stage}</span>
+                        )}
+                      </Link>
+                    </td>
+                    <td>
+                      <span className="font-medium text-[color:var(--mj-ink-strong)]">{g.teacher || '—'}</span>
+                      {g.subject && (
+                        <span className="mt-0.5 block text-xs text-[color:var(--mj-muted)]">{g.subject}</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className="font-semibold text-[color:var(--mj-ink-strong)]">
                         {g.studentCount} / {g.capacity ?? '∞'}
                       </span>
-                    </div>
-                    <Progress value={pct} variant={pct >= 90 ? 'red' : 'green'} size="sm" />
-                  </div>
-                </Card>
-              </Link>
-            );
-          })}
+                    </td>
+                    <td>
+                      <span className="font-medium text-[color:var(--mj-ink-strong)]">{g.room || t('groupNeedsRoom')}</span>
+                      <span className="mt-0.5 block text-xs text-[color:var(--mj-muted)]">
+                        {dayLabel(g.dayOfWeek)} · {timeRange(g.startTime, g.endTime)}
+                      </span>
+                    </td>
+                    <td>
+                      <CenterPill tone={pillFor(g.status)}>
+                        {g.status === 'ACTIVE' ? t('groupActive') : g.status === 'NEEDS_ROOM' ? t('groupNeedsRoom') : t('groupInactive')}
+                      </CenterPill>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {!loading && groups?.length === 0 && (
-        <Card bodyClassName="p-8">
-          <div className="flex flex-col items-center justify-center text-center">
-            <Group className="mb-3 h-12 w-12 text-slate-300 dark:text-slate-600" />
-            <p className="text-sm text-slate-500">{t('noClassrooms')}</p>
-          </div>
-        </Card>
+        <div className="mj-empty">
+          <p className="text-sm">{t('noClassrooms')}</p>
+        </div>
       )}
 
       {showAdd && formData && (
@@ -247,31 +239,82 @@ function AddGroupModal({ formData, onClose, onSuccess }: { formData: FormData; o
   };
 
   return (
-    <Modal open onClose={onClose} title={t('addGroup')} size="md"
-      footer={<><Button variant="outline" onClick={onClose}>{t('cancel')}</Button><Button onClick={handleSubmit} loading={saving}>{t('save')}</Button></>}>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Input label={t('groupName')} required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-          <Select label={t('groupStage')} value={form.stage} onChange={(e) => setForm((f) => ({ ...f, stage: e.target.value }))} options={STAGES} placeholder={t('selectBranch')} />
-          <Select label={t('groupTeacher')} value={form.teacherId} onChange={(e) => setForm((f) => ({ ...f, teacherId: e.target.value }))} options={formData.teachers.map((x) => ({ value: x.id, label: x.name }))} placeholder={t('selectBranch')} />
-          <Select label={t('groupRoom')} value={form.roomId} onChange={(e) => setForm((f) => ({ ...f, roomId: e.target.value }))} options={formData.rooms.map((x) => ({ value: x.id, label: x.name }))} placeholder={t('selectBranch')} />
-          <Select label={t('groupBranch')} value={form.branchId} onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))} options={formData.branches.map((x) => ({ value: x.id, label: x.name }))} placeholder={t('selectBranch')} />
-          <Input label={t('groupCapacity')} type="number" value={form.capacity} onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))} />
-          <Select label={t('groupDay')} value={form.dayOfWeek} onChange={(e) => setForm((f) => ({ ...f, dayOfWeek: e.target.value }))} options={WEEKDAYS} placeholder={t('selectBranch')} />
+    <CenterModal
+      open
+      onClose={onClose}
+      title={t('addGroup')}
+      footer={
+        <>
+          <button type="button" className="mj-btn mj-btn--ghost" onClick={onClose}>{t('cancel')}</button>
+          <button type="button" className="mj-btn mj-btn--primary" onClick={handleSubmit} disabled={saving}>{t('save')}</button>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-0">
+        <div className="grid grid-cols-1 gap-x-4 gap-y-0 sm:grid-cols-2">
+          <div className="mj-field">
+            <label className="mj-label">{t('groupName')}</label>
+            <input type="text" className="mj-input" required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('groupStage')}</label>
+            <select className="mj-select" value={form.stage} onChange={(e) => setForm((f) => ({ ...f, stage: e.target.value }))}>
+              <option value="">{t('selectBranch')}</option>
+              {STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('groupTeacher')}</label>
+            <select className="mj-select" value={form.teacherId} onChange={(e) => setForm((f) => ({ ...f, teacherId: e.target.value }))}>
+              <option value="">{t('selectBranch')}</option>
+              {formData.teachers.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+            </select>
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('groupRoom')}</label>
+            <select className="mj-select" value={form.roomId} onChange={(e) => setForm((f) => ({ ...f, roomId: e.target.value }))}>
+              <option value="">{t('selectBranch')}</option>
+              {formData.rooms.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+            </select>
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('groupBranch')}</label>
+            <select className="mj-select" value={form.branchId} onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))}>
+              <option value="">{t('selectBranch')}</option>
+              {formData.branches.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+            </select>
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('groupCapacity')}</label>
+            <input type="number" className="mj-input" value={form.capacity} onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))} />
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('groupDay')}</label>
+            <select className="mj-select" value={form.dayOfWeek} onChange={(e) => setForm((f) => ({ ...f, dayOfWeek: e.target.value }))}>
+              <option value="">{t('selectBranch')}</option>
+              {WEEKDAYS.map((w) => <option key={w.value} value={w.value}>{w.label}</option>)}
+            </select>
+          </div>
           <div className="grid grid-cols-2 gap-2">
-            <Input label={t('groupStartTime')} type="time" value={form.startTime} onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} />
-            <Input label={t('groupEndTime')} type="time" value={form.endTime} onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} />
+            <div className="mj-field">
+              <label className="mj-label">{t('groupStartTime')}</label>
+              <input type="time" className="mj-input" value={form.startTime} onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} />
+            </div>
+            <div className="mj-field">
+              <label className="mj-label">{t('groupEndTime')}</label>
+              <input type="time" className="mj-input" value={form.endTime} onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} />
+            </div>
           </div>
         </div>
 
-        <div>
-          <p className="mb-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">{t('groupStudents')}</p>
-          <div className="max-h-48 overflow-y-auto rounded-lg border border-slate-200 p-2 dark:border-slate-600">
+        <div className="mj-field">
+          <label className="mj-label">{t('groupStudents')}</label>
+          <div className="max-h-48 overflow-y-auto rounded-lg border border-[color:var(--mj-border)] p-2">
             {formData.students.map((s) => (
-              <label key={s.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50">
+              <label key={s.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-[color:var(--mj-wash)]">
                 <input
                   type="checkbox"
-                  className="accent-teal-600"
+                  className="accent-[color:var(--mj-accent)]"
                   checked={form.studentIds.includes(s.id)}
                   onChange={() => toggleStudent(s.id)}
                 />
@@ -281,7 +324,7 @@ function AddGroupModal({ formData, onClose, onSuccess }: { formData: FormData; o
           </div>
         </div>
       </form>
-    </Modal>
+    </CenterModal>
   );
 }
 

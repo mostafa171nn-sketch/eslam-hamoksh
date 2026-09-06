@@ -12,14 +12,10 @@ import {
   Check,
   X,
 } from 'lucide-react';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { Card } from '../../../components/ui/Card';
-import { Button } from '../../../components/ui/Button';
-import { Badge, statusTone } from '../../../components/ui/Badge';
-import { Input } from '../../../components/ui/Input';
-import { Select } from '../../../components/ui/Select';
-import { Modal } from '../../../components/ui/Modal';
-import { Tabs } from '../../../components/ui/Tabs';
+import { CenterPageHeader } from '../ui/CenterPageHeader';
+import { CenterStatCard } from '../ui/CenterStatCard';
+import { CenterPill } from '../ui/CenterPill';
+import { CenterModal } from '../ui/CenterModal';
 import { PencilLoader } from '../../../components/ui/PencilLoader';
 import { useApi, errorMessage } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
@@ -73,20 +69,27 @@ export default function CenterClassroomsPage() {
   const [tab, setTab] = useState('rooms');
 
   return (
-    <div className="space-y-6">
-      <PageHeader title={t('classrooms')} subtitle={t('classroomsSub')} />
-      <Tabs
-        tabs={[
-          { key: 'rooms', label: t('roomsTab') },
-          { key: 'bookings', label: t('bookingsTitle') },
-        ]}
-        activeKey={tab}
-        onChange={setTab}
-      >
-        <div className="pt-1">
-          {tab === 'rooms' ? <RoomsGrid t={t} /> : <BookingsTab t={t} />}
-        </div>
-      </Tabs>
+    <div className="space-y-5">
+      <CenterPageHeader title={t('classrooms')} description={t('classroomsSub')} />
+      <nav className="mj-tabs">
+        <button
+          type="button"
+          className={`mj-tab ${tab === 'rooms' ? 'mj-tab--active' : ''}`}
+          onClick={() => setTab('rooms')}
+        >
+          {t('roomsTab')}
+        </button>
+        <button
+          type="button"
+          className={`mj-tab ${tab === 'bookings' ? 'mj-tab--active' : ''}`}
+          onClick={() => setTab('bookings')}
+        >
+          {t('bookingsTitle')}
+        </button>
+      </nav>
+      <div className="pt-1">
+        {tab === 'rooms' ? <RoomsGrid t={t} /> : <BookingsTab t={t} />}
+      </div>
     </div>
   );
 }
@@ -116,66 +119,69 @@ function RoomsGrid({ t }: { t: (k: DictKey) => string }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => setShowAddModal(true)}>
+        <button type="button" className="mj-btn mj-btn--primary" onClick={() => setShowAddModal(true)}>
           <Plus className="h-4 w-4" />
           {t('addClassroom')}
-        </Button>
+        </button>
       </div>
 
       {loading && <PencilLoader label={t('loading')} />}
       {error && <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>}
 
       {!loading && rooms && rooms.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {rooms.map((room) => (
-            <Card key={room.id} bodyClassName="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300">
-                    <BookOpen className="h-6 w-6" />
+        <>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <CenterStatCard value={rooms.length} label={t('rooms')} />
+            <CenterStatCard value={rooms.reduce((sum, r) => sum + r.capacity, 0)} label={t('capacity')} />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {rooms.map((room) => (
+              <div key={room.id} className="mj-card mj-card--padding">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[color:var(--mj-accent-soft)] text-[color:var(--mj-accent)]">
+                      <BookOpen className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-[color:var(--mj-ink-strong)]">{room.name}</h3>
+                      <p className="text-xs text-[color:var(--mj-muted)]">{room.branch || t('noBranch')}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-900 dark:text-white">{room.name}</h3>
-                    <p className="text-xs text-slate-500">{room.branch || t('noBranch')}</p>
+                  <div className="flex gap-1">
+                    <button type="button" className="mj-btn mj-btn--ghost mj-btn--sm" aria-label={t('editClassroom')} onClick={() => { setSelectedRoom(room); setShowEditModal(true); }}>
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button type="button" className="mj-btn mj-btn--ghost mj-btn--sm" aria-label={t('delete')} onClick={() => deleteRoom(room.id)}>
+                      <Trash2 className="h-4 w-4 text-[color:var(--mj-danger)]" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => { setSelectedRoom(room); setShowEditModal(true); }}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => deleteRoom(room.id)}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
+                <div className="mt-3 flex items-center justify-between gap-4 border-t border-[color:var(--mj-border-soft)] pt-3">
+                  <div className="flex items-center gap-1.5 text-xs text-[color:var(--mj-muted)]">
+                    <Users className="h-4 w-4" />
+                    {room.capacity} {t('capacity')}
+                  </div>
+                  <CenterPill tone={room.status === 'ACTIVE' ? 'green' : 'slate'}>
+                    {t(room.status.toLowerCase() as DictKey)}
+                  </CenterPill>
                 </div>
               </div>
-              <div className="mt-3 flex items-center gap-4 border-t border-slate-100 pt-3 dark:border-slate-700">
-                <div className="flex items-center gap-1 text-xs text-slate-500">
-                  <Users className="h-4 w-4" />
-                  {room.capacity} {t('capacity')}
-                </div>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  room.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' :
-                  'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                }`}>
-                  {t(room.status.toLowerCase() as DictKey)}
-                </span>
-              </div>
-            </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
 
       {!loading && rooms?.length === 0 && (
-        <Card bodyClassName="p-8">
-          <div className="flex flex-col items-center justify-center text-center">
-            <BookOpen className="mb-3 h-12 w-12 text-slate-300 dark:text-slate-600" />
-            <p className="text-sm text-slate-500">{t('noClassrooms')}</p>
-            <Button className="mt-4" onClick={() => setShowAddModal(true)}>
+        <div className="mj-card mj-card--padding">
+          <div className="mj-empty">
+            <BookOpen className="mj-empty-icon" />
+            <p className="text-sm">{t('noClassrooms')}</p>
+            <button type="button" className="mj-btn mj-btn--soft" onClick={() => setShowAddModal(true)}>
               <Plus className="h-4 w-4" />
               {t('addClassroom')}
-            </Button>
+            </button>
           </div>
-        </Card>
+        </div>
       )}
 
       <AddRoomModal open={showAddModal} onClose={() => setShowAddModal(false)} onSuccess={() => { setShowAddModal(false); reload(); }} />
@@ -204,23 +210,26 @@ function BookingsTab({ t }: { t: (k: DictKey) => string }) {
     }
   };
 
+  const statusPill = (s: string) =>
+    s === 'PENDING' ? 'amber' : s === 'APPROVED' ? 'green' : s === 'CANCELLED' ? 'red' : ('slate' as const);
+
   return (
     <div className="space-y-4">
       {stats && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatChip label={t('bookingQueue')} value={stats.pending} tone="amber" />
-          <StatChip label={t('bookingApproved')} value={stats.approved} tone="green" />
-          <StatChip label={t('bookingRejected')} value={stats.cancelled} tone="red" />
+          <CenterStatCard value={stats.pending} label={t('bookingQueue')} />
+          <CenterStatCard value={stats.approved} label={t('bookingApproved')} />
+          <CenterStatCard value={stats.cancelled} label={t('bookingRejected')} />
         </div>
       )}
 
-      <Card bodyClassName="p-0">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3 dark:border-slate-700">
-          <p className="text-sm text-slate-500">{t('bookingsTitle')}</p>
-          <Button size="sm" onClick={() => setShowNew(true)}>
+      <div className="mj-card overflow-hidden">
+        <div className="flex items-center justify-between gap-3 border-b border-[color:var(--mj-border-soft)] px-5 py-3">
+          <p className="text-sm font-semibold text-[color:var(--mj-ink-strong)]">{t('bookingsTitle')}</p>
+          <button type="button" className="mj-btn mj-btn--primary mj-btn--sm" onClick={() => setShowNew(true)}>
             <Plus className="h-4 w-4" />
             {t('addBooking')}
-          </Button>
+          </button>
         </div>
 
         {loading && <PencilLoader label={t('loading')} />}
@@ -228,50 +237,54 @@ function BookingsTab({ t }: { t: (k: DictKey) => string }) {
 
         {!loading && bookings && bookings.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="mj-table">
               <thead>
-                <tr className="border-b border-slate-100 text-start text-xs text-slate-500 dark:border-slate-700">
-                  <th className="px-5 py-2.5 text-start font-medium">{t('groupRoom')}</th>
-                  <th className="px-5 py-2.5 text-start font-medium">{t('groupTeacher')}</th>
-                  <th className="px-5 py-2.5 text-start font-medium">{t('groupDay')}</th>
-                  <th className="px-5 py-2.5 text-start font-medium">{t('time')}</th>
-                  <th className="px-5 py-2.5 text-start font-medium">{t('bookingRecurrence')}</th>
-                  <th className="px-5 py-2.5 text-start font-medium">{t('bookingStatus')}</th>
-                  <th className="px-5 py-2.5 text-end font-medium"></th>
+                <tr>
+                  <th>{t('groupRoom')}</th>
+                  <th>{t('groupTeacher')}</th>
+                  <th>{t('groupDay')}</th>
+                  <th>{t('time')}</th>
+                  <th>{t('bookingRecurrence')}</th>
+                  <th>{t('bookingStatus')}</th>
+                  <th className="text-end">{t('action')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+              <tbody>
                 {bookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                    <td className="px-5 py-3 font-medium text-slate-900 dark:text-white">{b.room || '—'}</td>
-                    <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{b.teacher || '—'}</td>
-                    <td className="px-5 py-3 text-slate-600 dark:text-slate-300">
+                  <tr key={b.id}>
+                    <td>
+                      <span className="font-semibold text-[color:var(--mj-ink-strong)]">{b.room || '—'}</span>
+                    </td>
+                    <td>
+                      <span className="font-medium text-[color:var(--mj-ink)]">{b.teacher || '—'}</span>
+                    </td>
+                    <td>
                       <span className="flex items-center gap-1">
-                        <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                        <CalendarDays className="h-3.5 w-3.5 text-[color:var(--mj-muted-2)]" />
                         {b.dayOfWeek == null ? (b.date ? new Date(b.date).toLocaleDateString() : '—') : DAY_NAMES[b.dayOfWeek]}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-slate-600 dark:text-slate-300">
+                    <td>
                       <span className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5 text-slate-400" />
+                        <Clock className="h-3.5 w-3.5 text-[color:var(--mj-muted-2)]" />
                         {b.startTime} — {b.endTime}
                       </span>
                     </td>
-                    <td className="px-5 py-3">
-                      <Badge tone="slate">{t(b.recurrence === 'WEEKLY' ? 'weeklyRecurring' : 'oneTime')}</Badge>
+                    <td>
+                      <CenterPill tone="slate">{t(b.recurrence === 'WEEKLY' ? 'weeklyRecurring' : 'oneTime')}</CenterPill>
                     </td>
-                    <td className="px-5 py-3">
-                      <Badge tone={statusTone(b.status)}>{b.status?.replace(/_/g, ' ')}</Badge>
+                    <td>
+                      <CenterPill tone={statusPill(b.status)}>{b.status?.replace(/_/g, ' ')}</CenterPill>
                     </td>
-                    <td className="px-5 py-3 text-end">
+                    <td className="text-end">
                       {b.status === 'PENDING' && (
                         <div className="flex justify-end gap-1">
-                          <Button size="sm" variant="outline" onClick={() => changeStatus(b.id, 'APPROVED')} aria-label={t('approveBooking')}>
-                            <Check className="h-4 w-4 text-emerald-600" />
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => changeStatus(b.id, 'CANCELLED')} aria-label={t('rejectBooking')}>
-                            <X className="h-4 w-4 text-red-500" />
-                          </Button>
+                          <button type="button" className="mj-btn mj-btn--ghost mj-btn--sm" aria-label={t('approveBooking')} onClick={() => changeStatus(b.id, 'APPROVED')}>
+                            <Check className="h-4 w-4 text-[color:var(--mj-success)]" />
+                          </button>
+                          <button type="button" className="mj-btn mj-btn--ghost mj-btn--sm" aria-label={t('rejectBooking')} onClick={() => changeStatus(b.id, 'CANCELLED')}>
+                            <X className="h-4 w-4 text-[color:var(--mj-danger)]" />
+                          </button>
                         </div>
                       )}
                     </td>
@@ -283,23 +296,15 @@ function BookingsTab({ t }: { t: (k: DictKey) => string }) {
         )}
 
         {!loading && bookings?.length === 0 && (
-          <div className="p-8 text-center text-sm text-slate-500">{t('noClassrooms')}</div>
+          <div className="mj-empty">
+            <p className="text-sm">{t('noClassrooms')}</p>
+          </div>
         )}
-      </Card>
+      </div>
 
       {showNew && formData && (
         <NewBookingModal t={t} formData={formData} onClose={() => setShowNew(false)} onDone={() => { setShowNew(false); reload(); reloadStats(); }} />
       )}
-    </div>
-  );
-}
-
-function StatChip({ label, value, tone }: { label: string; value: number | undefined; tone: 'amber' | 'green' | 'red' }) {
-  const tones: Record<string, string> = { amber: 'text-amber-600 dark:text-amber-400', green: 'text-emerald-600 dark:text-emerald-400', red: 'text-red-600 dark:text-red-400' };
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
-      <p className={`text-xl font-bold ${tones[tone]}`}>{value ?? '—'}</p>
-      <p className="mt-0.5 text-[11px] text-slate-500">{label}</p>
     </div>
   );
 }
@@ -339,20 +344,62 @@ function NewBookingModal({ t, formData, onClose, onDone }: { t: (k: DictKey) => 
   };
 
   return (
-    <Modal open onClose={onClose} title={t('addBooking')} size="md"
-      footer={<><Button variant="outline" onClick={onClose}>{t('cancel')}</Button><Button onClick={submit} loading={saving}>{t('save')}</Button></>}>
-      <form onSubmit={submit} className="space-y-4" noValidate>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Select label={t('groupRoom')} required value={form.roomId} onChange={(e) => setForm((f) => ({ ...f, roomId: e.target.value }))} options={rooms.map((x) => ({ value: x.id, label: x.name }))} placeholder={t('selectBranch')} />
-          <Select label={t('groupTeacher')} required value={form.teacherId} onChange={(e) => setForm((f) => ({ ...f, teacherId: e.target.value }))} options={formData.teachers.map((x) => ({ value: x.id, label: x.name }))} placeholder={t('selectBranch')} />
-          <Select label={t('groupDay')} value={form.dayOfWeek} onChange={(e) => setForm((f) => ({ ...f, dayOfWeek: e.target.value }))} options={Object.entries(DAY_NAMES).map(([value, label]) => ({ value, label }))} placeholder={t('selectBranch')} />
-          <Select label={t('bookingRecurrence')} value={form.recurrence} onChange={(e) => setForm((f) => ({ ...f, recurrence: e.target.value }))} options={[{ value: 'ONE_TIME', label: t('oneTime') }, { value: 'WEEKLY', label: t('weeklyRecurring') }]} />
-          <Input label={t('groupStartTime')} type="time" required value={form.startTime} onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} />
-          <Input label={t('groupEndTime')} type="time" required value={form.endTime} onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} />
+    <CenterModal
+      open
+      onClose={onClose}
+      title={t('addBooking')}
+      footer={
+        <>
+          <button type="button" className="mj-btn mj-btn--ghost" onClick={onClose}>{t('cancel')}</button>
+          <button type="button" className="mj-btn mj-btn--primary" onClick={submit} disabled={saving}>{t('save')}</button>
+        </>
+      }
+    >
+      <form onSubmit={submit} className="space-y-0" noValidate>
+        <div className="grid grid-cols-1 gap-x-4 gap-y-0 sm:grid-cols-2">
+          <div className="mj-field">
+            <label className="mj-label">{t('groupRoom')}</label>
+            <select className="mj-select" required value={form.roomId} onChange={(e) => setForm((f) => ({ ...f, roomId: e.target.value }))}>
+              <option value="">{t('selectBranch')}</option>
+              {rooms.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+            </select>
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('groupTeacher')}</label>
+            <select className="mj-select" required value={form.teacherId} onChange={(e) => setForm((f) => ({ ...f, teacherId: e.target.value }))}>
+              <option value="">{t('selectBranch')}</option>
+              {formData.teachers.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+            </select>
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('groupDay')}</label>
+            <select className="mj-select" value={form.dayOfWeek} onChange={(e) => setForm((f) => ({ ...f, dayOfWeek: e.target.value }))}>
+              <option value="">{t('selectBranch')}</option>
+              {Object.entries(DAY_NAMES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('bookingRecurrence')}</label>
+            <select className="mj-select" value={form.recurrence} onChange={(e) => setForm((f) => ({ ...f, recurrence: e.target.value }))}>
+              <option value="ONE_TIME">{t('oneTime')}</option>
+              <option value="WEEKLY">{t('weeklyRecurring')}</option>
+            </select>
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('groupStartTime')}</label>
+            <input type="time" className="mj-input" required value={form.startTime} onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} />
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('groupEndTime')}</label>
+            <input type="time" className="mj-input" required value={form.endTime} onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} />
+          </div>
         </div>
-        <Input label={t('note')} value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} />
+        <div className="mj-field">
+          <label className="mj-label">{t('note')}</label>
+          <input type="text" className="mj-input" value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} />
+        </div>
       </form>
-    </Modal>
+    </CenterModal>
   );
 }
 
@@ -378,13 +425,28 @@ function AddRoomModal({ open, onClose, onSuccess }: { open: boolean; onClose: ()
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={t('addClassroom')} size="md"
-      footer={<><Button variant="outline" onClick={onClose}>{t('cancel')}</Button><Button onClick={handleSubmit} loading={saving}>{t('save')}</Button></>}>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label={t('classroomName')} required value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
-        <Input label={t('capacity')} type="number" value={form.capacity} onChange={(e) => setForm(f => ({ ...f, capacity: parseInt(e.target.value) || 20 }))} />
+    <CenterModal
+      open={open}
+      onClose={onClose}
+      title={t('addClassroom')}
+      footer={
+        <>
+          <button type="button" className="mj-btn mj-btn--ghost" onClick={onClose}>{t('cancel')}</button>
+          <button type="button" className="mj-btn mj-btn--primary" onClick={handleSubmit} disabled={saving}>{t('save')}</button>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-0">
+        <div className="mj-field">
+          <label className="mj-label">{t('classroomName')}</label>
+          <input type="text" className="mj-input" required value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('capacity')}</label>
+          <input type="number" className="mj-input" value={form.capacity} onChange={(e) => setForm(f => ({ ...f, capacity: parseInt(e.target.value) || 20 }))} />
+        </div>
       </form>
-    </Modal>
+    </CenterModal>
   );
 }
 
@@ -409,12 +471,27 @@ function EditRoomModal({ room, open, onClose, onSuccess }: { room: Classroom; op
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={t('editClassroom')} size="md"
-      footer={<><Button variant="outline" onClick={onClose}>{t('cancel')}</Button><Button onClick={handleSubmit} loading={saving}>{t('save')}</Button></>}>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label={t('classroomName')} required value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
-        <Input label={t('capacity')} type="number" value={form.capacity} onChange={(e) => setForm(f => ({ ...f, capacity: parseInt(e.target.value) || 20 }))} />
+    <CenterModal
+      open={open}
+      onClose={onClose}
+      title={t('editClassroom')}
+      footer={
+        <>
+          <button type="button" className="mj-btn mj-btn--ghost" onClick={onClose}>{t('cancel')}</button>
+          <button type="button" className="mj-btn mj-btn--primary" onClick={handleSubmit} disabled={saving}>{t('save')}</button>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-0">
+        <div className="mj-field">
+          <label className="mj-label">{t('classroomName')}</label>
+          <input type="text" className="mj-input" required value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('capacity')}</label>
+          <input type="number" className="mj-input" value={form.capacity} onChange={(e) => setForm(f => ({ ...f, capacity: parseInt(e.target.value) || 20 }))} />
+        </div>
       </form>
-    </Modal>
+    </CenterModal>
   );
 }

@@ -4,17 +4,15 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
-  UserRound, DoorOpen, Clock, CalendarDays,
-  Users, Plus, Trash2, CreditCard, UserPlus,
+  CalendarDays, Users, Plus, Trash2, CreditCard, UserPlus,
 } from 'lucide-react';
-import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBackButton } from '../../../components/layout/PageBackButton';
-import { Card } from '../../../components/ui/Card';
-import { Button } from '../../../components/ui/Button';
-import { Badge, statusTone } from '../../../components/ui/Badge';
 import { PencilLoader } from '../../../components/ui/PencilLoader';
-import { Modal } from '../../../components/ui/Modal';
-import { Tabs } from '../../../components/ui/Tabs';
+import { statusTone } from '../../../components/ui/Badge';
+import { CenterPageHeader } from '../ui/CenterPageHeader';
+import { CenterStatCard } from '../ui/CenterStatCard';
+import { CenterPill } from '../ui/CenterPill';
+import { CenterModal } from '../ui/CenterModal';
 import { useApi, errorMessage } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
 import { useToast } from '../../../context/ToastContext';
@@ -88,175 +86,153 @@ export default function CenterGroupDetailPage() {
     }
   };
 
+  const groupPill = (status: string) => {
+    if (status === 'ACTIVE') return 'green' as const;
+    if (status === 'NEEDS_ROOM') return 'amber' as const;
+    return 'red' as const;
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <PageBackButton />
-        <PageHeader
-          title={group.name}
-          subtitle={group.subject || group.stage || t('groupGeneric')}
-          action={
-            <Badge tone={group.status === 'ACTIVE' ? 'green' : group.status === 'NEEDS_ROOM' ? 'amber' : 'red'}>
-              {group.status === 'ACTIVE' ? t('groupActive') : group.status === 'NEEDS_ROOM' ? t('groupNeedsRoom') : t('groupInactive')}
-            </Badge>
-          }
+    <div className="space-y-5">
+      <PageBackButton />
+
+      <CenterPageHeader
+        eyebrow={t('groupGeneric')}
+        title={group.name}
+        description={group.subject || group.stage || t('groupGeneric')}
+      >
+        <CenterPill tone={groupPill(group.status)}>
+          {group.status === 'ACTIVE' ? t('groupActive') : group.status === 'NEEDS_ROOM' ? t('groupNeedsRoom') : t('groupInactive')}
+        </CenterPill>
+      </CenterPageHeader>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <CenterStatCard label={t('groupTeacher')} value={group.teacher || '—'} />
+        <CenterStatCard label={t('groupRoom')} value={group.room || t('groupNeedsRoom')} />
+        <CenterStatCard
+          label={DAY_NAMES[group.dayOfWeek ?? -1] ?? t('selectBranch')}
+          value={`${group.startTime ?? ''} — ${group.endTime ?? ''}`}
+        />
+        <CenterStatCard
+          label={t('groupStudents')}
+          value={`${group.students.length} / ${group.capacity ?? '∞'}`}
+          sub={`(${occupancy}%)`}
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">
-              <UserRound className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-slate-500">{t('groupTeacher')}</p>
-              <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{group.teacher || '—'}</p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
-              <DoorOpen className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-slate-500">{t('groupRoom')}</p>
-              <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{group.room || t('groupNeedsRoom')}</p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
-              <Clock className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-slate-500">{DAY_NAMES[group.dayOfWeek ?? -1] ?? t('selectBranch')}</p>
-              <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
-                {group.startTime ?? ''} — {group.endTime ?? ''}
-              </p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
-              <Users className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-slate-500">{t('groupStudents')}</p>
-              <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
-                {group.students.length} / {group.capacity ?? '∞'}
-                <span className="ms-2 text-xs font-normal text-slate-400">({occupancy}%)</span>
-              </p>
-            </div>
-          </div>
-        </Card>
+      <div className="mj-tabs">
+        <button
+          type="button"
+          className={`mj-tab ${tab === 'students' ? 'mj-tab--active' : ''}`}
+          onClick={() => setTab('students')}
+        >
+          {t('groupTypeStudent')}
+          <span className="mj-tab-count">{group.students.length}</span>
+        </button>
+        <button
+          type="button"
+          className={`mj-tab ${tab === 'bookings' ? 'mj-tab--active' : ''}`}
+          onClick={() => setTab('bookings')}
+        >
+          {t('groupTypeBookings')}
+          <span className="mj-tab-count">{group.bookings.length}</span>
+        </button>
       </div>
 
-      <Tabs
-        tabs={[
-          { key: 'students', label: t('groupTypeStudent'), count: group.students.length },
-          { key: 'bookings', label: t('groupTypeBookings'), count: group.bookings.length },
-        ]}
-        activeKey={tab}
-        onChange={setTab}
-      >
-        <>
-            {tab === 'bookings' ? (
-              <Card bodyClassName="p-0">
-                {group.bookings.length === 0 ? (
-                  <div className="flex flex-col items-center py-12 text-center">
-                    <CalendarDays className="mb-3 h-10 w-10 text-slate-300 dark:text-slate-600" />
-                    <p className="text-sm text-slate-500">{t('noClassrooms')}</p>
+      {tab === 'bookings' ? (
+        <div className="mj-card overflow-hidden">
+          {group.bookings.length === 0 ? (
+            <div className="mj-empty">
+              <CalendarDays className="mj-empty-icon" />
+              <p className="text-sm">{t('noClassrooms')}</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[color:var(--mj-border-soft)]">
+              {group.bookings.map((b) => (
+                <div key={b.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
+                  <div>
+                    <p className="text-sm font-medium text-[color:var(--mj-ink-strong)]">
+                      {b.room || t('groupNeedsRoom')}
+                    </p>
+                    <p className="text-xs text-[color:var(--mj-muted)]">
+                      {DAY_NAMES[b.dayOfWeek ?? -1] ?? t('selectBranch')} {b.startTime} — {b.endTime}
+                    </p>
                   </div>
-                ) : (
-                  <div className="divide-y divide-slate-100 dark:divide-slate-700">
-                    {group.bookings.map((b) => (
-                      <div key={b.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
-                        <div>
-                          <p className="text-sm font-medium text-slate-900 dark:text-white">
-                            {b.room || t('groupNeedsRoom')}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {DAY_NAMES[b.dayOfWeek ?? -1] ?? t('selectBranch')} {b.startTime} — {b.endTime}
-                          </p>
-                        </div>
-                        <Badge tone={statusTone(b.status)}>{b.status ?? '—'}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card>
-            ) : (
-              <Card bodyClassName="p-0">
-                <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3 dark:border-slate-700">
-                  <p className="text-sm text-slate-500">{t('groupStudents')}</p>
-                  <Button size="sm" onClick={() => setShowAddStudents(true)}>
-                    <UserPlus className="h-4 w-4" />
-                    {t('groupAddStudents')}
-                  </Button>
+                  <CenterPill tone={statusTone(b.status) as 'green' | 'amber' | 'red' | 'blue' | 'slate'}>{b.status ?? '—'}</CenterPill>
                 </div>
-                {group.students.length === 0 ? (
-                  <div className="flex flex-col items-center py-12 text-center">
-                    <Users className="mb-3 h-10 w-10 text-slate-300 dark:text-slate-600" />
-                    <p className="text-sm text-slate-500">{t('noClassrooms')}</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-100 text-start text-xs text-slate-500 dark:border-slate-700">
-                          <th className="px-5 py-2.5 text-start font-medium">{t('fullName')}</th>
-                          <th className="px-5 py-2.5 text-start font-medium">{t('enrolledAt')}</th>
-                          <th className="px-5 py-2.5 text-start font-medium">{t('financialStatus')}</th>
-                          <th className="px-5 py-2.5 text-start font-medium">{t('lastAttendance')}</th>
-                          <th className="px-5 py-2.5 text-end font-medium"></th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                        {group.students.map((s) => (
-                          <tr key={s.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                            <td className="px-5 py-3">
-                              <div className="flex items-center gap-2">
-                                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-                                  {s.name.charAt(0)}
-                                </span>
-                                <Link href={`/center/students/${s.id}`} className="font-medium text-slate-900 hover:text-brand-600 dark:text-white">
-                                  {s.name}
-                                </Link>
-                              </div>
-                            </td>
-                            <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{fmtDate(s.enrolledAt)}</td>
-                            <td className="px-5 py-3">
-                              <div className="flex items-center gap-1.5">
-                                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15">
-                                  <CreditCard className="h-3.5 w-3.5" />
-                                </span>
-                                <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
-                                  {s.totalPaid > 0 ? `${(s.totalPaid / 100).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} EGP` : t('financialNotPaid')}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-5 py-3 text-slate-600 dark:text-slate-300">
-                              {s.lastAttendance ? fmtDate(s.lastAttendance) : t('notAttendedYet')}
-                            </td>
-                            <td className="px-5 py-3 text-end">
-                              <Button variant="ghost" size="sm" onClick={() => removeStudent(s.id)} aria-label={t('unsubscribeStudent')}>
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </Card>
-            )}
-          </>
-      </Tabs>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="mj-card overflow-hidden">
+          <div className="flex items-center justify-between gap-3 border-b border-[color:var(--mj-border-soft)] px-5 py-3">
+            <p className="text-sm text-[color:var(--mj-muted)]">{t('groupStudents')}</p>
+            <button type="button" className="mj-btn mj-btn--primary mj-btn--sm" onClick={() => setShowAddStudents(true)}>
+              <UserPlus className="h-4 w-4" />
+              {t('groupAddStudents')}
+            </button>
+          </div>
+          {group.students.length === 0 ? (
+            <div className="mj-empty">
+              <Users className="mj-empty-icon" />
+              <p className="text-sm">{t('noClassrooms')}</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="mj-table">
+                <thead>
+                  <tr>
+                    <th>{t('fullName')}</th>
+                    <th>{t('enrolledAt')}</th>
+                    <th>{t('financialStatus')}</th>
+                    <th>{t('lastAttendance')}</th>
+                    <th className="text-end"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {group.students.map((s) => (
+                    <tr key={s.id}>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--mj-accent-soft)] text-xs font-semibold text-[color:var(--mj-accent)]">
+                            {s.name.charAt(0)}
+                          </span>
+                          <Link href={`/center/students/${s.id}`} className="font-medium text-[color:var(--mj-link)] hover:underline">
+                            {s.name}
+                          </Link>
+                        </div>
+                      </td>
+                      <td>{fmtDate(s.enrolledAt)}</td>
+                      <td>
+                        <div className="flex items-center gap-1.5">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[color:var(--mj-success-soft)] text-[color:var(--mj-success)]">
+                            <CreditCard className="h-3.5 w-3.5" />
+                          </span>
+                          <span className="text-xs font-medium text-[color:var(--mj-ink-strong)]">
+                            {s.totalPaid > 0 ? `${(s.totalPaid / 100).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} EGP` : t('financialNotPaid')}
+                          </span>
+                        </div>
+                      </td>
+                      <td>{s.lastAttendance ? fmtDate(s.lastAttendance) : t('notAttendedYet')}</td>
+                      <td className="text-end">
+                        <button
+                          type="button"
+                          className="mj-btn mj-btn--ghost mj-btn--sm"
+                          onClick={() => removeStudent(s.id)}
+                          aria-label={t('unsubscribeStudent')}
+                        >
+                          <Trash2 className="h-4 w-4 text-[color:var(--mj-danger)]" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {showAddStudents && formData && (
         <AddStudentsModal
@@ -305,22 +281,37 @@ function AddStudentsModal({
   };
 
   return (
-    <Modal open onClose={onClose} title={t('groupAddStudents')} size="md"
-      footer={<><Button variant="outline" onClick={onClose}>{t('cancel')}</Button><Button onClick={submit} loading={saving} disabled={selected.length === 0}>{t('save')}</Button></>}>
+    <CenterModal
+      open
+      onClose={onClose}
+      title={t('groupAddStudents')}
+      size="md"
+      footer={
+        <>
+          <button type="button" className="mj-btn mj-btn--ghost" onClick={onClose}>{t('cancel')}</button>
+          <button type="button" className="mj-btn mj-btn--primary" onClick={submit} disabled={saving || selected.length === 0}>{t('save')}</button>
+        </>
+      }
+    >
       <form onSubmit={submit} className="space-y-3">
-        <p className="flex items-center gap-1.5 text-sm text-slate-500">
+        <p className="flex items-center gap-1.5 text-sm text-[color:var(--mj-muted)]">
           <Plus className="h-4 w-4" />
           {t('groupStudents')}: {selected.length}
         </p>
-        <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-200 p-2 dark:border-slate-600">
+        <div className="max-h-64 overflow-y-auto rounded-lg border border-[color:var(--mj-border)] p-2">
           {available.map((s) => (
-            <label key={s.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50">
-              <input type="checkbox" className="accent-teal-600" checked={selected.includes(s.id)} onChange={() => toggle(s.id)} />
+            <label key={s.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-[color:var(--mj-wash)]">
+              <input
+                type="checkbox"
+                className="accent-[color:var(--mj-accent)]"
+                checked={selected.includes(s.id)}
+                onChange={() => toggle(s.id)}
+              />
               {s.name}
             </label>
           ))}
         </div>
       </form>
-    </Modal>
+    </CenterModal>
   );
 }

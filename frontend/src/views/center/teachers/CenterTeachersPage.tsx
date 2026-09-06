@@ -2,27 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import {
-  Search,
-  Edit,
-  Star,
-  Users,
-  Calendar,
-  Eye,
-  X,
-  Filter,
-} from 'lucide-react';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { Card } from '../../../components/ui/Card';
-import { Button } from '../../../components/ui/Button';
-import { Input } from '../../../components/ui/Input';
-import { Select } from '../../../components/ui/Select';
-import { Avatar } from '../../../components/ui/Avatar';
-import { Badge } from '../../../components/ui/Badge';
-import { Modal } from '../../../components/ui/Modal';
+import { Edit, Star, Users, Filter, X } from 'lucide-react';
+import { CenterPageHeader } from '../ui/CenterPageHeader';
+import { CenterStatCard } from '../ui/CenterStatCard';
+import { CenterPill, type CenterPillTone } from '../ui/CenterPill';
+import { CenterSearchInput } from '../ui/CenterSearchInput';
+import { CenterModal } from '../ui/CenterModal';
 import { PencilLoader } from '../../../components/ui/PencilLoader';
-import { Alert } from '../../../components/ui/ErrorAlert';
-import { EmptyState } from '../../../components/ui/EmptyState';
 import { useApi, errorMessage } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
 import { useToast } from '../../../context/ToastContext';
@@ -58,6 +44,21 @@ interface TeacherStats {
   averageRating: number;
 }
 
+function initial(name: string) {
+  return name.trim().charAt(0) || '?';
+}
+
+function statusTone(status: string): CenterPillTone {
+  if (status === 'ACTIVE') return 'green';
+  if (status === 'INACTIVE') return 'slate';
+  return 'amber';
+}
+
+function StatusPill({ status }: { status: string }) {
+  const { t } = useT();
+  return <CenterPill tone={statusTone(status)}>{t(status.toLowerCase() as DictKey)}</CenterPill>;
+}
+
 export default function CenterTeachersPage() {
   const { t } = useT();
 
@@ -84,170 +85,161 @@ export default function CenterTeachersPage() {
     []
   );
 
-  const getStatusBadge = (status: string) => {
-    return <Badge tone={status === 'ACTIVE' ? 'green' : 'slate'}>{t(status.toLowerCase() as DictKey)}</Badge>;
-  };
-
   return (
-    <div className="space-y-6">
-      <PageHeader title={t('teachersManagement')} subtitle={t('teachersManagementSub')} />
+    <div className="space-y-5">
+      <CenterPageHeader
+        title={t('teachersManagement')}
+        description={t('teachersManagementSub')}
+      />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300">
-              <Users className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.totalTeachers || 0}</p>
-              <p className="text-xs text-slate-500">{t('totalTeachers')}</p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300">
-              <Users className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.activeTeachers || 0}</p>
-              <p className="text-xs text-slate-500">{t('active')}</p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300">
-              <Users className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.totalStudents || 0}</p>
-              <p className="text-xs text-slate-500">{t('students')}</p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
-              <Calendar className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.totalLessons || 0}</p>
-              <p className="text-xs text-slate-500">{t('lessons')}</p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-300">
-              <Star className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.averageRating ? stats.averageRating.toFixed(1) : '0.0'} ★</p>
-              <p className="text-xs text-slate-500">{t('avgRating')}</p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-500/20 dark:text-sky-300">
-              <Calendar className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{teachers?.reduce((sum, t) => sum + t.todayLessons, 0) || 0}</p>
-              <p className="text-xs text-slate-500">{t('todaysLessons')}</p>
-            </div>
-          </div>
-        </Card>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+        <CenterStatCard value={stats?.totalTeachers || 0} label={t('totalTeachers')} />
+        <CenterStatCard value={stats?.activeTeachers || 0} label={t('active')} />
+        <CenterStatCard value={stats?.totalStudents || 0} label={t('students')} />
+        <CenterStatCard value={stats?.totalLessons || 0} label={t('todaysLessons')} />
+        <CenterStatCard value={stats?.averageRating ? stats.averageRating.toFixed(1) : '0.0'} label={t('avgRating')} />
+        <CenterStatCard
+          value={teachers?.reduce((sum, tr) => sum + tr.todayLessons, 0) || 0}
+          label={t('lessons')}
+        />
       </div>
 
-      {/* Search */}
-      <Card bodyClassName="p-4">
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <div className="relative flex-1">
-            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input
-              placeholder={t('searchTeachers')}
-              className="ps-9"
+      <div className="mj-card mj-card--padding">
+        <div className="mj-toolbar">
+          <div className="min-w-0 flex-1 sm:max-w-xs">
+            <CenterSearchInput
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); setSearch(searchInput); } }}
+              onChange={setSearchInput}
+              placeholder={t('searchTeachers')}
+              aria-label={t('searchTeachers')}
             />
           </div>
-          <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
+          <button
+            type="button"
+            className="mj-btn mj-btn--ghost"
+            onClick={() => setShowFilters(!showFilters)}
+          >
             <Filter className="h-4 w-4" />
             {t('filters')}
-          </Button>
+          </button>
           {(status || search) && (
-            <Button variant="ghost" onClick={() => { setStatus(''); setSearch(''); setSearchInput(''); }}>
+            <button
+              type="button"
+              className="mj-btn mj-btn--ghost"
+              onClick={() => { setStatus(''); setSearch(''); setSearchInput(''); }}
+            >
               <X className="h-4 w-4" />
               {t('clearFilters')}
-            </Button>
+            </button>
           )}
         </div>
         {showFilters && (
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            <Select label={t('status')} value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }}
-              options={[{ value: '', label: t('allStatus') }, { value: 'ACTIVE', label: t('active') }, { value: 'INACTIVE', label: t('inactive') }]}
-            />
+            <div className="mj-field sm:mb-0">
+              <label className="mj-label">{t('status')}</label>
+              <select
+                className="mj-select"
+                value={status}
+                onChange={(e) => { setPage(1); setStatus(e.target.value); }}
+              >
+                <option value="">{t('allStatus')}</option>
+                <option value="ACTIVE">{t('active')}</option>
+                <option value="INACTIVE">{t('inactive')}</option>
+              </select>
+            </div>
           </div>
         )}
-      </Card>
+      </div>
 
-      {/* Teachers Grid */}
-      {error && <Alert message={error} />}
+      {error && <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>}
       {loading && <PencilLoader label={t('loading')} size={initialLoading ? undefined : 'sm'} />}
 
       {!loading && teachers && teachers.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {teachers.map((teacher) => (
-            <Card key={teacher.id} bodyClassName="p-4">
-              <div className="flex flex-col items-center text-center">
-                <Avatar name={teacher.fullName} src={teacher.photo} size="lg" className="mb-3" />
-                <h3 className="font-semibold text-slate-900 dark:text-white">{teacher.fullName}</h3>
-                <p className="mb-1 text-xs text-slate-500">@{teacher.username}</p>
-                <div className="mb-2">{getStatusBadge(teacher.status)}</div>
-                <div className="mb-3 flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  <span className="text-sm font-medium">{teacher.rating.toFixed(1)}</span>
-                  <span className="text-xs text-slate-400">({teacher.studentCount} {t('students')})</span>
-                </div>
-                <div className="mb-3 flex flex-wrap justify-center gap-1">
-                  {teacher.subjects.slice(0, 3).map((s, i) => <Badge key={i} tone="slate" className="text-xs">{s}</Badge>)}
-                  {teacher.subjects.length > 3 && <Badge tone="slate" className="text-xs">+{teacher.subjects.length - 3}</Badge>}
-                </div>
-                <div className="grid w-full grid-cols-2 gap-2 border-t border-slate-100 pt-3 text-xs dark:border-slate-700">
-                  <div>
-                    <p className="text-slate-500">{t('todaysLessons')}</p>
-                    <p className="font-medium">{teacher.todayLessons}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500">{t('experience')}</p>
-                    <p className="font-medium">{teacher.yearsExperience} {t('years')}</p>
-                  </div>
-                </div>
-                <div className="mt-3 flex w-full gap-2">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => { setSelectedTeacher(teacher); setShowEditModal(true); }}>
-                    <Edit className="h-3.5 w-3.5" />
-                  </Button>
-                  <Link href={`/center/teachers/${teacher.id}`} className="flex-1">
-                    <Button variant="outline" size="sm" className="w-full">
-                      <Eye className="h-3.5 w-3.5" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </Card>
-          ))}
+        <div className="mj-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="mj-table">
+              <thead>
+                <tr>
+                  <th>{t('teacher')}</th>
+                  <th>{t('stages')}</th>
+                  <th>{t('students')}</th>
+                  <th>{t('agreement')}</th>
+                  <th>{t('status')}</th>
+                  <th aria-label={t('actions')} />
+                </tr>
+              </thead>
+              <tbody>
+                {teachers.map((teacher) => (
+                  <tr key={teacher.id}>
+                    <td>
+                      <Link href={`/center/teachers/${teacher.id}`} className="flex items-center gap-3">
+                        <span className="mj-avatar mj-avatar--md shrink-0">{initial(teacher.fullName)}</span>
+                        <span>
+                          <span className="block font-bold text-[color:var(--mj-ink-strong)]">{teacher.fullName}</span>
+                          <span className="mt-0.5 block text-xs text-[color:var(--mj-muted)]">
+                            {teacher.subjects.length > 0 ? teacher.subjects.join('، ') : ''}
+                            {teacher.phone ? ` · ${teacher.phone}` : ''}
+                          </span>
+                        </span>
+                      </Link>
+                    </td>
+                    <td>
+                      <div className="flex flex-wrap gap-1">
+                        {teacher.grades.slice(0, 3).map((g, i) => (
+                          <CenterPill key={i} tone="slate">{g}</CenterPill>
+                        ))}
+                        {teacher.grades.length > 3 && (
+                          <CenterPill tone="slate">+{teacher.grades.length - 3}</CenterPill>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="font-semibold text-[color:var(--mj-ink-strong)]">{teacher.studentCount}</span>
+                      <span className="ms-1 text-xs text-[color:var(--mj-muted)]">{t('students')}</span>
+                    </td>
+                    <td>
+                      <span className="font-semibold text-[color:var(--mj-ink-strong)]">
+                        {teacher.hourlyRate} {t('rate')}
+                      </span>
+                      <span className="mt-0.5 flex items-center gap-1 text-xs text-[color:var(--mj-muted)]">
+                        <Star className="h-3.5 w-3.5 fill-[color:var(--mj-amber)] text-[color:var(--mj-amber)]" />
+                        {teacher.rating.toFixed(1)}
+                      </span>
+                    </td>
+                    <td>
+                      <StatusPill status={teacher.status} />
+                    </td>
+                    <td>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          className="mj-btn mj-btn--ghost mj-btn--sm"
+                          onClick={() => { setSelectedTeacher(teacher); setShowEditModal(true); }}
+                          aria-label={t('editTeacher')}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <Link href={`/center/teachers/${teacher.id}`} className="mj-btn mj-btn--ghost mj-btn--sm">
+                          <span aria-hidden>{t('view')}</span>
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {!loading && teachers?.length === 0 && (
-        <EmptyState icon={Users} title={t('noTeachers')} description={t('noTeachersDesc')} />
+        <div className="mj-empty">
+          <Users className="mj-empty-icon" />
+          <p className="text-sm font-semibold text-[color:var(--mj-ink-strong)]">{t('noTeachers')}</p>
+          <p className="text-sm">{t('noTeachersDesc')}</p>
+        </div>
       )}
 
-      {/* Edit Modal */}
       {selectedTeacher && (
         <EditTeacherModal teacher={selectedTeacher} open={showEditModal} onClose={() => { setShowEditModal(false); setSelectedTeacher(null); }} onSuccess={() => { setShowEditModal(false); setSelectedTeacher(null); reload(); }} />
       )}
@@ -283,35 +275,57 @@ function EditTeacherModal({ teacher, open, onClose, onSuccess }: { teacher: Teac
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={t('editTeacher')} size="lg"
-      footer={<><Button variant="outline" onClick={onClose}>{t('cancel')}</Button><Button onClick={handleSubmit} loading={saving}>{t('save')}</Button></>}>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input label={t('fullName')} required value={form.fullName} onChange={(e) => setForm(f => ({ ...f, fullName: e.target.value }))} />
-          <Input label={t('phone')} value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} />
-          <Input label={t('email')} type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
-          <Input label={t('experience')} type="number" value={form.yearsExperience} onChange={(e) => setForm(f => ({ ...f, yearsExperience: parseInt(e.target.value) || 0 }))} />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input label={t('hourlyRate')} type="number" value={form.hourlyRate} onChange={(e) => setForm(f => ({ ...f, hourlyRate: parseInt(e.target.value) || 0 }))} />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">{t('bio')}</label>
-          <textarea className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800" rows={3} value={form.bio} onChange={(e) => setForm(f => ({ ...f, bio: e.target.value }))} />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">{t('subjects')}</label>
-          <div className="flex flex-wrap gap-1">
-            {teacher.subjects.map((s, i) => <Badge key={i} tone="brand">{s}</Badge>)}
+    <CenterModal
+      open={open}
+      onClose={onClose}
+      title={t('editTeacher')}
+      footer={
+        <>
+          <button type="button" className="mj-btn mj-btn--ghost" onClick={onClose}>{t('cancel')}</button>
+          <button type="button" className="mj-btn mj-btn--primary" onClick={handleSubmit} disabled={saving}>{t('save')}</button>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-0">
+        <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+          <div className="mj-field">
+            <label className="mj-label">{t('fullName')}</label>
+            <input type="text" className="mj-input" required value={form.fullName} onChange={(e) => setForm(f => ({ ...f, fullName: e.target.value }))} />
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('phone')}</label>
+            <input type="text" className="mj-input" value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} />
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('email')}</label>
+            <input type="email" className="mj-input" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('experience')}</label>
+            <input type="number" className="mj-input" value={form.yearsExperience} onChange={(e) => setForm(f => ({ ...f, yearsExperience: parseInt(e.target.value) || 0 }))} />
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('hourlyRate')}</label>
+            <input type="number" className="mj-input" value={form.hourlyRate} onChange={(e) => setForm(f => ({ ...f, hourlyRate: parseInt(e.target.value) || 0 }))} />
           </div>
         </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">{t('grades')}</label>
+        <div className="mj-field">
+          <label className="mj-label">{t('bio')}</label>
+          <textarea className="mj-textarea" rows={3} value={form.bio} onChange={(e) => setForm(f => ({ ...f, bio: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('subjects')}</label>
           <div className="flex flex-wrap gap-1">
-            {teacher.grades.map((g, i) => <Badge key={i} tone="violet">{g}</Badge>)}
+            {teacher.subjects.map((s, i) => <CenterPill key={i} tone="blue">{s}</CenterPill>)}
+          </div>
+        </div>
+        <div className="mj-field mb-0">
+          <label className="mj-label">{t('grades')}</label>
+          <div className="flex flex-wrap gap-1">
+            {teacher.grades.map((g, i) => <CenterPill key={i} tone="slate">{g}</CenterPill>)}
           </div>
         </div>
       </form>
-    </Modal>
+    </CenterModal>
   );
 }

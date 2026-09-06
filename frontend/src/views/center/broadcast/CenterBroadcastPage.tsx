@@ -1,18 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Radio, Plus, Send, XCircle, Trash2, Users, CheckCheck } from 'lucide-react';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { Card } from '../../../components/ui/Card';
-import { Button } from '../../../components/ui/Button';
-import { Badge } from '../../../components/ui/Badge';
-import { StatCard } from '../../../components/ui/StatCard';
+import { Plus, Send, XCircle, Trash2, Users, CheckCheck, Radio } from 'lucide-react';
 import { PencilLoader } from '../../../components/ui/PencilLoader';
-import { Modal } from '../../../components/ui/Modal';
-import { Input } from '../../../components/ui/Input';
-import { Select } from '../../../components/ui/Select';
-import { Textarea } from '../../../components/ui/Textarea';
-import { EmptyState } from '../../../components/ui/EmptyState';
+import { CenterPageHeader } from '../ui/CenterPageHeader';
+import { CenterStatCard } from '../ui/CenterStatCard';
+import { CenterPill, type CenterPillTone } from '../ui/CenterPill';
+import { CenterModal } from '../ui/CenterModal';
 import { useApi, errorMessage } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
 import { useToast } from '../../../context/ToastContext';
@@ -50,7 +44,7 @@ const CHANNELS = [
   { value: 'EMAIL', label: 'الإيميل' },
 ];
 
-const statusTone = (s: string) =>
+const statusTone = (s: string): CenterPillTone =>
   s === 'SENT' ? 'green' : s === 'SCHEDULED' ? 'amber' : s === 'CANCELLED' ? 'red' : 'slate';
 
 export function CenterBroadcastPage() {
@@ -86,69 +80,80 @@ export function CenterBroadcastPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t('moduleBroadcast')} subtitle={t('broadcastSub')} />
+      <CenterPageHeader
+        eyebrow={t('centerDashboard')}
+        title={t('moduleBroadcast')}
+        description={t('broadcastSub')}
+      >
+        <button type="button" className="mj-btn mj-btn--primary" onClick={() => setShowNew(true)}>
+          <Plus className="h-4 w-4" /> {t('addBroadcast')}
+        </button>
+      </CenterPageHeader>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label={t('broadcastTotal')} value={summary?.total ?? '—'} icon={Radio} tone="teal" />
-        <StatCard label={t('broadcastSent')} value={summary?.sent ?? '—'} icon={CheckCheck} tone="emerald" />
-        <StatCard label={t('broadcastScheduled')} value={summary?.scheduled ?? '—'} icon={Send} tone="amber" />
-        <StatCard label={t('broadcastRecipients')} value={summary?.recipients ?? '—'} icon={Users} tone="violet" />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <CenterStatCard value={summary?.total ?? '—'} label={t('broadcastTotal')} />
+        <CenterStatCard value={summary?.sent ?? '—'} label={t('broadcastSent')} />
+        <CenterStatCard value={summary?.scheduled ?? '—'} label={t('broadcastScheduled')} />
+        <CenterStatCard value={summary?.recipients ?? '—'} label={t('broadcastRecipients')} />
       </div>
 
-      <Card bodyClassName="p-0">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3 dark:border-slate-700">
-          <p className="text-sm text-slate-500">{t('listBroadcasts')}</p>
-          <Button size="sm" onClick={() => setShowNew(true)}>
-            <Plus className="h-4 w-4" />
-            {t('addBroadcast')}
-          </Button>
+      <div className="mj-card overflow-hidden">
+        <div className="flex items-center justify-between gap-3 px-5 py-4">
+          <h2 className="mj-title">{t('listBroadcasts')}</h2>
+          <button type="button" className="mj-btn mj-btn--soft mj-btn--sm" onClick={() => setShowNew(true)}>
+            <Plus className="h-4 w-4" /> {t('addBroadcast')}
+          </button>
         </div>
+        <div className="mj-divider" />
 
-        {loading && <PencilLoader label={t('loading')} />}
-        {error && <div className="m-4 rounded-lg bg-red-50 p-4 text-red-600">{error}</div>}
+        {loading && <div className="p-8"><PencilLoader label={t('loading')} /></div>}
+        {error && <div className="m-4 rounded-lg bg-[color:var(--mj-danger-soft)] p-4 text-[color:var(--mj-danger)]">{error}</div>}
 
         {!loading && broadcasts && broadcasts.length > 0 ? (
-          <div className="divide-y divide-slate-100 dark:divide-slate-700">
+          <div className="divide-y divide-[color:var(--mj-border-soft)]">
             {broadcasts.map((b) => (
               <div key={b.id} className="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{b.subject}</p>
-                    <Badge tone={statusTone(b.status)}>{b.status?.replace(/_/g, ' ')}</Badge>
-                    <Badge tone="blue">{b.audience}</Badge>
-                    <Badge tone="slate">{b.channel}</Badge>
+                    <p className="text-sm font-bold text-[color:var(--mj-ink-strong)]">{b.subject}</p>
+                    <CenterPill tone={statusTone(b.status)}>{b.status?.replace(/_/g, ' ')}</CenterPill>
+                    <CenterPill tone="blue">{b.audience}</CenterPill>
+                    <CenterPill tone="slate">{b.channel}</CenterPill>
                   </div>
-                  <p className="mt-1.5 line-clamp-2 text-sm text-slate-600 dark:text-slate-300">{b.message}</p>
-                  <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
-                    <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{b.recipientCount}</span>
-                    <span className="flex items-center gap-1"><CheckCheck className="h-3.5 w-3.5 text-emerald-500" />{b.readCount} {t('read')}</span>
-                    <span>{b.status === 'SENT' ? fmtDate(b.sentAt) : fmtDate(b.scheduledFor)}</span>
-                  </p>
+                  <p className="mt-1.5 line-clamp-2 text-sm text-[color:var(--mj-muted)]">{b.message}</p>
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[color:var(--mj-muted-2)]">
+                    <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /><strong className="text-[color:var(--mj-ink-strong)]">{b.recipientCount}</strong>{t('recipientsCount')}</span>
+                    <span className="flex items-center gap-1.5"><CheckCheck className="h-3.5 w-3.5 text-[color:var(--mj-success)]" /><strong className="text-[color:var(--mj-ink-strong)]">{b.readCount}</strong>{t('read')}</span>
+                    <span className="flex items-center gap-1.5"><Send className="h-3.5 w-3.5" />{b.status === 'SENT' ? fmtDate(b.sentAt) : fmtDate(b.scheduledFor)}</span>
+                  </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-2">
                   {b.status === 'SCHEDULED' && (
-                    <Button size="sm" variant="outline" onClick={() => act(`/center/account/broadcast/${b.id}/send`, t('broadcastSentToast'))}>
-                      <Send className="h-4 w-4" />
-                      {t('broadcastSendNow')}
-                    </Button>
+                    <button type="button" className="mj-btn mj-btn--soft mj-btn--sm" onClick={() => act(`/center/account/broadcast/${b.id}/send`, t('broadcastSentToast'))}>
+                      <Send className="h-4 w-4" /> {t('broadcastSendNow')}
+                    </button>
                   )}
                   {b.status !== 'SENT' && b.status !== 'CANCELLED' && (
-                    <Button size="sm" variant="outline" onClick={() => act(`/center/account/broadcast/${b.id}/cancel`, t('broadcastCancelledToast'))}>
-                      <XCircle className="h-4 w-4" />
-                      {t('broadcastCancel')}
-                    </Button>
+                    <button type="button" className="mj-btn mj-btn--ghost mj-btn--sm" onClick={() => act(`/center/account/broadcast/${b.id}/cancel`, t('broadcastCancelledToast'))}>
+                      <XCircle className="h-4 w-4" /> {t('broadcastCancel')}
+                    </button>
                   )}
-                  <Button size="sm" variant="ghost" onClick={() => remove(b.id)} aria-label={t('delete')}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
+                  <button type="button" className="mj-btn mj-btn--ghost mj-btn--sm" onClick={() => remove(b.id)} aria-label={t('delete')}>
+                    <Trash2 className="h-4 w-4 text-[color:var(--mj-danger)]" />
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          !loading && <EmptyState icon={Radio} title={t('noBroadcasts')} />
+          !loading && (
+            <div className="mj-empty">
+              <Radio className="mj-empty-icon" />
+              <p className="text-sm">{t('noBroadcasts')}</p>
+            </div>
+          )
         )}
-      </Card>
+      </div>
 
       {showNew && <NewBroadcastModal t={t} onClose={() => setShowNew(false)} onDone={() => { setShowNew(false); reload(); }} />}
     </div>
@@ -176,24 +181,55 @@ function NewBroadcastModal({ t, onClose, onDone }: { t: (k: DictKey) => string; 
   };
 
   return (
-    <Modal open onClose={onClose} title={t('addBroadcast')} size="md"
-      footer={<><Button variant="outline" onClick={onClose}>{t('cancel')}</Button><Button onClick={submit} loading={saving}>{t('send')}</Button></>}>
-      <form onSubmit={submit} className="space-y-4" noValidate>
+    <CenterModal
+      open
+      onClose={onClose}
+      title={t('addBroadcast')}
+      size="md"
+      footer={
+        <>
+          <button type="button" className="mj-btn mj-btn--ghost" onClick={onClose}>{t('cancel')}</button>
+          <button type="button" className="mj-btn mj-btn--primary" onClick={submit} disabled={saving}>
+            <Send className="h-4 w-4" /> {saving ? t('loading') : t('send')}
+          </button>
+        </>
+      }
+    >
+      <form onSubmit={submit} noValidate>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Select label={t('broadcastAudience')} value={form.audience} onChange={(e) => setForm((f) => ({ ...f, audience: e.target.value }))} options={AUDIENCES} />
-          <Select label={t('broadcastChannel')} value={form.channel} onChange={(e) => setForm((f) => ({ ...f, channel: e.target.value }))} options={CHANNELS} />
+          <div className="mj-field">
+            <label className="mj-label">{t('broadcastAudience')}</label>
+            <select className="mj-select" value={form.audience} onChange={(e) => setForm((f) => ({ ...f, audience: e.target.value }))}>
+              {AUDIENCES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
+            </select>
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('broadcastChannel')}</label>
+            <select className="mj-select" value={form.channel} onChange={(e) => setForm((f) => ({ ...f, channel: e.target.value }))}>
+              {CHANNELS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+          </div>
         </div>
-        <Input label={t('broadcastSubject')} required value={form.subject} onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))} />
-        <Textarea label={t('broadcastMessage')} required rows={5} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} />
-        <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-          <input type="checkbox" className="accent-teal-600" checked={form.sendNow} onChange={(e) => setForm((f) => ({ ...f, sendNow: e.target.checked }))} />
+        <div className="mj-field">
+          <label className="mj-label">{t('broadcastSubject')}</label>
+          <input className="mj-input" required value={form.subject} onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('broadcastMessage')}</label>
+          <textarea className="mj-textarea" required rows={5} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} />
+        </div>
+        <label className="mb-3 flex items-center gap-2 text-sm text-[color:var(--mj-ink)]">
+          <input type="checkbox" className="accent-[color:var(--mj-accent)]" checked={form.sendNow} onChange={(e) => setForm((f) => ({ ...f, sendNow: e.target.checked }))} />
           {t('sendNow')}
         </label>
         {!form.sendNow && (
-          <Input label={t('scheduleDate')} type="datetime-local" required value={form.scheduledFor} onChange={(e) => setForm((f) => ({ ...f, scheduledFor: e.target.value }))} />
+          <div className="mj-field">
+            <label className="mj-label">{t('scheduleDate')}</label>
+            <input className="mj-input" type="datetime-local" required value={form.scheduledFor} onChange={(e) => setForm((f) => ({ ...f, scheduledFor: e.target.value }))} />
+          </div>
         )}
       </form>
-    </Modal>
+    </CenterModal>
   );
 }
 

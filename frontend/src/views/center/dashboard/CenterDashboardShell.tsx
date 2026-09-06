@@ -21,17 +21,17 @@ export function CenterDashboardShell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-900">
+    <div className="mj-shell">
       <CenterSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onLogout={doLogout}
       />
-      <div className="lg:ps-72">
+      <div className="lg:ps-[280px]">
         <CenterBranchProvider>
           <CenterHeader onOpenSidebar={() => setSidebarOpen(true)} />
-          <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-            <div key={pathname} className="animate-fade-in pb-24 lg:pb-0">
+          <main className="mj-main">
+            <div key={pathname} className="animate-fade-in">
               {children}
             </div>
           </main>

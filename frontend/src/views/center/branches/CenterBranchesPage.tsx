@@ -7,14 +7,10 @@ import {
   MapPin,
   Trash2,
 } from 'lucide-react';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { Card } from '../../../components/ui/Card';
-import { Button } from '../../../components/ui/Button';
-import { Input } from '../../../components/ui/Input';
-import { Modal } from '../../../components/ui/Modal';
+import { CenterPageHeader } from '../ui/CenterPageHeader';
+import { CenterModal } from '../ui/CenterModal';
 import { PencilLoader } from '../../../components/ui/PencilLoader';
 import { Alert } from '../../../components/ui/ErrorAlert';
-import { EmptyState } from '../../../components/ui/EmptyState';
 import { useApi, errorMessage } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
 import { useToast } from '../../../context/ToastContext';
@@ -55,16 +51,15 @@ export default function CenterBranchesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <CenterPageHeader
         title={t('branchesManagement')}
-        subtitle={t('branchesManagementSub')}
-        action={
-          <Button onClick={() => setShowAddModal(true)}>
-            <Plus className="h-4 w-4" />
-            {t('addBranch')}
-          </Button>
-        }
-      />
+        description={t('branchesManagementSub')}
+      >
+        <button className="mj-btn mj-btn--primary" onClick={() => setShowAddModal(true)}>
+          <Plus className="h-4 w-4" />
+          {t('addBranch')}
+        </button>
+      </CenterPageHeader>
 
       {error && <Alert message={error} />}
       {loading && <PencilLoader label={t('loading')} />}
@@ -72,49 +67,55 @@ export default function CenterBranchesPage() {
       {!loading && branches && branches.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {branches.map((branch) => (
-            <Card key={branch.id} bodyClassName="p-4">
+            <div key={branch.id} className="mj-card mj-card--padding">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300">
-                    <MapPin className="h-6 w-6" />
-                  </div>
+                  <span className="mj-avatar mj-avatar--md">
+                    <MapPin className="h-5 w-5" />
+                  </span>
                   <div>
-                    <h3 className="font-semibold text-slate-900 dark:text-white">{branch.name}</h3>
-                    <p className="text-sm text-slate-500">{branch.address || t('noAddress')}</p>
+                    <h3 className="font-semibold" style={{ color: 'var(--mj-ink-strong)' }}>{branch.name}</h3>
+                    <p className="text-sm" style={{ color: 'var(--mj-muted)' }}>{branch.address || t('noAddress')}</p>
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => { setSelectedBranch(branch); setShowEditModal(true); }}>
+                  <button className="mj-btn mj-btn--ghost mj-btn--sm" onClick={() => { setSelectedBranch(branch); setShowEditModal(true); }}>
                     <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => deleteBranch(branch.id)}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
+                  </button>
+                  <button className="mj-btn mj-btn--ghost mj-btn--sm" onClick={() => deleteBranch(branch.id)}>
+                    <Trash2 className="h-4 w-4" style={{ color: 'var(--mj-danger)' }} />
+                  </button>
                 </div>
               </div>
-              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center dark:border-slate-700">
+              <div className="mt-4 grid grid-cols-3 gap-2 border-t pt-4 text-center" style={{ borderColor: 'var(--mj-border-soft)' }}>
                 <div>
-                  <p className="text-lg font-bold text-slate-900 dark:text-white">{branch.teacherCount}</p>
-                  <p className="text-xs text-slate-500">{t('teachers')}</p>
+                  <p className="text-lg font-bold" style={{ color: 'var(--mj-ink-strong)' }}>{branch.teacherCount}</p>
+                  <p className="text-xs" style={{ color: 'var(--mj-muted)' }}>{t('teachers')}</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-slate-900 dark:text-white">{branch.roomCount}</p>
-                  <p className="text-xs text-slate-500">{t('classrooms')}</p>
+                  <p className="text-lg font-bold" style={{ color: 'var(--mj-ink-strong)' }}>{branch.roomCount}</p>
+                  <p className="text-xs" style={{ color: 'var(--mj-muted)' }}>{t('classrooms')}</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-slate-900 dark:text-white">{branch.lessonCount}</p>
-                  <p className="text-xs text-slate-500">{t('lessons')}</p>
+                  <p className="text-lg font-bold" style={{ color: 'var(--mj-ink-strong)' }}>{branch.lessonCount}</p>
+                  <p className="text-xs" style={{ color: 'var(--mj-muted)' }}>{t('lessons')}</p>
                 </div>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}
 
       {!loading && branches?.length === 0 && (
-        <EmptyState icon={MapPin} title={t('noBranches')} description={t('noBranchesDesc')}
-          action={<Button onClick={() => setShowAddModal(true)}><Plus className="h-4 w-4" />{t('addBranch')}</Button>}
-        />
+        <div className="mj-card mj-empty">
+          <MapPin className="mj-empty-icon" />
+          <p className="font-medium">{t('noBranches')}</p>
+          <p style={{ color: 'var(--mj-muted-2)' }}>{t('noBranchesDesc')}</p>
+          <button className="mj-btn mj-btn--primary" onClick={() => setShowAddModal(true)}>
+            <Plus className="h-4 w-4" />
+            {t('addBranch')}
+          </button>
+        </div>
       )}
 
       <AddBranchModal open={showAddModal} onClose={() => setShowAddModal(false)} onSuccess={() => { setShowAddModal(false); reload(); }} />
@@ -147,13 +148,19 @@ function AddBranchModal({ open, onClose, onSuccess }: { open: boolean; onClose: 
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={t('addBranch')} size="md"
-      footer={<><Button variant="outline" onClick={onClose}>{t('cancel')}</Button><Button onClick={handleSubmit} loading={saving}>{t('save')}</Button></>}>
+    <CenterModal open={open} onClose={onClose} title={t('addBranch')} size="md"
+      footer={<><button className="mj-btn mj-btn--ghost" onClick={onClose}>{t('cancel')}</button><button className="mj-btn mj-btn--primary" onClick={handleSubmit}>{saving ? t('loading') : t('save')}</button></>}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label={t('branchName')} required value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
-        <Input label={t('address')} value={form.address} onChange={(e) => setForm(f => ({ ...f, address: e.target.value }))} />
+        <div className="mj-field">
+          <label className="mj-label">{t('branchName')}</label>
+          <input className="mj-input" required value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('address')}</label>
+          <input className="mj-input" value={form.address} onChange={(e) => setForm(f => ({ ...f, address: e.target.value }))} />
+        </div>
       </form>
-    </Modal>
+    </CenterModal>
   );
 }
 
@@ -178,12 +185,18 @@ function EditBranchModal({ branch, open, onClose, onSuccess }: { branch: Branch;
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={t('editBranch')} size="md"
-      footer={<><Button variant="outline" onClick={onClose}>{t('cancel')}</Button><Button onClick={handleSubmit} loading={saving}>{t('save')}</Button></>}>
+    <CenterModal open={open} onClose={onClose} title={t('editBranch')} size="md"
+      footer={<><button className="mj-btn mj-btn--ghost" onClick={onClose}>{t('cancel')}</button><button className="mj-btn mj-btn--primary" onClick={handleSubmit}>{saving ? t('loading') : t('save')}</button></>}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label={t('branchName')} required value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
-        <Input label={t('address')} value={form.address} onChange={(e) => setForm(f => ({ ...f, address: e.target.value }))} />
+        <div className="mj-field">
+          <label className="mj-label">{t('branchName')}</label>
+          <input className="mj-input" required value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('address')}</label>
+          <input className="mj-input" value={form.address} onChange={(e) => setForm(f => ({ ...f, address: e.target.value }))} />
+        </div>
       </form>
-    </Modal>
+    </CenterModal>
   );
 }

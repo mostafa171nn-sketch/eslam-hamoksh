@@ -11,14 +11,12 @@ import {
   Users,
   MapPin,
   Edit,
-  X,
 } from 'lucide-react';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { Card } from '../../../components/ui/Card';
-import { Button } from '../../../components/ui/Button';
-import { Badge } from '../../../components/ui/Badge';
+import { CenterPageHeader } from '../ui/CenterPageHeader';
+import { CenterStatCard } from '../ui/CenterStatCard';
+import { CenterPill } from '../ui/CenterPill';
+import { CenterModal } from '../ui/CenterModal';
 import { PencilLoader } from '../../../components/ui/PencilLoader';
-import { Modal } from '../../../components/ui/Modal';
 import { useApi } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
 import { useAuth } from '../../../context/AuthContext';
@@ -109,108 +107,61 @@ export default function CenterSchedulePage() {
     return currentDate.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long' });
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusPill = (status: string) => {
     switch (status) {
       case 'SCHEDULED':
-        return <Badge tone="blue">{t('scheduled')}</Badge>;
+        return <CenterPill tone="blue">{t('scheduled')}</CenterPill>;
       case 'IN_PROGRESS':
-        return <Badge tone="amber">{t('inProgress')}</Badge>;
+        return <CenterPill tone="amber">{t('inProgress')}</CenterPill>;
       case 'COMPLETED':
-        return <Badge tone="green">{t('completed')}</Badge>;
+        return <CenterPill tone="green">{t('completed')}</CenterPill>;
       case 'CANCELLED':
-        return <Badge tone="red">{t('cancelled')}</Badge>;
+        return <CenterPill tone="red">{t('cancelled')}</CenterPill>;
       default:
-        return <Badge tone="slate">{status}</Badge>;
+        return <CenterPill tone="slate">{status}</CenterPill>;
     }
   };
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <CenterPageHeader
         title={t('schedule')}
-        subtitle={t('scheduleSub', { center: center?.name || '' })}
-        action={
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="h-4 w-4" />
-            {t('createLesson')}
-          </Button>
-        }
-      />
+        description={t('scheduleSub', { center: center?.name || '' })}
+      >
+        <button className="mj-btn mj-btn--primary" onClick={() => setShowCreateModal(true)}>
+          <Plus className="h-4 w-4" />
+          {t('createLesson')}
+        </button>
+      </CenterPageHeader>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300">
-              <Calendar className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.todayLessons || 0}</p>
-              <p className="text-xs text-slate-500">{t('todayLessons')}</p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300">
-              <Clock className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.completedLessons || 0}</p>
-              <p className="text-xs text-slate-500">{t('completed')}</p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
-              <Clock className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.upcomingLessons || 0}</p>
-              <p className="text-xs text-slate-500">{t('upcoming')}</p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-300">
-              <X className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.cancelledLessons || 0}</p>
-              <p className="text-xs text-slate-500">{t('cancelled')}</p>
-            </div>
-          </div>
-        </Card>
+        <CenterStatCard value={stats?.todayLessons || 0} label={t('todayLessons')} />
+        <CenterStatCard value={stats?.completedLessons || 0} label={t('completed')} />
+        <CenterStatCard value={stats?.upcomingLessons || 0} label={t('upcoming')} />
+        <CenterStatCard value={stats?.cancelledLessons || 0} label={t('cancelled')} />
       </div>
 
-      {/* View Controls */}
-      <Card bodyClassName="p-4">
+      <div className="mj-card mj-card--padding">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigateDate('prev')}>
+            <button className="mj-btn mj-btn--ghost mj-btn--sm" onClick={() => navigateDate('prev')}>
               <ChevronRight className="h-4 w-4 rtl:rotate-180" />
-            </Button>
+            </button>
             <span className="min-w-[180px] text-center font-medium">{formatDateHeader()}</span>
-            <Button variant="outline" size="sm" onClick={() => navigateDate('next')}>
+            <button className="mj-btn mj-btn--ghost mj-btn--sm" onClick={() => navigateDate('next')}>
               <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setCurrentDate(new Date())}>
+            </button>
+            <button className="mj-btn mj-btn--soft mj-btn--sm" onClick={() => setCurrentDate(new Date())}>
               {t('today')}
-            </Button>
+            </button>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
+            <div className="mj-tabs" style={{ borderBottom: 'none' }}>
               {(['day', 'week', 'month'] as ViewMode[]).map((mode) => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    viewMode === mode
-                      ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
-                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-                  }`}
+                  className={`mj-tab ${viewMode === mode ? 'mj-tab--active' : ''}`}
                 >
                   {t(mode as DictKey)}
                 </button>
@@ -220,7 +171,7 @@ export default function CenterSchedulePage() {
               <select
                 value={branchFilter}
                 onChange={(e) => setBranchFilter(e.target.value)}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800"
+                className="mj-select"
               >
                 <option value="">{t('allBranches')}</option>
                 {branches.map((b) => (
@@ -230,28 +181,28 @@ export default function CenterSchedulePage() {
             )}
           </div>
         </div>
-      </Card>
+      </div>
 
-      {/* Timeline */}
       {loading ? (
         <PencilLoader label={t('loading')} />
       ) : lessons && lessons.length > 0 ? (
-        <Card>
+        <div className="mj-card">
           <div className="space-y-3 p-4">
             {lessons.map((lesson) => (
               <div
                 key={lesson.id}
                 onClick={() => setSelectedLesson(lesson)}
-                className={`group cursor-pointer rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-brand-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800`}
+                className="mj-card--padding cursor-pointer transition-colors hover:border-[color:var(--mj-accent)]"
+                style={{ background: 'var(--mj-surface-2)' }}
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300">
-                      <BookOpen className="h-6 w-6" />
+                    <div className="mj-avatar mj-avatar--md">
+                      <BookOpen className="h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900 dark:text-white">{lesson.subject}</h3>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
+                      <h3 className="font-semibold" style={{ color: 'var(--mj-ink-strong)' }}>{lesson.subject}</h3>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" style={{ color: 'var(--mj-muted)' }}>
                         <span className="flex items-center gap-1">
                           <Clock className="h-3.5 w-3.5" />
                           {lesson.startTime} - {lesson.endTime}
@@ -262,35 +213,32 @@ export default function CenterSchedulePage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--mj-muted)' }}>
                       <Users className="h-4 w-4" />
                       {lesson.enrolledCount}/{lesson.studentCount}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--mj-muted)' }}>
                       <MapPin className="h-4 w-4" />
                       {lesson.room}
                     </div>
-                    {getStatusBadge(lesson.status)}
+                    {getStatusPill(lesson.status)}
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        </Card>
+        </div>
       ) : (
-        <Card bodyClassName="p-8">
-          <div className="flex flex-col items-center justify-center text-center">
-            <Calendar className="mb-3 h-12 w-12 text-slate-300 dark:text-slate-600" />
-            <p className="text-sm text-slate-500">{t('noLessonsScheduled')}</p>
-            <Button variant="secondary" className="mt-4" onClick={() => setShowCreateModal(true)}>
-              <Plus className="h-4 w-4" />
-              {t('createLesson')}
-            </Button>
-          </div>
-        </Card>
+        <div className="mj-card mj-empty">
+          <Calendar className="mj-empty-icon" />
+          <p>{t('noLessonsScheduled')}</p>
+          <button className="mj-btn mj-btn--soft" onClick={() => setShowCreateModal(true)}>
+            <Plus className="h-4 w-4" />
+            {t('createLesson')}
+          </button>
+        </div>
       )}
 
-      {/* Lesson Detail Modal */}
       {selectedLesson && (
         <LessonDetailModal
           lesson={selectedLesson}
@@ -299,7 +247,6 @@ export default function CenterSchedulePage() {
         />
       )}
 
-      {/* Create Lesson Modal */}
       <CreateLessonModal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -319,66 +266,66 @@ function LessonDetailModal({ lesson, open, onClose }: LessonDetailModalProps) {
   const { t } = useT();
 
   return (
-    <Modal
+    <CenterModal
       open={open}
       onClose={onClose}
       title={lesson.subject}
       size="lg"
       footer={
         <>
-          <Button variant="outline" onClick={onClose}>{t('close')}</Button>
-          <Button variant="outline">
+          <button className="mj-btn mj-btn--ghost" onClick={onClose}>{t('close')}</button>
+          <button className="mj-btn mj-btn--ghost">
             <Edit className="h-4 w-4" />
             {t('edit')}
-          </Button>
-          <Button>
+          </button>
+          <button className="mj-btn mj-btn--primary">
             <Users className="h-4 w-4" />
             {t('manageStudents')}
-          </Button>
+          </button>
         </>
       }
     >
       <div className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
-            <Clock className="h-5 w-5 text-slate-400" />
+          <div className="flex items-center gap-3 rounded-lg p-3" style={{ background: 'var(--mj-wash)' }}>
+            <Clock className="h-5 w-5" style={{ color: 'var(--mj-muted-2)' }} />
             <div>
-              <p className="text-xs text-slate-500">{t('time')}</p>
+              <p className="text-xs" style={{ color: 'var(--mj-muted-2)' }}>{t('time')}</p>
               <p className="font-medium">{lesson.startTime} - {lesson.endTime}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
-            <Users className="h-5 w-5 text-slate-400" />
+          <div className="flex items-center gap-3 rounded-lg p-3" style={{ background: 'var(--mj-wash)' }}>
+            <Users className="h-5 w-5" style={{ color: 'var(--mj-muted-2)' }} />
             <div>
-              <p className="text-xs text-slate-500">{t('students')}</p>
+              <p className="text-xs" style={{ color: 'var(--mj-muted-2)' }}>{t('students')}</p>
               <p className="font-medium">{lesson.enrolledCount}/{lesson.studentCount}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
-            <BookOpen className="h-5 w-5 text-slate-400" />
+          <div className="flex items-center gap-3 rounded-lg p-3" style={{ background: 'var(--mj-wash)' }}>
+            <BookOpen className="h-5 w-5" style={{ color: 'var(--mj-muted-2)' }} />
             <div>
-              <p className="text-xs text-slate-500">{t('grade')}</p>
+              <p className="text-xs" style={{ color: 'var(--mj-muted-2)' }}>{t('grade')}</p>
               <p className="font-medium">{lesson.grade}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
-            <MapPin className="h-5 w-5 text-slate-400" />
+          <div className="flex items-center gap-3 rounded-lg p-3" style={{ background: 'var(--mj-wash)' }}>
+            <MapPin className="h-5 w-5" style={{ color: 'var(--mj-muted-2)' }} />
             <div>
-              <p className="text-xs text-slate-500">{t('room')}</p>
+              <p className="text-xs" style={{ color: 'var(--mj-muted-2)' }}>{t('room')}</p>
               <p className="font-medium">{lesson.room}</p>
             </div>
           </div>
         </div>
         <div>
-          <p className="text-xs text-slate-500">{t('teacher')}</p>
+          <p className="text-xs" style={{ color: 'var(--mj-muted-2)' }}>{t('teacher')}</p>
           <p className="font-medium">{lesson.teacher}</p>
         </div>
         <div>
-          <p className="text-xs text-slate-500">{t('branch')}</p>
+          <p className="text-xs" style={{ color: 'var(--mj-muted-2)' }}>{t('branch')}</p>
           <p className="font-medium">{lesson.branch}</p>
         </div>
       </div>
-    </Modal>
+    </CenterModal>
   );
 }
 
@@ -468,17 +415,17 @@ function CreateLessonModal({ open, onClose, onCreated }: CreateLessonModalProps)
   };
 
   return (
-    <Modal
+    <CenterModal
       open={open}
       onClose={() => { resetForm(); onClose(); }}
       title={t('createLesson')}
       size="lg"
       footer={
         <>
-          <Button variant="outline" onClick={() => { resetForm(); onClose(); }}>{t('cancel')}</Button>
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <button className="mj-btn mj-btn--ghost" onClick={() => { resetForm(); onClose(); }}>{t('cancel')}</button>
+          <button className="mj-btn mj-btn--primary" onClick={handleSubmit} disabled={submitting}>
             {submitting ? t('creating') : t('create')}
-          </Button>
+          </button>
         </>
       }
     >
@@ -487,17 +434,17 @@ function CreateLessonModal({ open, onClose, onCreated }: CreateLessonModalProps)
       ) : (
         <div className="space-y-4">
           {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-500/10 dark:text-red-400">
+            <div className="rounded-lg p-3 text-sm" style={{ background: 'var(--mj-danger-soft)', color: 'var(--mj-danger)' }}>
               {error}
             </div>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-sm font-medium">{t('teacher')} *</label>
+            <div className="mj-field sm:col-span-2">
+              <label className="mj-label">{t('teacher')} *</label>
               <select
                 value={teacherId}
                 onChange={(e) => setTeacherId(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+                className="mj-select"
               >
                 <option value="">{t('selectTeacher')}</option>
                 {formData.teachers.map((te) => (
@@ -505,12 +452,12 @@ function CreateLessonModal({ open, onClose, onCreated }: CreateLessonModalProps)
                 ))}
               </select>
             </div>
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-sm font-medium">{t('subject')}</label>
+            <div className="mj-field sm:col-span-2">
+              <label className="mj-label">{t('subject')}</label>
               <select
                 value={subjectId}
                 onChange={(e) => setSubjectId(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+                className="mj-select"
               >
                 <option value="">{t('select')}</option>
                 {formData.subjects.map((s) => (
@@ -518,21 +465,21 @@ function CreateLessonModal({ open, onClose, onCreated }: CreateLessonModalProps)
                 ))}
               </select>
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">{t('date')} *</label>
+            <div className="mj-field">
+              <label className="mj-label">{t('date')} *</label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+                className="mj-input"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">{t('branch')}</label>
+            <div className="mj-field">
+              <label className="mj-label">{t('branch')}</label>
               <select
                 value={locationId}
                 onChange={(e) => setLocationId(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+                className="mj-select"
               >
                 <option value="">{t('select')}</option>
                 {formData.branches.map((b) => (
@@ -540,12 +487,12 @@ function CreateLessonModal({ open, onClose, onCreated }: CreateLessonModalProps)
                 ))}
               </select>
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">{t('room')}</label>
+            <div className="mj-field">
+              <label className="mj-label">{t('room')}</label>
               <select
                 value={roomId}
                 onChange={(e) => setRoomId(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+                className="mj-select"
               >
                 <option value="">{t('select')}</option>
                 {formData.rooms.map((r) => (
@@ -553,46 +500,46 @@ function CreateLessonModal({ open, onClose, onCreated }: CreateLessonModalProps)
                 ))}
               </select>
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">{t('capacity')}</label>
+            <div className="mj-field">
+              <label className="mj-label">{t('capacity')}</label>
               <input
                 type="number"
                 value={capacity}
                 onChange={(e) => setCapacity(e.target.value)}
                 placeholder="30"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+                className="mj-input"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">{t('startTime')} *</label>
+            <div className="mj-field">
+              <label className="mj-label">{t('startTime')} *</label>
               <input
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+                className="mj-input"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">{t('endTime')} *</label>
+            <div className="mj-field">
+              <label className="mj-label">{t('endTime')} *</label>
               <input
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+                className="mj-input"
               />
             </div>
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-sm font-medium">{t('notes')}</label>
+            <div className="mj-field sm:col-span-2">
+              <label className="mj-label">{t('notes')}</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+                className="mj-input"
               />
             </div>
           </div>
         </div>
       )}
-    </Modal>
+    </CenterModal>
   );
 }

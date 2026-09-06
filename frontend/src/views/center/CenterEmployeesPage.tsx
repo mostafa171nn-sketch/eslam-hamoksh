@@ -3,32 +3,19 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import {
-  Search,
   Plus,
-  MoreVertical,
-  Edit,
-  Shield,
-  Activity,
   UserCheck,
-  UserX,
   X,
 } from 'lucide-react';
-import { PageHeader } from '../../components/layout/PageHeader';
-import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Select } from '../../components/ui/Select';
-import { Avatar } from '../../components/ui/Avatar';
-import { Badge } from '../../components/ui/Badge';
-import { Pagination } from '../../components/ui/Pagination';
-import { Modal } from '../../components/ui/Modal';
-import { PencilLoader } from '../../components/ui/PencilLoader';
-import { Alert } from '../../components/ui/ErrorAlert';
-import { EmptyState } from '../../components/ui/EmptyState';
 import { useApi, errorMessage } from '../../hooks/useApi';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 import { useT, type DictKey } from '../../i18n';
+import { CenterPageHeader } from './ui/CenterPageHeader';
+import { CenterStatCard } from './ui/CenterStatCard';
+import { CenterPill } from './ui/CenterPill';
+import { CenterSearchInput } from './ui/CenterSearchInput';
+import { CenterModal } from './ui/CenterModal';
 
 interface Employee {
   id: string;
@@ -51,22 +38,32 @@ interface EmployeeStats {
   changesToday: number;
 }
 
+const STATUS_MAP: Record<string, { label: string; tone: 'green' | 'amber' | 'red' | 'slate' }> = {
+  ACTIVE: { label: 'active', tone: 'green' },
+  INACTIVE: { label: 'inactive', tone: 'slate' },
+  PENDING: { label: 'pending', tone: 'amber' },
+  SUSPENDED: { label: 'deactivated', tone: 'red' },
+};
+
+const ROLE_MAP: Record<string, { label: string; tone: 'blue' | 'green' | 'amber' | 'slate' }> = {
+  CENTER_EMPLOYEE: { label: 'centerEmployee', tone: 'blue' },
+  RECEPTIONIST: { label: 'receptionist', tone: 'green' },
+  TEACHER_ASSISTANT: { label: 'teacherAssistant', tone: 'amber' },
+};
+
 export default function CenterEmployeesPage() {
   const { t } = useT();
-  const toast = useToast();
 
   const [page, setPage] = useState(1);
   const [role, setRole] = useState('');
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [, setBusyId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const [showActions, setShowActions] = useState<string | null>(null);
 
-  const { data: employees, meta, loading, initialLoading, error, reload } = useApi(
+  const { data: employees, meta, loading, error, reload } = useApi(
     () => api.get<Employee[]>('/center/staff', {
       page,
       limit: 20,
@@ -82,249 +79,222 @@ export default function CenterEmployeesPage() {
     []
   );
 
-  const toggleStatus = async (employee: Employee) => {
-    setBusyId(employee.id);
-    try {
-      const next = employee.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      await api.patch(`/center/staff/${employee.id}/status`, { status: next });
-      toast.success(next === 'ACTIVE' ? t('employeeActivated') : t('employeeDeactivated'));
-      reload();
-    } catch (err) {
-      toast.error(errorMessage(err));
-    } finally {
-      setBusyId(null);
-    }
-  };
+  const getRoleLabel = (r: string) => ROLE_MAP[r]?.label ?? r;
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'CENTER_EMPLOYEE': return t('centerEmployee');
-      case 'RECEPTIONIST': return t('receptionist');
-      case 'TEACHER_ASSISTANT': return t('teacherAssistant');
-      default: return role;
-    }
-  };
+  const getInitial = (name: string) => name.charAt(0).toUpperCase();
 
-  const getRoleBadge = (role: string) => {
-    const colors: Record<string, string> = {
-      CENTER_EMPLOYEE: 'violet',
-      RECEPTIONIST: 'teal',
-      TEACHER_ASSISTANT: 'amber',
-    };
-    return <Badge tone={colors[role] as any || 'slate'}>{getRoleLabel(role)}</Badge>;
-  };
-
-  const getStatusBadge = (status: string) => {
-    const colors: Record<string, string> = {
-      ACTIVE: 'green',
-      INACTIVE: 'slate',
-      PENDING: 'amber',
-      SUSPENDED: 'red',
-    };
-    return <Badge tone={colors[status] as any || 'slate'}>{t(status.toLowerCase() as DictKey)}</Badge>;
-  };
+  const activeCount = stats?.activeEmployees || 0;
+  const totalCount = stats?.totalEmployees || 0;
 
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <div className="space-y-5">
+      <CenterPageHeader
+        eyebrow="بوابة إدارة السنتر"
         title={t('employeesManagement')}
-        subtitle={t('employeesManagementSub')}
-        action={
-          <Button onClick={() => setShowAddModal(true)}>
-            <Plus className="h-4 w-4" />
-            {t('addEmployee')}
-          </Button>
-        }
-      />
+        description={t('employeesManagementSub')}
+      >
+        <button onClick={() => setShowAddModal(true)} className="mj-btn mj-btn--primary">
+          <Plus className="h-4 w-4" />
+          {t('addEmployee')}
+        </button>
+      </CenterPageHeader>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300">
-              <UserCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.totalEmployees || 0}</p>
-              <p className="text-xs text-slate-500">{t('employees')}</p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300">
-              <UserCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.activeEmployees || 0}</p>
-              <p className="text-xs text-slate-500">{t('activeOnJob')}</p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
-              <Shield className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.pendingInvitations || 0}</p>
-              <p className="text-xs text-slate-500">{t('pendingInvitations')}</p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300">
-              <Shield className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.activeRoles || 0}</p>
-              <p className="text-xs text-slate-500">{t('activeRoles')}</p>
-            </div>
-          </div>
-        </Card>
-        <Card bodyClassName="p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-500/20 dark:text-sky-300">
-              <Activity className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.changesToday || 0}</p>
-              <p className="text-xs text-slate-500">{t('changesToday')}</p>
-            </div>
-          </div>
-        </Card>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <CenterStatCard value={totalCount} label={t('employees')} />
+        <CenterStatCard value={activeCount} label={t('activeOnJob')} />
+        <CenterStatCard value={stats?.pendingInvitations || 0} label={t('pendingInvitations')} />
+        <CenterStatCard value={stats?.activeRoles || 0} label={t('activeRoles')} />
       </div>
 
-      {/* Filters */}
-      <Card bodyClassName="p-4">
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <div className="relative flex-1">
-            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input
-              placeholder={t('searchEmployee')}
-              className="ps-9"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); setSearch(searchInput); } }}
-            />
-          </div>
-          <Select value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }} className="sm:w-40"
-            options={[
-              { value: '', label: t('allStatus') },
-              { value: 'ACTIVE', label: t('active') },
-              { value: 'INACTIVE', label: t('inactive') },
-              { value: 'PENDING', label: t('pending') },
-            ]}
+      <nav className="mj-tabs">
+        <button
+          className={`mj-tab ${!status ? 'mj-tab--active' : ''}`}
+          onClick={() => { setStatus(''); setPage(1); }}
+        >
+          {t('employees')}
+          <span className="mj-tab-count">{totalCount}</span>
+        </button>
+        <button
+          className={`mj-tab ${status === 'ACTIVE' ? 'mj-tab--active' : ''}`}
+          onClick={() => { setStatus('ACTIVE'); setPage(1); }}
+        >
+          {t('activeOnJob')}
+          <span className="mj-tab-count">{activeCount}</span>
+        </button>
+        {stats?.pendingInvitations ? (
+          <button
+            className={`mj-tab ${status === 'PENDING' ? 'mj-tab--active' : ''}`}
+            onClick={() => { setStatus('PENDING'); setPage(1); }}
+          >
+            {t('pendingInvitations')}
+            <span className="mj-tab-count">{stats.pendingInvitations}</span>
+          </button>
+        ) : null}
+      </nav>
+
+      <div className="mj-toolbar" style={{ gap: '0.625rem' }}>
+        <div className="min-w-0 flex-1" onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); setSearch(searchInput); } }}>
+          <CenterSearchInput
+            value={searchInput}
+            onChange={setSearchInput}
+            placeholder={t('searchEmployee')}
+            aria-label={t('searchEmployee')}
           />
-          <Select value={role} onChange={(e) => { setPage(1); setRole(e.target.value); }} className="sm:w-44"
-            options={[
-              { value: '', label: t('allRoles') },
-              { value: 'CENTER_EMPLOYEE', label: t('centerEmployee') },
-              { value: 'RECEPTIONIST', label: t('receptionist') },
-              { value: 'TEACHER_ASSISTANT', label: t('teacherAssistant') },
-            ]}
-          />
-          {(status || role || search) && (
-            <Button variant="ghost" onClick={() => { setStatus(''); setRole(''); setSearch(''); setSearchInput(''); }}>
-              <X className="h-4 w-4" />
-              {t('clearFilters')}
-            </Button>
-          )}
         </div>
-      </Card>
+        <select
+          className="mj-select"
+          style={{ width: 'auto', minWidth: '9rem' }}
+          value={status}
+          onChange={(e) => { setPage(1); setStatus(e.target.value); }}
+        >
+          <option value="">{t('allStatus')}</option>
+          <option value="ACTIVE">{t('active')}</option>
+          <option value="INACTIVE">{t('inactive')}</option>
+          <option value="PENDING">{t('pending')}</option>
+        </select>
+        <select
+          className="mj-select"
+          style={{ width: 'auto', minWidth: '10rem' }}
+          value={role}
+          onChange={(e) => { setPage(1); setRole(e.target.value); }}
+        >
+          <option value="">{t('allRoles')}</option>
+          <option value="CENTER_EMPLOYEE">{t('centerEmployee')}</option>
+          <option value="RECEPTIONIST">{t('receptionist')}</option>
+          <option value="TEACHER_ASSISTANT">{t('teacherAssistant')}</option>
+        </select>
+        {(status || role || search) && (
+          <button
+            className="mj-btn mj-btn--ghost mj-btn--sm"
+            onClick={() => { setStatus(''); setRole(''); setSearch(''); setSearchInput(''); }}
+          >
+            <X className="h-4 w-4" />
+            {t('clearFilters')}
+          </button>
+        )}
+      </div>
 
-      {/* Table */}
-      <Card bodyClassName="p-0">
-        {error && <div className="p-4"><Alert message={error} /></div>}
-        {loading && <PencilLoader label={t('loading')} size={initialLoading ? undefined : 'sm'} />}
+      <div className="mj-card">
+        {error && (
+          <div className="px-4 py-3 text-sm" style={{ color: 'var(--mj-danger)' }}>
+            {error}
+          </div>
+        )}
 
-        {!loading && employees && (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-start text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:bg-slate-800/50">
-                    <th className="px-4 py-3 font-medium">{t('employee')}</th>
-                    <th className="px-4 py-3 font-medium">{t('jobTitle')}</th>
-                    <th className="px-4 py-3 font-medium">{t('phone')}</th>
-                    <th className="px-4 py-3 font-medium">{t('status')}</th>
-                    <th className="px-4 py-3 font-medium text-end">{t('actions')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                  {employees.map((emp) => (
-                    <tr key={emp.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar name={emp.fullName} src={emp.photo} size="sm" />
-                          <div>
-                            <Link href={`/center/employees/${emp.id}`} className="font-medium text-slate-900 hover:text-brand-600 dark:text-white">
-                              {emp.fullName}
-                            </Link>
-                            <p className="text-xs text-slate-400">@{emp.username}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">{getRoleBadge(emp.role)}</td>
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{emp.phone || '—'}</td>
-                      <td className="px-4 py-3">{getStatusBadge(emp.status)}</td>
-                      <td className="px-4 py-3 text-end">
-                        <div className="relative inline-block">
-                          <Button variant="ghost" size="sm" onClick={() => setShowActions(showActions === emp.id ? null : emp.id)}>
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                          {showActions === emp.id && (
-                            <div className="absolute end-0 top-full z-10 mt-1 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-elevated-lg dark:border-slate-700 dark:bg-slate-800">
-                              <div className="py-1">
-                                <button onClick={() => { setSelectedEmployee(emp); setShowEditModal(true); setShowActions(null); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700">
-                                  <Edit className="h-4 w-4" />{t('edit')}
-                                </button>
-                                <button onClick={() => { setSelectedEmployee(emp); setShowActions(null); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700">
-                                  <Shield className="h-4 w-4" />{t('managePermissions')}
-                                </button>
-                                <button onClick={() => { setSelectedEmployee(emp); setShowActions(null); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700">
-                                  <Activity className="h-4 w-4" />{t('viewActivity')}
-                                </button>
-                                <hr className="my-1 border-slate-100 dark:border-slate-700" />
-                                {emp.status === 'ACTIVE' ? (
-                                  <button onClick={() => { toggleStatus(emp); setShowActions(null); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10">
-                                    <UserX className="h-4 w-4" />{t('deactivate')}
-                                  </button>
-                                ) : (
-                                  <button onClick={() => { toggleStatus(emp); setShowActions(null); }} className="flex w-full items-center gap-2 px-3 py-2 text-sm text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-500/10">
-                                    <UserCheck className="h-4 w-4" />{t('activate')}
-                                  </button>
-                                )}
-                              </div>
-                            </div>
+        {loading && (
+          <div className="mj-empty">
+            <p>{t('loading')}</p>
+          </div>
+        )}
+
+        {!loading && employees && employees.length > 0 && (
+          <div style={{ overflowX: 'auto' }}>
+            <table className="mj-table">
+              <thead>
+                <tr>
+                  <th>{t('employee')}</th>
+                  <th>{t('jobTitle')}</th>
+                  <th>{t('phone')}</th>
+                  <th>{t('status')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {employees.map((emp) => {
+                  const statusInfo = STATUS_MAP[emp.status] ?? STATUS_MAP.ACTIVE;
+                  const roleInfo = ROLE_MAP[emp.role];
+                  return (
+                    <tr key={emp.id} className="is-clickable">
+                      <td>
+                        <Link
+                          href={`/center/employees/${emp.id}`}
+                          className="flex items-center gap-3 no-underline"
+                          style={{ color: 'inherit' }}
+                        >
+                          {emp.photo ? (
+                            <img
+                              src={emp.photo}
+                              alt=""
+                              className="mj-avatar mj-avatar--md"
+                              style={{ objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <span className="mj-avatar mj-avatar--md">
+                              {getInitial(emp.fullName)}
+                            </span>
                           )}
-                        </div>
+                          <div>
+                            <div style={{ fontWeight: 700, color: 'var(--mj-ink-strong)' }}>
+                              {emp.fullName}
+                            </div>
+                            <div className="mj-muted-2" style={{ fontSize: '0.8125rem' }}>
+                              @{emp.username}
+                            </div>
+                          </div>
+                        </Link>
+                      </td>
+                      <td>
+                        <CenterPill tone={roleInfo?.tone ?? 'slate'}>
+                          {t(getRoleLabel(emp.role) as DictKey)}
+                        </CenterPill>
+                      </td>
+                      <td className="mj-muted">{emp.phone || '—'}</td>
+                      <td>
+                        <CenterPill tone={statusInfo.tone} dot>
+                          {t(statusInfo.label as DictKey)}
+                        </CenterPill>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="border-t border-slate-200 px-4 py-3 dark:border-slate-700">
-              <Pagination page={page} totalPages={meta?.totalPages ?? 1} onChange={setPage} />
-            </div>
-          </>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
 
-        {!loading && employees?.length === 0 && (
-          <EmptyState icon={UserCheck} title={t('noEmployees')} description={t('noEmployeesDesc')}
-            action={<Button onClick={() => setShowAddModal(true)}><Plus className="h-4 w-4" />{t('addEmployee')}</Button>}
-          />
+        {!loading && employees && employees.length === 0 && (
+          <div className="mj-empty">
+            <UserCheck className="mj-empty-icon" />
+            <p style={{ fontWeight: 700, color: 'var(--mj-ink-strong)' }}>{t('noEmployees')}</p>
+            <p className="mj-muted-2">{t('noEmployeesDesc')}</p>
+            <button
+              className="mj-btn mj-btn--primary mj-btn--sm"
+              style={{ marginTop: '0.5rem' }}
+              onClick={() => setShowAddModal(true)}
+            >
+              <Plus className="h-4 w-4" />
+              {t('addEmployee')}
+            </button>
+          </div>
         )}
-      </Card>
 
-      {/* Add Modal */}
-      <AddEmployeeModal open={showAddModal} onClose={() => setShowAddModal(false)} onSuccess={() => { setShowAddModal(false); reload(); }} />
+        {!loading && meta && meta.totalPages > 1 && (
+          <div style={{ borderTop: '1px solid var(--mj-border-soft)', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'center', gap: '0.25rem' }}>
+            {Array.from({ length: meta.totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                className={`mj-btn mj-btn--sm ${p === page ? 'mj-btn--primary' : 'mj-btn--ghost'}`}
+                onClick={() => setPage(p)}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* Edit Modal */}
+      <AddEmployeeModal
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={() => { setShowAddModal(false); reload(); }}
+      />
+
       {selectedEmployee && (
-        <EditEmployeeModal employee={selectedEmployee} open={showEditModal} onClose={() => { setShowEditModal(false); setSelectedEmployee(null); }} onSuccess={() => { setShowEditModal(false); setSelectedEmployee(null); reload(); }} />
+        <EditEmployeeModal
+          employee={selectedEmployee}
+          open={showEditModal}
+          onClose={() => { setShowEditModal(false); setSelectedEmployee(null); }}
+          onSuccess={() => { setShowEditModal(false); setSelectedEmployee(null); reload(); }}
+        />
       )}
     </div>
   );
@@ -352,23 +322,48 @@ function AddEmployeeModal({ open, onClose, onSuccess }: { open: boolean; onClose
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={t('addEmployee')} size="md"
-      footer={<><Button variant="outline" onClick={onClose}>{t('cancel')}</Button><Button onClick={handleSubmit} loading={saving}>{t('save')}</Button></>}>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label={t('fullName')} required value={form.fullName} onChange={(e) => setForm(f => ({ ...f, fullName: e.target.value }))} />
-        <Input label={t('username')} required value={form.username} onChange={(e) => setForm(f => ({ ...f, username: e.target.value }))} />
-        <Input label={t('phone')} required value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} />
-        <Input label={t('email')} type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
-        <Input label={t('password')} type="password" required value={form.password} onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))} />
-        <Select label={t('role')} required value={form.role} onChange={(e) => setForm(f => ({ ...f, role: e.target.value }))}
-          options={[
-            { value: 'CENTER_EMPLOYEE', label: t('centerEmployee') },
-            { value: 'RECEPTIONIST', label: t('receptionist') },
-            { value: 'TEACHER_ASSISTANT', label: t('teacherAssistant') },
-          ]}
-        />
+    <CenterModal
+      open={open}
+      onClose={onClose}
+      title={t('addEmployee')}
+      footer={
+        <>
+          <button className="mj-btn mj-btn--ghost" onClick={onClose}>{t('cancel')}</button>
+          <button className="mj-btn mj-btn--primary" onClick={handleSubmit} disabled={saving}>{t('save')}</button>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit}>
+        <div className="mj-field">
+          <label className="mj-label">{t('fullName')}</label>
+          <input className="mj-input" required value={form.fullName} onChange={(e) => setForm(f => ({ ...f, fullName: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('username')}</label>
+          <input className="mj-input" required value={form.username} onChange={(e) => setForm(f => ({ ...f, username: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('phone')}</label>
+          <input className="mj-input" required value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('email')}</label>
+          <input className="mj-input" type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('password')}</label>
+          <input className="mj-input" type="password" required value={form.password} onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('role')}</label>
+          <select className="mj-select" required value={form.role} onChange={(e) => setForm(f => ({ ...f, role: e.target.value }))}>
+            <option value="CENTER_EMPLOYEE">{t('centerEmployee')}</option>
+            <option value="RECEPTIONIST">{t('receptionist')}</option>
+            <option value="TEACHER_ASSISTANT">{t('teacherAssistant')}</option>
+          </select>
+        </div>
       </form>
-    </Modal>
+    </CenterModal>
   );
 }
 
@@ -398,20 +393,39 @@ function EditEmployeeModal({ employee, open, onClose, onSuccess }: { employee: E
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={t('editEmployee')} size="md"
-      footer={<><Button variant="outline" onClick={onClose}>{t('cancel')}</Button><Button onClick={handleSubmit} loading={saving}>{t('save')}</Button></>}>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input label={t('fullName')} required value={form.fullName} onChange={(e) => setForm(f => ({ ...f, fullName: e.target.value }))} />
-        <Input label={t('phone')} value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} />
-        <Input label={t('email')} type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
-        <Select label={t('role')} required value={form.role} onChange={(e) => setForm(f => ({ ...f, role: e.target.value }))}
-          options={[
-            { value: 'CENTER_EMPLOYEE', label: t('centerEmployee') },
-            { value: 'RECEPTIONIST', label: t('receptionist') },
-            { value: 'TEACHER_ASSISTANT', label: t('teacherAssistant') },
-          ]}
-        />
+    <CenterModal
+      open={open}
+      onClose={onClose}
+      title={t('editEmployee')}
+      footer={
+        <>
+          <button className="mj-btn mj-btn--ghost" onClick={onClose}>{t('cancel')}</button>
+          <button className="mj-btn mj-btn--primary" onClick={handleSubmit} disabled={saving}>{t('save')}</button>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit}>
+        <div className="mj-field">
+          <label className="mj-label">{t('fullName')}</label>
+          <input className="mj-input" required value={form.fullName} onChange={(e) => setForm(f => ({ ...f, fullName: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('phone')}</label>
+          <input className="mj-input" value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('email')}</label>
+          <input className="mj-input" type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('role')}</label>
+          <select className="mj-select" required value={form.role} onChange={(e) => setForm(f => ({ ...f, role: e.target.value }))}>
+            <option value="CENTER_EMPLOYEE">{t('centerEmployee')}</option>
+            <option value="RECEPTIONIST">{t('receptionist')}</option>
+            <option value="TEACHER_ASSISTANT">{t('teacherAssistant')}</option>
+          </select>
+        </div>
       </form>
-    </Modal>
+    </CenterModal>
   );
 }

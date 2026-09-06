@@ -2,12 +2,11 @@
 
 import { useParams } from 'next/navigation';
 import { Phone, Mail, Users, GraduationCap } from 'lucide-react';
-import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBackButton } from '../../../components/layout/PageBackButton';
-import { Card } from '../../../components/ui/Card';
-import { Badge } from '../../../components/ui/Badge';
-import { Avatar } from '../../../components/ui/Avatar';
 import { PencilLoader } from '../../../components/ui/PencilLoader';
+import { CenterPageHeader } from '../ui/CenterPageHeader';
+import { CenterStatCard } from '../ui/CenterStatCard';
+import { CenterPill } from '../ui/CenterPill';
 import { useApi } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
 import { useT } from '../../../i18n';
@@ -46,97 +45,117 @@ export default function CenterStudentDetailPage() {
   if (error) return <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>;
   if (!student) return null;
 
+  const statusTone = student.user.status === 'ACTIVE' ? 'green' : 'slate';
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <PageBackButton />
-        <PageHeader title={student.user.fullName} subtitle={`@${student.user.username}`} />
+    <div className="space-y-5">
+      <PageBackButton />
+
+      <CenterPageHeader
+        eyebrow={t('student')}
+        title={student.user.fullName}
+        description={`@${student.user.username}`}
+      />
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <CenterStatCard value={student.grade?.name || '—'} label={t('grade')} />
+        <CenterStatCard value={student.parents.length} label={t('parents')} />
+        <CenterStatCard value={student.teachers.length} label={t('teachers')} />
       </div>
 
-      <Card bodyClassName="p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <Avatar name={student.user.fullName} src={student.photo} size="xl" />
-          <div className="flex-1">
+      <div className="mj-card overflow-hidden">
+        <div className="flex flex-col gap-4 border-b border-[color:var(--mj-border-soft)] p-5 sm:flex-row sm:items-center">
+          <span className="mj-avatar mj-avatar--md shrink-0">{student.user.fullName.charAt(0)}</span>
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{student.user.fullName}</h2>
-              <Badge tone={student.user.status === 'ACTIVE' ? 'green' : 'slate'}>{student.user.status}</Badge>
+              <h2 className="text-[color:var(--mj-ink-strong)]">{student.user.fullName}</h2>
+              <CenterPill tone={statusTone}>{student.user.status}</CenterPill>
+              {student.grade && <CenterPill tone="slate">{student.grade.name}</CenterPill>}
             </div>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-[color:var(--mj-muted)]">
               {t('joinedAt')}: {new Date(student.user.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           </div>
-          {student.grade && <Badge tone="violet">{student.grade.name}</Badge>}
         </div>
-      </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <InfoCard icon={Phone} label={t('phone')} value={student.user.phone || '—'} />
-        <InfoCard icon={Mail} label={t('email')} value={student.user.email || '—'} />
-        <InfoCard icon={GraduationCap} label={t('subject')} value={student.grade?.name || '—'} />
+        <div className="grid gap-px bg-[color:var(--mj-border-soft)] sm:grid-cols-3">
+          <InfoCell icon={Phone} label={t('phone')} value={student.user.phone || '—'} />
+          <InfoCell icon={Mail} label={t('email')} value={student.user.email || '—'} />
+          <InfoCell icon={GraduationCap} label={t('subject')} value={student.grade?.name || '—'} />
+        </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card title={t('parents')} bodyClassName="p-0">
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div className="mj-card overflow-hidden">
+          <div className="border-b border-[color:var(--mj-border-soft)] px-5 py-4">
+            <h3 className="font-bold text-[color:var(--mj-ink-strong)]">{t('parents')}</h3>
+          </div>
           {student.parents.length > 0 ? (
-            <div className="divide-y divide-slate-100 dark:divide-slate-700">
+            <div className="divide-y divide-[color:var(--mj-border-soft)]">
               {student.parents.map((p, i) => (
                 <div key={i} className="flex items-center gap-3 px-5 py-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--mj-accent-soft)] text-xs font-semibold text-[color:var(--mj-accent)]">
                     {p.parent.user.fullName.charAt(0)}
                   </span>
                   <div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">{p.parent.user.fullName}</p>
-                    <p className="text-xs text-slate-500">{p.parent.user.phone || '—'}</p>
+                    <p className="text-sm font-medium text-[color:var(--mj-ink-strong)]">{p.parent.user.fullName}</p>
+                    <p className="text-xs text-[color:var(--mj-muted)]">{p.parent.user.phone || '—'}</p>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="p-5 text-sm text-slate-500">{t('noParents')}</p>
+            <div className="p-5 text-sm text-[color:var(--mj-muted)]">{t('noParents')}</div>
           )}
-        </Card>
+        </div>
 
-        <Card title={t('teachers')} bodyClassName="p-0">
+        <div className="mj-card overflow-hidden">
+          <div className="border-b border-[color:var(--mj-border-soft)] px-5 py-4">
+            <h3 className="font-bold text-[color:var(--mj-ink-strong)]">{t('teachers')}</h3>
+          </div>
           {student.teachers.length > 0 ? (
-            <div className="divide-y divide-slate-100 dark:divide-slate-700">
+            <div className="divide-y divide-[color:var(--mj-border-soft)]">
               {student.teachers.map((x, i) => (
                 <div key={i} className="flex items-center gap-3 px-5 py-3">
-                  <Users className="h-4 w-4 text-slate-400" />
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">{x.teacher.user.fullName}</p>
+                  <Users className="h-4 w-4 shrink-0 text-[color:var(--mj-muted-2)]" />
+                  <p className="text-sm font-medium text-[color:var(--mj-ink-strong)]">{x.teacher.user.fullName}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="p-5 text-sm text-slate-500">{t('noTeachers')}</p>
+            <div className="p-5 text-sm text-[color:var(--mj-muted)]">{t('noTeachers')}</div>
           )}
-        </Card>
+        </div>
       </div>
 
-      <Card title={t('subjects')} bodyClassName="p-5">
-        {student.studentSubjects.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
-            {student.studentSubjects.map((s, i) => <Badge key={i} tone="blue">{s.subject.name}</Badge>)}
-          </div>
-        ) : (
-          <p className="text-sm text-slate-500">{t('noSubjects')}</p>
-        )}
-      </Card>
+      <div className="mj-card overflow-hidden">
+        <div className="border-b border-[color:var(--mj-border-soft)] px-5 py-4">
+          <h3 className="font-bold text-[color:var(--mj-ink-strong)]">{t('subjects')}</h3>
+        </div>
+        <div className="p-5">
+          {student.studentSubjects.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {student.studentSubjects.map((s, i) => <CenterPill key={i} tone="blue">{s.subject.name}</CenterPill>)}
+            </div>
+          ) : (
+            <p className="text-sm text-[color:var(--mj-muted)]">{t('noSubjects')}</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
-function InfoCard({ icon: Icon, label, value }: { icon: typeof Phone; label: string; value: string }) {
+function InfoCell({ icon: Icon, label, value }: { icon: typeof Phone; label: string; value: string }) {
   return (
-    <Card bodyClassName="p-4">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs text-slate-500">{label}</p>
-          <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{value}</p>
-        </div>
+    <div className="flex items-center gap-3 bg-[color:var(--mj-surface)] p-4">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[color:var(--mj-accent-soft)] text-[color:var(--mj-accent)]">
+        <Icon className="h-5 w-5" />
       </div>
-    </Card>
+      <div className="min-w-0">
+        <p className="text-xs text-[color:var(--mj-muted)]">{label}</p>
+        <p className="truncate text-sm font-semibold text-[color:var(--mj-ink-strong)]">{value}</p>
+      </div>
+    </div>
   );
 }

@@ -11,12 +11,8 @@ import {
   BookOpen,
   CreditCard,
 } from 'lucide-react';
-import { PageHeader } from '../../../components/layout/PageHeader';
-import { Card } from '../../../components/ui/Card';
-import { Button } from '../../../components/ui/Button';
-import { Select } from '../../../components/ui/Select';
-import { Input } from '../../../components/ui/Input';
 import { PencilLoader } from '../../../components/ui/PencilLoader';
+import { CenterPageHeader } from '../ui/CenterPageHeader';
 import { useApi } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
 import { useT, type DictKey } from '../../../i18n';
@@ -66,100 +62,116 @@ export default function CenterReportsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <CenterPageHeader
+        eyebrow={t('centerDashboard')}
         title={t('reports')}
-        subtitle={t('reportsSub')}
-        action={
-          <Button variant="outline">
-            <Download className="h-4 w-4" />
-            {t('exportAll')}
-          </Button>
-        }
-      />
+        description={t('reportsSub')}
+      >
+        <button type="button" className="mj-btn mj-btn--ghost">
+          <Download className="h-4 w-4" /> {t('exportAll')}
+        </button>
+      </CenterPageHeader>
 
-      {/* Generate Report */}
-      <Card title={t('generateReport')} bodyClassName="p-4">
-        <div className="grid gap-4 sm:grid-cols-4">
-          <Select
-            label={t('reportType')}
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            options={[
-              { value: '', label: t('selectType') },
-              ...REPORT_TYPES.map(r => ({ value: r.id, label: t(r.id as DictKey) || r.name })),
-            ]}
-          />
-          <Input
-            label={t('from')}
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-          />
-          <Input
-            label={t('to')}
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-          />
+      <div className="mj-card p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-[color:var(--mj-accent)]" />
+          <h2 className="mj-title">{t('generateReport')}</h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mj-field">
+            <label className="mj-label">{t('reportType')}</label>
+            <select className="mj-select" value={type} onChange={(e) => setType(e.target.value)}>
+              <option value="">{t('selectType')}</option>
+              {REPORT_TYPES.map(r => (
+                <option key={r.id} value={r.id}>{t(r.id as DictKey) || r.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('from')}</label>
+            <input className="mj-input" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('to')}</label>
+            <input className="mj-input" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+          </div>
           <div className="flex items-end">
-            <Button onClick={generateReport} loading={generating} className="w-full">
-              <BarChart3 className="h-4 w-4" />
-              {t('generate')}
-            </Button>
+            <button type="button" className="mj-btn mj-btn--primary w-full" onClick={generateReport} disabled={generating}>
+              <BarChart3 className="h-4 w-4" /> {generating ? t('loading') : t('generate')}
+            </button>
           </div>
         </div>
-      </Card>
+      </div>
 
-      {/* Quick Reports */}
       <div>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
-          <FileText className="h-5 w-5" />
-          {t('quickReports')}
+        <h2 className="mb-3 flex items-center gap-2 text-[1.05rem] font-bold text-[color:var(--mj-ink-strong)]">
+          <FileText className="h-5 w-5 text-[color:var(--mj-accent)]" /> {t('quickReports')}
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {REPORT_TYPES.map((report) => {
             const Icon = report.icon;
             return (
-              <Card key={report.id} bodyClassName="p-4 cursor-pointer hover:border-brand-300 transition-colors"
-                onClick={() => { setType(report.id); generateReport(); }}>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300">
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-900 dark:text-white">{t(report.id as DictKey) || report.name}</h3>
-                    <p className="text-xs text-slate-500">{t((report.id + 'Desc') as DictKey) || t('clickToGenerate')}</p>
-                  </div>
-                </div>
-              </Card>
+              <button
+                key={report.id}
+                type="button"
+                onClick={() => { setType(report.id); generateReport(); }}
+                className="mj-card flex items-center gap-3 p-4 text-start transition-colors hover:border-[color:var(--mj-accent)]"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[color:var(--mj-accent-soft)] text-[color:var(--mj-accent)]">
+                  <Icon className="h-6 w-6" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-bold text-[color:var(--mj-ink-strong)]">{t(report.id as DictKey) || report.name}</span>
+                  <span className="block text-xs text-[color:var(--mj-muted)]">{t((report.id + 'Desc') as DictKey) || t('clickToGenerate')}</span>
+                </span>
+              </button>
             );
           })}
         </div>
       </div>
 
-      {/* Recent Reports */}
-      {loading && <PencilLoader label={t('loading')} />}
+      {loading && <div className="p-8"><PencilLoader label={t('loading')} /></div>}
       {!loading && reports && reports.length > 0 && (
-        <Card title={t('recentReports')} bodyClassName="p-0">
-          <div className="divide-y divide-slate-100 dark:divide-slate-700">
-            {reports.map((report) => (
-              <div key={report.id} className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 text-slate-400" />
-                  <div>
-                    <p className="font-medium text-slate-900 dark:text-white">{report.name}</p>
-                    <p className="text-xs text-slate-500">
-                      {new Date(report.generatedAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
+        <div className="mj-card overflow-hidden">
+          <div className="flex items-center justify-between gap-3 px-5 py-4">
+            <h2 className="mj-title">{t('recentReports')}</h2>
           </div>
-        </Card>
+          <div className="overflow-x-auto">
+            <table className="mj-table">
+              <thead>
+                <tr>
+                  <th>{t('reportType')}</th>
+                  <th>{t('date')}</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {reports.map((report) => (
+                  <tr key={report.id}>
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[color:var(--mj-wash)] text-[color:var(--mj-muted)]">
+                          <FileText className="h-4 w-4" />
+                        </span>
+                        <span className="font-medium text-[color:var(--mj-ink-strong)]">{report.name}</span>
+                      </div>
+                    </td>
+                    <td className="text-[color:var(--mj-muted)]">
+                      {new Date(report.generatedAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td>
+                      <span className="flex justify-end">
+                        <button type="button" className="mj-btn mj-btn--ghost mj-btn--sm">
+                          <Download className="h-4 w-4" />
+                        </button>
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
     </div>
   );

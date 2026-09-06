@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Menu, Settings, User as UserIcon, LogOut, ChevronDown, GraduationCap } from 'lucide-react';
+import { Menu, Settings, User as UserIcon, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useT } from '../../../i18n';
 import { useCenterBranch } from './CenterBranchContext';
@@ -14,35 +14,17 @@ import { LangToggle } from '../../../components/LangToggle';
 export function CenterHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   const { user, center, logout } = useAuth();
   const { t, lang } = useT();
-  const { branches, branchId, setBranches, setBranchId } = useCenterBranch();
+  const { branches, branchId, setBranches } = useCenterBranch();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [branchOpen, setBranchOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const branchRef = useRef<HTMLDivElement>(null);
-  const loadedBranches = useRef(false);
 
   useEffect(() => {
-    if (loadedBranches.current) return;
-    loadedBranches.current = true;
-    import('../../../lib/api').then(({ api }) => {
-      api
-        .get<{ id: string; name: string }[]>('/center/account/branches')
-        .then((res) => setBranches(res.data))
-        .catch(() => setBranches([]));
-    });
-  }, [setBranches]);
-
-  useEffect(() => {
-    if (!menuOpen && !branchOpen) return;
+    if (!menuOpen) return;
     const onClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-      if (branchRef.current && !branchRef.current.contains(e.target as Node)) setBranchOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setMenuOpen(false);
-        setBranchOpen(false);
-      }
+      if (e.key === 'Escape') setMenuOpen(false);
     };
     document.addEventListener('mousedown', onClick);
     document.addEventListener('keydown', onKey);
@@ -50,7 +32,17 @@ export function CenterHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
       document.removeEventListener('mousedown', onClick);
       document.removeEventListener('keydown', onKey);
     };
-  }, [menuOpen, branchOpen]);
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (branches.length > 0) return;
+    import('../../../lib/api').then(({ api }) => {
+      api
+        .get<{ id: string; name: string }[]>('/center/account/branches')
+        .then((res) => setBranches(res.data))
+        .catch(() => setBranches([]));
+    });
+  }, [branches.length, setBranches]);
 
   const dateLabel = new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', {
     weekday: 'long',
@@ -67,70 +59,22 @@ export function CenterHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-teal-100 bg-white/90 px-4 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/90 sm:px-6">
+    <header className="mj-header sticky top-0 z-30 flex h-[72px] items-center justify-between px-4 sm:px-8">
       <div className="flex min-w-0 items-center gap-3">
         <button
           onClick={onOpenSidebar}
-          className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 lg:hidden"
+          className="-ms-1 rounded-lg p-2 text-[color:var(--mj-muted)] transition-colors hover:bg-[color:var(--mj-wash)] lg:hidden"
           aria-label={t('openMenu')}
         >
           <Menu className="h-5 w-5" />
         </button>
-
-        {/* Branch selector */}
-        <div ref={branchRef} className="relative min-w-0">
-          <button
-            onClick={() => setBranchOpen((o) => !o)}
-            aria-haspopup="menu"
-            aria-expanded={branchOpen}
-            className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-600/10 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">
-              <GraduationCap className="h-[18px] w-[18px]" />
-            </span>
-            <span className="min-w-0 max-w-[11rem] truncate text-start">
-              {center?.name || 'المركز'}
-            </span>
-            <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
-          </button>
-          {branchOpen && (
-            <div className="animate-scale-in absolute start-0 top-full z-[60] mt-2 w-64 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-elevated-lg dark:border-slate-700 dark:bg-slate-800">
-              <p className="px-4 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                {selectedBranch ? selectedBranch.name : t('allBranches')}
-              </p>
-              <button
-                onClick={() => {
-                  setBranchId('');
-                  setBranchOpen(false);
-                }}
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/60"
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-400" aria-hidden />
-                {t('allBranches')}
-              </button>
-              {branches.map((b) => (
-                <button
-                  key={b.id}
-                  onClick={() => {
-                    setBranchId(b.id);
-                    setBranchOpen(false);
-                  }}
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/60"
-                >
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full ${b.id === branchId ? 'bg-teal-600' : 'bg-slate-300'}`}
-                    aria-hidden
-                  />
-                  {b.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="hidden items-center gap-2 md:flex">
-          <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
-          <span className="text-sm text-slate-600 dark:text-slate-300">{dateLabel}</span>
+        <div className="min-w-0">
+          <p className="truncate text-[1.0625rem] font-bold leading-tight text-[color:var(--mj-ink-strong)]">
+            {center?.name || t('centerDashboard')}
+          </p>
+          <p className="truncate text-[0.8125rem] text-[color:var(--mj-muted)]">
+            {t('branchLabel', { name: selectedBranch ? selectedBranch.name : t('allBranches') })} · {dateLabel}
+          </p>
         </div>
       </div>
 
@@ -139,49 +83,52 @@ export function CenterHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
         <LangToggle className="hidden sm:inline-flex" />
         <Link
           href="/center/settings"
-          className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          className="rounded-lg p-2 text-[color:var(--mj-muted)] transition-colors hover:bg-[color:var(--mj-wash)] hover:text-[color:var(--mj-ink)]"
           aria-label={t('settings')}
         >
           <Settings className="h-5 w-5" />
         </Link>
-        <span className="mx-1 hidden h-5 w-px bg-slate-200 dark:bg-slate-700 sm:block" aria-hidden />
+        <span className="mx-1 hidden h-6 w-px bg-[color:var(--mj-border-soft)] sm:block" aria-hidden />
         <NotificationsBell />
-        <div ref={menuRef} className="relative ms-1">
+        <div ref={menuRef} className="relative">
           <button
             onClick={() => setMenuOpen((o) => !o)}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            className="flex items-center gap-2 rounded-full p-1 ring-1 ring-inset ring-transparent transition hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="flex items-center gap-2.5 rounded-full p-1 transition-colors hover:bg-[color:var(--mj-wash)]"
           >
             <Avatar name={user?.fullName ?? 'User'} src={user?.photo} size="sm" />
+            <span className="hidden text-start md:block">
+              <span className="block text-sm font-bold leading-tight text-[color:var(--mj-ink-strong)]">
+                {user?.fullName}
+              </span>
+              <span className="block text-xs text-[color:var(--mj-muted)]">{t('centerAdminRole')}</span>
+            </span>
+            <ChevronDown className={`hidden h-4 w-4 text-[color:var(--mj-muted-2)] md:block ${menuOpen ? 'rotate-180' : ''}`} />
           </button>
           {menuOpen && (
-            <div className="animate-scale-in absolute end-0 top-full z-[60] mt-2 w-56 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-elevated-lg dark:border-slate-700 dark:bg-slate-800">
-              <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-700">
+            <div className="absolute end-0 top-full z-[60] mt-2 w-56 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-[color:var(--mj-border)] bg-[var(--mj-surface)] py-1 shadow-lg">
+              <div className="flex items-center gap-3 border-b border-[color:var(--mj-border-soft)] px-4 py-3">
                 <Avatar name={user?.fullName ?? 'User'} src={user?.photo} size="md" />
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
-                    {user?.fullName}
-                  </p>
-                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                    {t('centerAdminRole')}
-                  </p>
+                  <p className="truncate text-sm font-bold text-[color:var(--mj-ink-strong)]">{user?.fullName}</p>
+                  <p className="truncate text-xs text-[color:var(--mj-muted)]">{t('centerAdminRole')}</p>
                 </div>
               </div>
-<div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-700">
-                  <ThemeToggle />
-                  <LangToggle className="flex-1 justify-center" />
-                </div>
-                <Link
-                  href="/center/profile"
-                  onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/60"
+              <div className="flex items-center gap-2 border-b border-[color:var(--mj-border-soft)] px-4 py-3">
+                <ThemeToggle />
+                <LangToggle className="flex-1 justify-center" />
+              </div>
+              <Link
+                href="/center/profile"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[color:var(--mj-ink)] transition-colors hover:bg-[color:var(--mj-wash)]"
               >
                 <UserIcon className="h-4 w-4" /> {t('myProfile')}
               </Link>
               <button
                 onClick={doLogout}
-                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-[color:var(--mj-danger)] transition-colors hover:bg-[color:var(--mj-danger-soft)]"
               >
                 <LogOut className="h-4 w-4" /> {t('signOut')}
               </button>

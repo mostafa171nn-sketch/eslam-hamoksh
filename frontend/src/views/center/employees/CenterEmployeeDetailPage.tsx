@@ -2,12 +2,11 @@
 
 import { useParams } from 'next/navigation';
 import { Phone, Mail, ShieldCheck, CalendarDays } from 'lucide-react';
-import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBackButton } from '../../../components/layout/PageBackButton';
-import { Card } from '../../../components/ui/Card';
-import { Badge } from '../../../components/ui/Badge';
-import { Avatar } from '../../../components/ui/Avatar';
 import { PencilLoader } from '../../../components/ui/PencilLoader';
+import { CenterPageHeader } from '../ui/CenterPageHeader';
+import { CenterStatCard } from '../ui/CenterStatCard';
+import { CenterPill } from '../ui/CenterPill';
 import { useApi } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
 import { useT } from '../../../i18n';
@@ -36,53 +35,68 @@ export default function CenterEmployeeDetailPage() {
   if (error) return <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>;
   if (!employee) return null;
 
+  const statusTone = employee.status === 'ACTIVE' ? 'green' : employee.status === 'PENDING' ? 'amber' : 'slate';
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <PageBackButton />
-        <PageHeader title={employee.fullName} subtitle={`@${employee.username}`} />
+    <div className="space-y-5">
+      <PageBackButton />
+
+      <CenterPageHeader
+        eyebrow={t('employee')}
+        title={employee.fullName}
+        description={`@${employee.username}`}
+      />
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <CenterStatCard value={employee.status} label={t('status')} />
+        <CenterStatCard value={employee.role.replace(/_/g, ' ')} label={t('role')} />
+        <CenterStatCard value={employee.phone || '—'} label={t('phone')} />
+        <CenterStatCard
+          value={new Date(employee.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+          label={t('joinedAt')}
+        />
       </div>
 
-      <Card bodyClassName="p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <Avatar name={employee.fullName} src={employee.photo} size="xl" />
-          <div className="flex-1">
+      <div className="mj-card overflow-hidden">
+        <div className="flex flex-col gap-4 border-b border-[color:var(--mj-border-soft)] p-5 sm:flex-row sm:items-center">
+          <span className="mj-avatar mj-avatar--md shrink-0">{employee.fullName.charAt(0)}</span>
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{employee.fullName}</h2>
-              <Badge tone={employee.status === 'ACTIVE' ? 'green' : employee.status === 'PENDING' ? 'amber' : 'slate'}>
-                {employee.status}
-              </Badge>
-              <Badge tone="blue">{employee.role.replace(/_/g, ' ')}</Badge>
+              <h2 className="text-[color:var(--mj-ink-strong)]">{employee.fullName}</h2>
+              <CenterPill tone={statusTone}>{employee.status}</CenterPill>
+              <CenterPill tone="blue">{employee.role.replace(/_/g, ' ')}</CenterPill>
             </div>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-[color:var(--mj-muted)]">
               {t('joinedAt')}: {new Date(employee.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           </div>
         </div>
-      </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <InfoCard icon={Phone} label={t('phone')} value={employee.phone || '—'} />
-        <InfoCard icon={Mail} label={t('email')} value={employee.email || '—'} />
-        <InfoCard icon={ShieldCheck} label={t('role')} value={employee.role.replace(/_/g, ' ')} />
-        <InfoCard icon={CalendarDays} label={t('joinedAt')} value={new Date(employee.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} />
+        <div className="grid gap-px bg-[color:var(--mj-border-soft)] sm:grid-cols-2 lg:grid-cols-4">
+          <InfoCell icon={Phone} label={t('phone')} value={employee.phone || '—'} />
+          <InfoCell icon={Mail} label={t('email')} value={employee.email || '—'} />
+          <InfoCell icon={ShieldCheck} label={t('role')} value={employee.role.replace(/_/g, ' ')} />
+          <InfoCell
+            icon={CalendarDays}
+            label={t('joinedAt')}
+            value={new Date(employee.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+          />
+        </div>
       </div>
     </div>
   );
 }
 
-function InfoCard({ icon: Icon, label, value }: { icon: typeof Phone; label: string; value: string }) {
+function InfoCell({ icon: Icon, label, value }: { icon: typeof Phone; label: string; value: string }) {
   return (
-    <Card bodyClassName="p-4">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs text-slate-500">{label}</p>
-          <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{value}</p>
-        </div>
+    <div className="flex items-center gap-3 bg-[color:var(--mj-surface)] p-4">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[color:var(--mj-accent-soft)] text-[color:var(--mj-accent)]">
+        <Icon className="h-5 w-5" />
       </div>
-    </Card>
+      <div className="min-w-0">
+        <p className="text-xs text-[color:var(--mj-muted)]">{label}</p>
+        <p className="truncate text-sm font-semibold text-[color:var(--mj-ink-strong)]">{value}</p>
+      </div>
+    </div>
   );
 }

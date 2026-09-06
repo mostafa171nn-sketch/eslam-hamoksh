@@ -2,12 +2,11 @@
 
 import { useParams } from 'next/navigation';
 import { Star, Phone, Mail, MapPin, BadgeCheck, Clock } from 'lucide-react';
-import { PageHeader } from '../../../components/layout/PageHeader';
 import { PageBackButton } from '../../../components/layout/PageBackButton';
-import { Card } from '../../../components/ui/Card';
-import { Badge } from '../../../components/ui/Badge';
-import { Avatar } from '../../../components/ui/Avatar';
 import { PencilLoader } from '../../../components/ui/PencilLoader';
+import { CenterPageHeader } from '../ui/CenterPageHeader';
+import { CenterStatCard } from '../ui/CenterStatCard';
+import { CenterPill } from '../ui/CenterPill';
 import { useApi } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
 import { useT } from '../../../i18n';
@@ -52,98 +51,132 @@ export default function CenterTeacherDetailPage() {
     ? (teacher.ratings.reduce((s, r) => s + r.stars, 0) / teacher.ratings.length).toFixed(1)
     : '0.0';
 
+  const statusTone = teacher.user.status === 'ACTIVE' ? 'green' : 'slate';
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <PageBackButton />
-        <PageHeader title={teacher.user.fullName} subtitle={`@${teacher.user.username}`} />
+    <div className="space-y-5">
+      <PageBackButton />
+
+      <CenterPageHeader
+        eyebrow={t('teacher')}
+        title={teacher.user.fullName}
+        description={`@${teacher.user.username}`}
+      />
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <CenterStatCard
+          value={avg}
+          label={t('avgRating')}
+          sub={`${teacher.ratings.length} ${t('reviews')}`}
+        />
+        <CenterStatCard
+          value={teacher.yearsExperience}
+          label={t('experience')}
+          sub={t('years')}
+        />
+        <CenterStatCard
+          value={teacher.hourlyRate.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')}
+          label={t('hourlyRate')}
+          sub="EGP"
+        />
+        <CenterStatCard value={teacher.grades.length} label={t('grades')} sub={teacher.location?.name || t('noBranch')} />
       </div>
 
-      <Card bodyClassName="p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <Avatar name={teacher.user.fullName} src={teacher.photo} size="xl" />
-          <div className="flex-1">
+      <div className="mj-card overflow-hidden">
+        <div className="flex flex-col gap-4 border-b border-[color:var(--mj-border-soft)] p-5 sm:flex-row sm:items-center">
+          <span className="mj-avatar mj-avatar--md shrink-0">{teacher.user.fullName.charAt(0)}</span>
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{teacher.user.fullName}</h2>
-              <Badge tone={teacher.user.status === 'ACTIVE' ? 'green' : 'slate'}>{teacher.user.status === 'ACTIVE' ? t('active') : teacher.user.status}</Badge>
+              <h2 className="text-[color:var(--mj-ink-strong)]">{teacher.user.fullName}</h2>
+              <CenterPill tone={statusTone}>{teacher.user.status === 'ACTIVE' ? t('active') : teacher.user.status}</CenterPill>
             </div>
-            <p className="mt-1 text-sm text-slate-500">{teacher.bio || t('noBio')}</p>
+            <p className="mt-1 text-sm text-[color:var(--mj-muted)]">{teacher.bio || t('noBio')}</p>
             <div className="mt-2 flex items-center gap-1">
-              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-              <span className="text-sm font-medium text-slate-900 dark:text-white">{avg}</span>
-              <span className="text-xs text-slate-400">({teacher.ratings.length} {t('reviews')})</span>
+              <Star className="h-4 w-4 fill-[color:var(--mj-amber)] text-[color:var(--mj-amber)]" />
+              <span className="text-sm font-bold text-[color:var(--mj-ink-strong)]">{avg}</span>
+              <span className="text-xs text-[color:var(--mj-muted-2)]">({teacher.ratings.length} {t('reviews')})</span>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {teacher.subjects.map((s) => <Badge key={s.subject.id} tone="brand">{s.subject.name}</Badge>)}
-          </div>
+          {teacher.subjects.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {teacher.subjects.map((s) => <CenterPill key={s.subject.id} tone="blue">{s.subject.name}</CenterPill>)}
+            </div>
+          )}
         </div>
-      </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <InfoCard icon={Phone} label={t('phone')} value={teacher.user.phone || '—'} />
-        <InfoCard icon={Mail} label={t('email')} value={teacher.user.email || '—'} />
-        <InfoCard icon={MapPin} label={t('branch')} value={teacher.location?.name || t('noBranch')} />
-        <InfoCard icon={Clock} label={t('experience')} value={`${teacher.yearsExperience} ${t('years')}`} />
+        <div className="grid gap-px bg-[color:var(--mj-border-soft)] sm:grid-cols-2 lg:grid-cols-4">
+          <InfoCell icon={Phone} label={t('phone')} value={teacher.user.phone || '—'} />
+          <InfoCell icon={Mail} label={t('email')} value={teacher.user.email || '—'} />
+          <InfoCell icon={MapPin} label={t('branch')} value={teacher.location?.name || t('noBranch')} />
+          <InfoCell icon={Clock} label={t('experience')} value={`${teacher.yearsExperience} ${t('years')}`} />
+        </div>
       </div>
 
-      <Card bodyClassName="p-5">
-        <div className="flex items-center gap-2">
-          <BadgeCheck className="h-5 w-5 text-emerald-500" />
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{t('hourlyRate')}</h3>
+      <div className="mj-card overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-[color:var(--mj-border-soft)] px-5 py-4">
+          <BadgeCheck className="h-5 w-5 text-[color:var(--mj-success)]" />
+          <h3 className="font-bold text-[color:var(--mj-ink-strong)]">{t('hourlyRate')}</h3>
         </div>
-        <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-          {teacher.hourlyRate.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} <span className="text-sm font-medium text-slate-400">EGP</span>
-        </p>
-      </Card>
+        <div className="p-5">
+          <p className="text-2xl font-bold text-[color:var(--mj-ink-strong)]">
+            {teacher.hourlyRate.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} <span className="text-sm font-medium text-[color:var(--mj-muted)]">EGP</span>
+          </p>
+        </div>
+      </div>
 
-      <Card title={t('grades')} bodyClassName="p-5">
-        {teacher.grades.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
-            {teacher.grades.map((g) => <Badge key={g.grade.id} tone="violet">{g.grade.name}</Badge>)}
-          </div>
-        ) : (
-          <p className="text-sm text-slate-500">{t('noGrades')}</p>
-        )}
-      </Card>
+      <div className="mj-card overflow-hidden">
+        <div className="border-b border-[color:var(--mj-border-soft)] px-5 py-4">
+          <h3 className="font-bold text-[color:var(--mj-ink-strong)]">{t('grades')}</h3>
+        </div>
+        <div className="p-5">
+          {teacher.grades.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {teacher.grades.map((g) => <CenterPill key={g.grade.id} tone="slate">{g.grade.name}</CenterPill>)}
+            </div>
+          ) : (
+            <p className="text-sm text-[color:var(--mj-muted)]">{t('noGrades')}</p>
+          )}
+        </div>
+      </div>
 
-      <Card title={t('reviews')} bodyClassName="p-0">
+      <div className="mj-card overflow-hidden">
+        <div className="border-b border-[color:var(--mj-border-soft)] px-5 py-4">
+          <h3 className="font-bold text-[color:var(--mj-ink-strong)]">{t('reviews')}</h3>
+        </div>
         {teacher.ratings.length > 0 ? (
-          <div className="divide-y divide-slate-100 dark:divide-slate-700">
+          <div className="divide-y divide-[color:var(--mj-border-soft)]">
             {teacher.ratings.map((r, i) => (
               <div key={i} className="px-5 py-4">
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((n) => (
-                    <Star key={n} className={`h-4 w-4 ${n <= r.stars ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-600'}`} />
+                    <Star key={n} className={`h-4 w-4 ${n <= r.stars ? 'fill-[color:var(--mj-amber)] text-[color:var(--mj-amber)]' : 'text-[color:var(--mj-border)]'}`} />
                   ))}
-                  <span className="ms-2 text-xs text-slate-400">
+                  <span className="ms-2 text-xs text-[color:var(--mj-muted-2)]">
                     {new Date(r.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB')}
                   </span>
                 </div>
-                {r.comment && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{r.comment}</p>}
+                {r.comment && <p className="mt-2 text-sm text-[color:var(--mj-ink)]">{r.comment}</p>}
               </div>
             ))}
           </div>
         ) : (
-          <p className="p-5 text-sm text-slate-500">{t('noReviews')}</p>
+          <div className="p-5 text-sm text-[color:var(--mj-muted)]">{t('noReviews')}</div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }
 
-function InfoCard({ icon: Icon, label, value }: { icon: typeof Phone; label: string; value: string }) {
+function InfoCell({ icon: Icon, label, value }: { icon: typeof Phone; label: string; value: string }) {
   return (
-    <Card bodyClassName="p-4">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs text-slate-500">{label}</p>
-          <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{value}</p>
-        </div>
+    <div className="flex items-center gap-3 bg-[color:var(--mj-surface)] p-4">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[color:var(--mj-accent-soft)] text-[color:var(--mj-accent)]">
+        <Icon className="h-5 w-5" />
       </div>
-    </Card>
+      <div className="min-w-0">
+        <p className="text-xs text-[color:var(--mj-muted)]">{label}</p>
+        <p className="truncate text-sm font-semibold text-[color:var(--mj-ink-strong)]">{value}</p>
+      </div>
+    </div>
   );
 }
