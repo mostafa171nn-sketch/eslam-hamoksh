@@ -42,7 +42,7 @@ export default function CenterStudentDetailPage() {
   );
 
   if (loading) return <PencilLoader label={t('loading')} />;
-  if (error) return <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>;
+  if (error) return <div className="rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-500/10 dark:text-red-300">{error}</div>;
   if (!student) return null;
 
   const statusTone = student.user.status === 'ACTIVE' ? 'green' : 'slate';

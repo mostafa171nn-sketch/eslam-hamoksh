@@ -44,7 +44,7 @@ export default function CenterTeacherDetailPage() {
   );
 
   if (loading) return <PencilLoader label={t('loading')} />;
-  if (error) return <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>;
+  if (error) return <div className="rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-500/10 dark:text-red-300">{error}</div>;
   if (!teacher) return null;
 
   const avg = teacher.ratings.length

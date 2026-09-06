@@ -270,7 +270,7 @@ export default function CenterDashboardPage() {
             <div className="flex items-center justify-center">
               <div className="relative inline-flex h-24 w-24 items-center justify-center">
                 <svg className="h-24 w-24 -rotate-90">
-                  <circle cx="48" cy="48" r="40" stroke="#E3ECE9" strokeWidth="8" fill="none" />
+                  <circle cx="48" cy="48" r="40" stroke="var(--mj-line-bg)" strokeWidth="8" fill="none" />
                   <circle
                     cx="48"
                     cy="48"

@@ -126,7 +126,7 @@ function RoomsGrid({ t }: { t: (k: DictKey) => string }) {
       </div>
 
       {loading && <PencilLoader label={t('loading')} />}
-      {error && <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>}
+      {error && <div className="rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-500/10 dark:text-red-300">{error}</div>}
 
       {!loading && rooms && rooms.length > 0 && (
         <>
@@ -233,7 +233,7 @@ function BookingsTab({ t }: { t: (k: DictKey) => string }) {
         </div>
 
         {loading && <PencilLoader label={t('loading')} />}
-        {error && <div className="m-4 rounded-lg bg-red-50 p-4 text-red-600">{error}</div>}
+        {error && <div className="m-4 rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-500/10 dark:text-red-300">{error}</div>}
 
         {!loading && bookings && bookings.length > 0 && (
           <div className="overflow-x-auto">

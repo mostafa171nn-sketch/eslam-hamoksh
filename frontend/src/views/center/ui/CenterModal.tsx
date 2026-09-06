@@ -44,7 +44,7 @@ export function CenterModal({
   return (
     <div className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto p-4 sm:p-8">
       <div className="fixed inset-0 bg-slate-900/45 dark:bg-slate-950/70" onClick={onClose} />
-      <div className={`relative my-auto w-full overflow-hidden rounded-xl bg-white shadow-elevated-lg dark:bg-slate-800 ${sizes[size]}`}>
+      <div className={`relative my-auto w-full overflow-hidden rounded-xl bg-[color:var(--mj-surface)] shadow-elevated-lg ${sizes[size]}`}>
         <div className="flex items-start justify-between gap-4 border-b border-[color:var(--mj-border-soft)] px-6 py-5">
           <div>
             <h2 className="text-lg font-bold text-[color:var(--mj-ink-strong)]">{title}</h2>

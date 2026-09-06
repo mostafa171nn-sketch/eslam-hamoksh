@@ -124,7 +124,7 @@ export function CenterGroupsPage() {
       </div>
 
       {loading && <PencilLoader label={t('loading')} />}
-      {error && <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>}
+      {error && <div className="rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-500/10 dark:text-red-300">{error}</div>}
 
       {!loading && groups && groups.length > 0 && (
         <div className="mj-card overflow-hidden">

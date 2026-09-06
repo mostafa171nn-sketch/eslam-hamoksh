@@ -127,7 +127,7 @@ function RoutesTab({ t }: { t: (k: DictKey) => string }) {
       </div>
 
       {loading && <PencilLoader label={t('loading')} />}
-      {error && <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>}
+      {error && <div className="rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-500/10 dark:text-red-300">{error}</div>}
 
       {!loading && routes && routes.length > 0 && (
         <div className="grid gap-3 lg:grid-cols-2">
@@ -355,7 +355,7 @@ function StudentsTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
   };
 
   if (loading) return <PencilLoader label={t('loading')} />;
-  if (error) return <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>;
+  if (error) return <div className="rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-500/10 dark:text-red-300">{error}</div>;
 
   return (
     <div className="mj-card overflow-hidden">
@@ -406,7 +406,7 @@ function DriversTab({ t }: { t: (k: DictKey) => string }) {
   const { data: drivers, loading, error } = useApi<DriverRow[]>(() => api.get<DriverRow[]>('/center/transport/drivers'), []);
 
   if (loading) return <PencilLoader label={t('loading')} />;
-  if (error) return <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>;
+  if (error) return <div className="rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-500/10 dark:text-red-300">{error}</div>;
 
   if (!drivers || drivers.length === 0) return (
     <div className="mj-empty">

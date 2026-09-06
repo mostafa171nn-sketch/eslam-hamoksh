@@ -32,7 +32,7 @@ export default function CenterEmployeeDetailPage() {
   );
 
   if (loading) return <PencilLoader label={t('loading')} />;
-  if (error) return <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>;
+  if (error) return <div className="rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-500/10 dark:text-red-300">{error}</div>;
   if (!employee) return null;
 
   const statusTone = employee.status === 'ACTIVE' ? 'green' : employee.status === 'PENDING' ? 'amber' : 'slate';

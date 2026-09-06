@@ -105,16 +105,7 @@ export default function CenterStudentsPage() {
         eyebrow={t('manageStudents')}
         title={t('studentsManagement')}
         description={t('studentsManagementSub')}
-      >
-        <button
-          type="button"
-          className="mj-btn mj-btn--primary"
-          onClick={() => setSelectedStudent(null)}
-        >
-          <Edit className="h-4 w-4" />
-          {t('addStudent')}
-        </button>
-      </CenterPageHeader>
+      />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <CenterStatCard value={stats?.totalStudents ?? 0} label={t('totalStudents')} />

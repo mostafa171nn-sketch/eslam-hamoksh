@@ -7,6 +7,8 @@ import {
   X,
   CheckCircle,
   AlertCircle,
+  ArrowLeft,
+  ArrowRight,
 } from 'lucide-react';
 import { PencilLoader } from '../../../components/ui/PencilLoader';
 import { Alert } from '../../../components/ui/ErrorAlert';
@@ -59,7 +61,8 @@ const DAYS = [
 const DAYS_AR = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
 export default function CenterProfilePage() {
-  const { t } = useT();
+  const { t, dir } = useT();
+  const Arrow = dir === 'rtl' ? ArrowLeft : ArrowRight;
   const toast = useToast();
   const { center } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -338,7 +341,7 @@ export default function CenterProfilePage() {
                             setField('workingHours', newHours);
                           }}
                         />
-                        <span className="text-[color:var(--mj-muted)]">→</span>
+                        <Arrow className="h-4 w-4 text-[color:var(--mj-muted)]" />
                         <input
                           type="time"
                           className="mj-input w-32"
