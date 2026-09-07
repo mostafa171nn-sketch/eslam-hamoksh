@@ -1888,4 +1888,156 @@ html {
     padding: 0.125rem 0.4375rem;
     flex-shrink: 0;
   }
+
+  /* === Rooms operating schedule page (القاعات والحجوزات) === */
+
+  /* Date navigation */
+  .mj-schedule-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .mj-schedule-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.3125rem 0.625rem;
+    border: 1px solid var(--mj-border);
+    border-radius: 0.5rem;
+    background: var(--mj-surface);
+    color: var(--mj-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 140ms ease, color 140ms ease, background-color 140ms ease;
+  }
+  .mj-schedule-btn:hover:not(:disabled) {
+    border-color: var(--mj-accent);
+    color: var(--mj-ink-strong);
+  }
+  .mj-schedule-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .mj-schedule-btn--primary {
+    border-color: var(--mj-accent);
+    color: var(--mj-accent);
+    background: var(--mj-accent-soft);
+  }
+  .mj-schedule-date {
+    min-width: 8.5rem;
+    text-align: center;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--mj-ink-strong);
+  }
+
+  /* Room tab with capacity on the side */
+  .mj-room-tab--wide {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .mj-room-tab-seats {
+    font-size: 0.6875rem;
+    font-style: normal;
+    font-weight: 700;
+    color: var(--mj-muted-2);
+    white-space: nowrap;
+  }
+
+  /* Room info bar */
+  .mj-room-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid var(--mj-border-soft);
+    background: var(--mj-surface-2);
+  }
+  .mj-room-info-main {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+  .mj-room-info-name {
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: var(--mj-ink-strong);
+  }
+  .mj-room-info-caption {
+    font-size: 0.75rem;
+    color: var(--mj-muted);
+  }
+  .mj-room-info-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--mj-muted);
+  }
+
+  /* Booking detail panel (below timeline) */
+  .mj-booking-detail {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-top: 1px solid var(--mj-border-soft);
+    background: var(--mj-surface);
+  }
+  .mj-booking-detail-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--mj-ink-strong);
+  }
+  .mj-booking-detail-meta {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--mj-muted);
+    line-height: 1.5;
+  }
+
+  /* Timeline slots rendered as buttons */
+  button.mj-timeline-slot {
+    border: none;
+    font: inherit;
+    text-align: start;
+    width: auto;
+  }
+
+  /* Booking request queue */
+  .mj-queue-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.625rem;
+    background: var(--mj-surface-2);
+    border: 1px solid var(--mj-border-soft);
+  }
+  .mj-queue-item-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--mj-ink-strong);
+  }
+  .mj-queue-item-msg {
+    margin-top: 0.1875rem;
+    font-size: 0.8125rem;
+    color: var(--mj-muted);
+    line-height: 1.5;
+  }
+  .mj-queue-item-meta {
+    margin-top: 0.375rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--mj-muted-2);
+  }
 }

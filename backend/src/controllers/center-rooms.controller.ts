@@ -13,7 +13,7 @@ export const getCenterRooms = asyncHandler(async (req: Request, res: Response) =
   }
 
   const rooms = await prisma.room.findMany({
-    where: { centerId },
+    where: { centerId, status: 'ACTIVE' },
     include: {
       location: { select: { name: true } },
     },

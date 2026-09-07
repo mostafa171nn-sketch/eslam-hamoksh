@@ -4,6 +4,7 @@ import { requirePermission } from '../middleware/rbac';
 import {
   listBookings,
   getBookingStats,
+  getRoomSchedule,
   createBooking,
   updateBookingStatus,
   deleteBooking,
@@ -14,6 +15,7 @@ const router = Router();
 router.use(authenticate, requireCenterAdmin);
 
 router.get('/', requirePermission('rooms.view'), listBookings);
+router.get('/schedule', requirePermission('rooms.view'), getRoomSchedule);
 router.get('/stats', requirePermission('rooms.view'), getBookingStats);
 router.post('/', requirePermission('rooms.create'), createBooking);
 router.patch('/:id/status', requirePermission('rooms.update'), updateBookingStatus);
