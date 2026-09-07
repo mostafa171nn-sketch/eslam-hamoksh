@@ -27,7 +27,6 @@ export const TENANT_MODELS = new Set<string>([
   'Document',
   'ActivityLog',
   'Group',
-  'GroupEnrollment',
   'RoomBooking',
   'Complaint',
   'Broadcast',

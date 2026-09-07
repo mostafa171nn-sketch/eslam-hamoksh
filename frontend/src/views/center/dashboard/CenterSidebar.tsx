@@ -33,8 +33,8 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/center', labelKey: 'dashboard', icon: LayoutDashboard, end: true },
-  { to: '/center/classrooms', labelKey: 'classrooms', icon: DoorOpen },
+  { to: '/center', labelKey: 'followUpNav', icon: LayoutDashboard, end: true },
+  { to: '/center/classrooms', labelKey: 'roomsNav', icon: DoorOpen },
   { to: '/center/teachers', labelKey: 'teachers', icon: GraduationCap },
   { to: '/center/groups', labelKey: 'groups', icon: Group },
   { to: '/center/students', labelKey: 'students', icon: Users },
@@ -123,7 +123,7 @@ export function CenterSidebar({
               معارج
             </p>
             <p className="mt-0.5 text-[0.8125rem] font-medium text-[color:var(--mj-muted)]">
-              {t('centerDashboard')}
+              {t('portalSubtitle')}
             </p>
           </div>
           <button

@@ -79,7 +79,7 @@ export const getGroupSummary = asyncHandler(async (_req: Request, res: Response)
   const [active, needsRoom, students, total] = await Promise.all([
     prisma.group.count({ where: { status: 'ACTIVE' } }),
     prisma.group.count({ where: { status: 'NEEDS_ROOM' } }),
-    prisma.groupEnrollment.count({ where: { status: 'ACTIVE' } }),
+    prisma.groupEnrollment.count({ where: { status: 'ACTIVE', group: { centerId } } }),
     prisma.group.count(),
   ]);
 
