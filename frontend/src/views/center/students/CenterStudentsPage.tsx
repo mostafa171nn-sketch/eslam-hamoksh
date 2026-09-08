@@ -1,44 +1,51 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import {
-  Edit,
-  Users,
-} from 'lucide-react';
-import { PencilLoader } from '../../../components/ui/PencilLoader';
-import { Alert } from '../../../components/ui/ErrorAlert';
-import { EmptyState } from '../../../components/ui/EmptyState';
+import { Users, BellRing, UserPlus } from 'lucide-react';
 import { useApi, errorMessage } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
 import { useToast } from '../../../context/ToastContext';
-import { useT, type DictKey } from '../../../i18n';
+import { useT } from '../../../i18n';
+import { formatCurrency } from '../../../lib/format';
 import { CenterPageHeader } from '../ui/CenterPageHeader';
 import { CenterStatCard } from '../ui/CenterStatCard';
 import { CenterPill } from '../ui/CenterPill';
-import { CenterSearchInput } from '../ui/CenterSearchInput';
 import { CenterModal } from '../ui/CenterModal';
+import { PencilLoader } from '../../../components/ui/PencilLoader';
+import { Alert } from '../../../components/ui/ErrorAlert';
+import { EmptyState } from '../../../components/ui/EmptyState';
 
-interface Student {
+interface StudentGroup {
+  id: string;
+  groupId: string;
+  name: string;
+  subject: string | null;
+  stage: string | null;
+}
+
+interface StudentRow {
   id: string;
   userId: string;
   fullName: string;
   username: string;
   phone: string | null;
-  email: string | null;
   photo: string | null;
   status: string;
   studentNumber: string | null;
   grade: string | null;
-  gradeId: string | null;
   parent: string | null;
-  parentId: string | null;
-  teachers: string[];
-  subjects: string[];
-  attendanceRate: number;
+  parentPhone: string | null;
+  groupCount: number;
+  groups: StudentGroup[];
   enrollmentStatus: string;
-  paymentStatus: string;
-  createdAt: string;
+  financialStatus: string;
+  amountDue: number;
+  totalCollected: number;
+  attendanceRate: number | null;
+  lastAttendance: string | null;
+  lastAttendanceStatus: string | null;
+  hasMissingAttendance: boolean;
 }
 
 interface StudentStats {
@@ -46,18 +53,25 @@ interface StudentStats {
   activeStudents: number;
   pendingEnrollments: number;
   overduePayments: number;
+  needsMatching: number;
 }
 
-const getStatusTone = (status: string) => {
+interface FormData {
+  groups: { id: string; name: string }[];
+  grades: { id: string; name: string }[];
+}
+
+const financiallyTone = (status: string) => {
   switch (status) {
-    case 'ACTIVE': return 'green' as const;
-    case 'INACTIVE': return 'slate' as const;
-    case 'PENDING': return 'amber' as const;
+    case 'PAID': return 'green' as const;
+    case 'DUE': return 'amber' as const;
+    case 'NEEDS_MATCHING': return 'amber' as const;
+    case 'UNPAID': return 'slate' as const;
     default: return 'slate' as const;
   }
 };
 
-const getEnrollmentTone = (status: string) => {
+const enrollmentTone = (status: string) => {
   switch (status) {
     case 'ACTIVE': return 'green' as const;
     case 'FROZEN': return 'slate' as const;
@@ -66,81 +80,136 @@ const getEnrollmentTone = (status: string) => {
   }
 };
 
+const attendanceTone = (status: string | null) =>
+  status === 'PRESENT' || status === 'LATE' ? 'green' as const : status === 'ABSENT' ? 'red' as const : 'slate' as const;
+
 export default function CenterStudentsPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
+  const toast = useToast();
 
-  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [searchInput, setSearchInput] = useState('');
-  const [status, setStatus] = useState('');
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [debounced, setDebounced] = useState('');
+  const [financialStatus, setFinancialStatus] = useState('');
+  const [registrationStatus, setRegistrationStatus] = useState('');
+  const [showAdd, setShowAdd] = useState(false);
+  const [reminding, setReminding] = useState(false);
 
-  const { data: students, loading, initialLoading, error, reload } = useApi(
-    () => api.get<Student[]>('/center/students', {
-      page,
-      limit: 20,
-      ...(search && { search }),
-      ...(status && { status }),
+  const { data: stats } = useApi<StudentStats>(() => api.get<StudentStats>('/center/students/stats'), []);
+  const { data: students, loading, error, reload } = useApi<StudentRow[]>(
+    () => api.get<StudentRow[]>('/center/students', {
+      limit: 100,
+      ...(debounced ? { search: debounced } : {}),
+      ...(financialStatus ? { financialStatus } : {}),
+      ...(registrationStatus ? { registrationStatus } : {}),
     }),
-    [page, search, status]
+    [debounced, financialStatus, registrationStatus]
   );
+  const { data: formData } = useApi<FormData>(() => api.get<FormData>('/center/students/form-data'), []);
 
-  const { data: stats } = useApi<StudentStats>(
-    () => api.get<StudentStats>('/center/students/stats'),
-    []
-  );
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  const segmentedStudents = students ?? [];
+  const activeCount = stats?.activeStudents ?? 0;
+  const overdueCount = stats?.overduePayments ?? 0;
+  const matchingCount = stats?.needsMatching ?? 0;
 
-  const segments = [
-    { key: '', label: t('allStatus'), count: stats?.totalStudents ?? segmentedStudents.length },
-    { key: 'ACTIVE', label: t('active'), count: stats?.activeStudents ?? 0 },
-    { key: 'INACTIVE', label: t('inactive'), count: 0 },
-  ];
+  const remindOverdue = async () => {
+    setReminding(true);
+    try {
+      const res = await api.post<{ count: number }>('/center/students/remind-overdue', {});
+      toast.success(t('remindOverdueToast', { count: res.data.count }));
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setReminding(false);
+    }
+  };
+
+  const financialLabel = (status: string, amountDue: number) => {
+    switch (status) {
+      case 'PAID':
+        return { label: t('financialPaid'), sub: t('financeMatched') };
+      case 'DUE':
+        return { label: formatCurrency(amountDue * 100, lang), sub: t('financeDue') };
+      case 'NEEDS_MATCHING':
+        return { label: t('financeNeedsMatching'), sub: t('financeReview') };
+      default:
+        return { label: t('financialNotPaid'), sub: '' };
+    }
+  };
+
+  const filteredStudents = students ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <CenterPageHeader
-        eyebrow={t('manageStudents')}
-        title={t('studentsManagement')}
-        description={t('studentsManagementSub')}
-      />
+        eyebrow={t('studentsEyebrow')}
+        title={t('studentsTitle')}
+        description={t('studentsSub')}
+      >
+        <button type="button" className="mj-btn mj-btn--ghost" onClick={remindOverdue} disabled={reminding}>
+          <BellRing className="h-4 w-4" />
+          {t('remindOverdue')}
+        </button>
+        <button type="button" className="mj-btn mj-btn--primary" onClick={() => setShowAdd(true)}>
+          <UserPlus className="h-4 w-4" />
+          {t('addStudentRecord')}
+        </button>
+      </CenterPageHeader>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <CenterStatCard value={stats?.totalStudents ?? 0} label={t('totalStudents')} />
-        <CenterStatCard value={stats?.activeStudents ?? 0} label={t('active')} />
-        <CenterStatCard value={stats?.pendingEnrollments ?? 0} label={t('pendingEnrollments')} />
-        <CenterStatCard value={stats?.overduePayments ?? 0} label={t('overdue')} />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <CenterStatCard value={activeCount} label={t('studentsStatActive')} />
+        <CenterStatCard value={overdueCount} label={t('studentsStatOverdue')} />
+        <CenterStatCard value={matchingCount} label={t('studentsStatMatching')} />
       </div>
 
       <div className="mj-card">
-        <div className="px-4 pt-3">
-          <CenterSearchInput
-            value={searchInput}
-            onChange={setSearchInput}
-            placeholder={t('searchStudents')}
-            aria-label={t('searchStudents')}
-          />
+        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mj-field">
+            <label className="mj-label">{t('search')}</label>
+            <input
+              type="search"
+              className="mj-input"
+              placeholder={t('studentsSearchPlaceholder')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label={t('search')}
+            />
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('financialStatus')}</label>
+            <select
+              className="mj-select"
+              value={financialStatus}
+              onChange={(e) => setFinancialStatus(e.target.value)}
+            >
+              <option value="">{t('allFinancialStatuses')}</option>
+              <option value="PAID">{t('financialPaid')}</option>
+              <option value="DUE">{t('financeDue')}</option>
+              <option value="NEEDS_MATCHING">{t('financeNeedsMatching')}</option>
+            </select>
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('enrollmentStatusFilter')}</label>
+            <select
+              className="mj-select"
+              value={registrationStatus}
+              onChange={(e) => setRegistrationStatus(e.target.value)}
+            >
+              <option value="">{t('allEnrollmentStatuses')}</option>
+              <option value="active">{t('enrollmentActive')}</option>
+              <option value="frozen">{t('enrollmentFrozen')}</option>
+            </select>
+          </div>
         </div>
-        <div className="mt-3 border-t border-[color:var(--mj-border-soft)] px-4 py-3">
-          <label className="mj-label">{t('status')}</label>
-          <select
-            className="mj-select"
-            value={status}
-            onChange={(e) => { setPage(1); setStatus(e.target.value); }}
-          >
-            <option value="">{t('allStatus')}</option>
-            <option value="ACTIVE">{t('active')}</option>
-            <option value="INACTIVE">{t('inactive')}</option>
-          </select>
-        </div>
-        {(status || search) && (
-          <div className="px-4 pb-3">
+        {(financialStatus || registrationStatus || search) && (
+          <div className="border-t border-[color:var(--mj-border-soft)] px-4 pb-3">
             <button
               type="button"
-              className="mj-btn mj-btn--ghost mj-btn--sm"
-              onClick={() => { setStatus(''); setSearch(''); setSearchInput(''); }}
+              className="mj-btn mj-btn--ghost mj-btn--sm mt-3"
+              onClick={() => { setFinancialStatus(''); setRegistrationStatus(''); setSearch(''); setDebounced(''); }}
             >
               {t('clearFilters')}
             </button>
@@ -148,24 +217,16 @@ export default function CenterStudentsPage() {
         )}
       </div>
 
-      <div className="mj-tabs">
-        {segments.map((seg) => (
-          <button
-            key={seg.key}
-            type="button"
-            className={`mj-tab ${status === seg.key ? 'mj-tab--active' : ''}`}
-            onClick={() => { setPage(1); setStatus(seg.key); }}
-          >
-            {seg.label}
-            <span className="mj-tab-count">{seg.count}</span>
-          </button>
-        ))}
-      </div>
-
       {error && <Alert message={error} />}
-      {loading && <PencilLoader label={t('loading')} size={initialLoading ? undefined : 'sm'} />}
+      {loading && <PencilLoader label={t('loading')} />}
 
-      {!loading && segmentedStudents.length > 0 && (
+      {!loading && filteredStudents.length === 0 && (
+        <div className="mj-card">
+          <EmptyState icon={Users} title={t('noStudents')} description={t('noStudentsDesc')} />
+        </div>
+      )}
+
+      {!loading && filteredStudents.length > 0 && (
         <div className="mj-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="mj-table">
@@ -173,104 +234,129 @@ export default function CenterStudentsPage() {
                 <tr>
                   <th>{t('student')}</th>
                   <th>{t('parent')}</th>
-                  <th>{t('grade')}</th>
-                  <th>{t('status')}</th>
-                  <th className="text-end">{t('actions')}</th>
+                  <th>{t('columnGroups')}</th>
+                  <th>{t('referenceAttendance')}</th>
+                  <th>{t('financialStatus')}</th>
                 </tr>
               </thead>
               <tbody>
-                {segmentedStudents.map((student) => (
-                  <tr key={student.id} className="is-clickable">
-                    <td>
-                      <Link
-                        href={`/center/students/${student.id}`}
-                        className="group flex items-center gap-3"
-                      >
-                        <span className="mj-avatar mj-avatar--sm">
-                          {student.fullName ? student.fullName.charAt(0) : '؟'}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block font-semibold text-[color:var(--mj-ink-strong)] group-hover:text-[color:var(--mj-accent)]">
-                            {student.fullName}
+                {filteredStudents.map((student) => {
+                  const fin = financialLabel(student.financialStatus, student.amountDue);
+                  const regTone = enrollmentTone(student.enrollmentStatus);
+                  const regLabel =
+                    student.enrollmentStatus === 'ACTIVE' ? t('enrollmentActive')
+                    : student.enrollmentStatus === 'FROZEN' ? t('enrollmentFrozen')
+                    : t('enrollmentPending');
+                  return (
+                    <tr key={student.id} className="is-clickable">
+                      <td>
+                        <Link href={`/center/students/${student.id}`} className="group flex items-center gap-3">
+                          <span className="mj-avatar mj-avatar--sm">
+                            {student.fullName ? student.fullName.charAt(0) : '؟'}
                           </span>
-                          <span className="block text-xs text-[color:var(--mj-muted-2)]">
-                            {student.studentNumber || student.id.slice(0, 8).toUpperCase()}{student.grade ? ' · ' + student.grade : ''}
-                          </span>
-                          {student.enrollmentStatus && (
-                            <span className="mt-1 inline-block">
-                              <CenterPill tone={getEnrollmentTone(student.enrollmentStatus)}>
-                                {t(student.enrollmentStatus.toLowerCase() as DictKey)}
-                              </CenterPill>
+                          <span className="min-w-0">
+                            <span className="block font-semibold text-[color:var(--mj-ink-strong)] group-hover:text-[color:var(--mj-accent)]">
+                              {student.fullName}
                             </span>
-                          )}
+                            <span className="block text-xs text-[color:var(--mj-muted-2)]">
+                              {[student.studentNumber, student.grade].filter(Boolean).join(' · ')}
+                            </span>
+                            {student.groupCount > 0 && (
+                              <span className="mt-0.5 flex items-center gap-1 text-xs text-[color:var(--mj-muted)]">
+                                <Users className="h-3 w-3" />
+                                {student.groups.map((g) => g.name).join('، ')}
+                              </span>
+                            )}
+                          </span>
+                        </Link>
+                      </td>
+                      <td>
+                        <span className="block font-medium text-[color:var(--mj-ink)]">{student.parent || '—'}</span>
+                        {student.parentPhone && (
+                          <span className="block text-xs text-[color:var(--mj-muted-2)]" dir="ltr">{student.parentPhone}</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className="block font-medium text-[color:var(--mj-ink-strong)]">
+                          {student.groupCount} {student.groupCount === 1 ? t('groupGeneric') : t('groupsGeneric')}
                         </span>
-                      </Link>
-                    </td>
-                    <td>
-                      <span className="block font-medium text-[color:var(--mj-ink)]">
-                        {student.parent || '—'}
-                      </span>
-                      <span className="block text-xs text-[color:var(--mj-muted-2)]">
-                        {student.phone || ''}
-                      </span>
-                    </td>
-                    <td className="text-[color:var(--mj-muted)]">{student.grade || '—'}</td>
-                    <td>
-                      <CenterPill tone={getStatusTone(student.status)}>
-                        {t(student.status.toLowerCase() as DictKey)}
-                      </CenterPill>
-                    </td>
-                    <td className="text-end">
-                      <button
-                        type="button"
-                        className="mj-btn mj-btn--ghost mj-btn--sm"
-                        onClick={() => { setSelectedStudent(student); setShowEditModal(true); }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                        <span className="mt-1 inline-block">
+                          <CenterPill tone={regTone}>{regLabel}</CenterPill>
+                        </span>
+                      </td>
+                      <td>
+                        <span className="block font-semibold text-[color:var(--mj-ink-strong)]">
+                          {student.attendanceRate !== null && student.attendanceRate !== undefined ? `${student.attendanceRate}%` : '—'}
+                        </span>
+                        {student.lastAttendanceStatus && (
+                          <span className="mt-1 inline-flex items-center gap-1.5">
+                            <CenterPill tone={attendanceTone(student.lastAttendanceStatus)}>
+                              {student.lastAttendanceStatus === 'PRESENT' ? t('attendancePresentShort')
+                                : student.lastAttendanceStatus === 'LATE' ? t('attendanceLateShort')
+                                : student.lastAttendanceStatus === 'ABSENT' ? t('attendanceAbsentShort')
+                                : t('attendanceExcusedShort')}
+                            </CenterPill>
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <span className="block font-semibold text-[color:var(--mj-ink-strong)]">{fin.label}</span>
+                        {fin.sub && (
+                          <span className="mt-0.5 inline-block">
+                            <CenterPill tone={financiallyTone(student.financialStatus)}>{fin.sub}</CenterPill>
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
       )}
 
-      {!loading && segmentedStudents.length === 0 && (
-        <div className="mj-card">
-          <EmptyState icon={Users} title={t('noStudents')} description={t('noStudentsDesc')} />
-        </div>
-      )}
-
-      {selectedStudent && (
-        <EditStudentModal
-          student={selectedStudent}
-          open={showEditModal}
-          onClose={() => { setShowEditModal(false); setSelectedStudent(null); }}
-          onSuccess={() => { setShowEditModal(false); setSelectedStudent(null); reload(); }}
+      {showAdd && (
+        <AddStudentModal
+          groups={formData?.groups ?? []}
+          grades={formData?.grades ?? []}
+          onClose={() => setShowAdd(false)}
+          onSuccess={() => { setShowAdd(false); reload(); }}
         />
       )}
     </div>
   );
 }
 
-function EditStudentModal({ student, open, onClose, onSuccess }: { student: Student; open: boolean; onClose: () => void; onSuccess: () => void }) {
+function AddStudentModal({
+  groups,
+  grades,
+  onClose,
+  onSuccess,
+}: {
+  groups: { id: string; name: string }[];
+  grades: { id: string; name: string }[];
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
   const { t } = useT();
   const toast = useToast();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    fullName: student.fullName,
-    phone: student.phone || '',
-    email: student.email || '',
+    studentName: '',
+    grade: '',
+    studentPhone: '',
+    parentName: '',
+    parentPhone: '',
+    groupId: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await api.put(`/center/students/${student.id}`, form);
-      toast.success(t('studentUpdated'));
+      await api.post('/center/students', form);
+      toast.success(t('studentCreatedToast'));
       onSuccess();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -281,67 +367,85 @@ function EditStudentModal({ student, open, onClose, onSuccess }: { student: Stud
 
   return (
     <CenterModal
-      open={open}
+      open
       onClose={onClose}
-      title={t('editStudent')}
+      title={t('addStudentTitle')}
+      description={t('addStudentDesc')}
       size="md"
       footer={
         <>
           <button type="button" className="mj-btn mj-btn--ghost" onClick={onClose}>{t('cancel')}</button>
-          <button type="submit" form="edit-student-form" className="mj-btn mj-btn--primary" disabled={saving}>
-            {saving ? t('creating') : t('save')}
+          <button type="submit" form="add-student-form" className="mj-btn mj-btn--primary" disabled={saving}>
+            {saving ? t('creating') : t('saveRecord')}
           </button>
         </>
       }
     >
-      <form id="edit-student-form" onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex items-center gap-3 rounded-lg bg-[color:var(--mj-wash)] p-3">
-          <span className="mj-avatar mj-avatar--md">
-            {student.fullName ? student.fullName.charAt(0) : '؟'}
-          </span>
-          <div>
-            <p className="font-semibold text-[color:var(--mj-ink-strong)]">{student.fullName}</p>
-            <p className="text-sm text-[color:var(--mj-muted)]">
-              @{student.username}{student.grade ? ' • ' + student.grade : ''}
-            </p>
-          </div>
-        </div>
+      <form id="add-student-form" onSubmit={handleSubmit} className="space-y-4">
         <div className="mj-field">
-          <label className="mj-label">{t('fullName')}</label>
+          <label className="mj-label">{t('studentNameLabel')}</label>
           <input
             type="text"
             className="mj-input"
             required
-            value={form.fullName}
-            onChange={(e) => setForm(f => ({ ...f, fullName: e.target.value }))}
+            value={form.studentName}
+            onChange={(e) => setForm(f => ({ ...f, studentName: e.target.value }))}
           />
         </div>
-        <div className="mj-field">
-          <label className="mj-label">{t('phone')}</label>
-          <input
-            type="text"
-            className="mj-input"
-            value={form.phone}
-            onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
-          />
-        </div>
-        <div className="mj-field">
-          <label className="mj-label">{t('email')}</label>
-          <input
-            type="email"
-            className="mj-input"
-            value={form.email}
-            onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
-          />
-        </div>
-        {student.subjects.length > 0 && (
-          <div>
-            <label className="mj-label">{t('subjects')}</label>
-            <div className="flex flex-wrap gap-1">
-              {student.subjects.map((s, i) => <CenterPill key={i} tone="blue">{s}</CenterPill>)}
-            </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="mj-field">
+            <label className="mj-label">{t('stage')}</label>
+            <select
+              className="mj-select"
+              value={form.grade}
+              onChange={(e) => setForm(f => ({ ...f, grade: e.target.value }))}
+            >
+              <option value="">{t('stagePlaceholder')}</option>
+              {grades.map((g) => <option key={g.id} value={g.name}>{g.name}</option>)}
+            </select>
           </div>
-        )}
+          <div className="mj-field">
+            <label className="mj-label">{t('studentPhoneLabel')}</label>
+            <input
+              type="text"
+              className="mj-input"
+              required
+              value={form.studentPhone}
+              onChange={(e) => setForm(f => ({ ...f, studentPhone: e.target.value }))}
+            />
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="mj-field">
+            <label className="mj-label">{t('parentNameLabel')}</label>
+            <input
+              type="text"
+              className="mj-input"
+              value={form.parentName}
+              onChange={(e) => setForm(f => ({ ...f, parentName: e.target.value }))}
+            />
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('parentPhoneLabel')}</label>
+            <input
+              type="text"
+              className="mj-input"
+              value={form.parentPhone}
+              onChange={(e) => setForm(f => ({ ...f, parentPhone: e.target.value }))}
+            />
+          </div>
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('approvedGroup')}</label>
+          <select
+            className="mj-select"
+            value={form.groupId}
+            onChange={(e) => setForm(f => ({ ...f, groupId: e.target.value }))}
+          >
+            <option value="">{t('selectGroupPlaceholder')}</option>
+            {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+          </select>
+        </div>
       </form>
     </CenterModal>
   );
