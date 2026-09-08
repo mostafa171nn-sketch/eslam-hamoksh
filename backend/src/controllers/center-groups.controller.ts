@@ -12,8 +12,35 @@ function slugify(value: string): string {
   return base || `group-${Date.now()}`;
 }
 
+// The center's agreement with the teacher is derived honestly from the stored
+// payment/rent settings — there is no commission-percent field in the model.
+function deriveAgreement(
+  paymentSettings: {
+    sessionEnabled: boolean | null;
+    monthlyEnabled: boolean | null;
+    sessionPrice: number | null;
+    monthlyPrice: number | null;
+  } | null,
+  hourlyRate: number | null,
+) {
+  const monthly =
+    paymentSettings?.monthlyEnabled && (paymentSettings?.monthlyPrice ?? 0) > 0
+      ? { type: 'monthly' as const, amount: (paymentSettings.monthlyPrice ?? 0) as number }
+      : null;
+  const session =
+    paymentSettings?.sessionEnabled && (paymentSettings?.sessionPrice ?? 0) > 0
+      ? { type: 'session' as const, amount: (paymentSettings.sessionPrice ?? 0) as number }
+      : null;
+  return monthly ?? session ?? { type: 'session' as const, amount: hourlyRate ?? 0 };
+}
+
 const groupInclude = {
-  teacher: { include: { user: { select: { fullName: true } } } },
+  teacher: {
+    include: {
+      user: { select: { fullName: true } },
+      paymentSettings: true,
+    },
+  },
   room: { select: { name: true } },
   branch: { select: { name: true } },
   subject: { select: { name: true } },
@@ -38,11 +65,19 @@ export const listGroups = asyncHandler(async (req: Request, res: Response) => {
 
   const groups = await prisma.group.findMany({
     where: {
+      centerId,
       ...(teacherId ? { teacherId } : {}),
       ...(roomId ? { roomId } : {}),
       ...(status ? { status: status as any } : {}),
       ...(search
-        ? { OR: [{ name: { contains: search } }, { stage: { contains: search } }] }
+        ? {
+            OR: [
+              { name: { contains: search } },
+              { stage: { contains: search } },
+              { teacher: { user: { fullName: { contains: search } } } },
+              { room: { name: { contains: search } } },
+            ],
+          }
         : {}),
     },
     include: groupInclude,
@@ -68,6 +103,7 @@ export const listGroups = asyncHandler(async (req: Request, res: Response) => {
       endTime: g.endTime,
       capacity: g.capacity,
       studentCount: g.enrollments.length,
+      agreement: deriveAgreement(g.teacher?.paymentSettings ?? null, g.teacher?.hourlyRate ?? null),
     })),
   );
 });
@@ -77,10 +113,10 @@ export const getGroupSummary = asyncHandler(async (_req: Request, res: Response)
   if (!centerId) throw ApiError.unauthorized();
 
   const [active, needsRoom, students, total] = await Promise.all([
-    prisma.group.count({ where: { status: 'ACTIVE' } }),
-    prisma.group.count({ where: { status: 'NEEDS_ROOM' } }),
+    prisma.group.count({ where: { centerId, status: 'ACTIVE' } }),
+    prisma.group.count({ where: { centerId, status: 'NEEDS_ROOM' } }),
     prisma.groupEnrollment.count({ where: { status: 'ACTIVE', group: { centerId } } }),
-    prisma.group.count(),
+    prisma.group.count({ where: { centerId } }),
   ]);
 
   return ok(res, {
@@ -97,7 +133,7 @@ export const getGroupDetail = asyncHandler(async (req: Request, res: Response) =
 
   const { slug } = req.params;
   const group = await prisma.group.findFirst({
-    where: { slug, centerId },
+    where: { centerId, OR: [{ slug }, { id: slug }] },
     include: {
       ...groupInclude,
       bookings: { include: { teacher: { include: { user: { select: { fullName: true } } } }, room: { select: { name: true } } }, orderBy: { createdAt: 'desc' } },
@@ -150,6 +186,7 @@ export const getGroupDetail = asyncHandler(async (req: Request, res: Response) =
     roomId: group.roomId,
     branch: group.branch?.name || null,
     subject: group.subject?.name || null,
+    agreement: deriveAgreement(group.teacher?.paymentSettings ?? null, group.teacher?.hourlyRate ?? null),
     students,
     bookings: group.bookings.map((b) => ({
       id: b.id,

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Link2, Search } from 'lucide-react';
 import { CenterPageHeader } from '../ui/CenterPageHeader';
 import { CenterStatCard } from '../ui/CenterStatCard';
 import { CenterPill } from '../ui/CenterPill';
@@ -13,10 +13,12 @@ import { useApi, errorMessage } from '../../../hooks/useApi';
 import { api } from '../../../lib/api';
 import { useToast } from '../../../context/ToastContext';
 import { useT } from '../../../i18n';
+import { dayName, formatTime, formatCurrency } from '../../../lib/format';
 
-const DAY_NAMES: Record<number, string> = {
-  0: 'الأحد', 1: 'الاثنين', 2: 'الثلاثاء', 3: 'الأربعاء', 4: 'الخميس', 5: 'الجمعة', 6: 'السبت',
-};
+interface Agreement {
+  type: 'session' | 'monthly';
+  amount: number;
+}
 
 interface GroupRow {
   id: string;
@@ -24,6 +26,7 @@ interface GroupRow {
   slug: string | null;
   stage: string | null;
   status: string;
+  teacherId: string | null;
   teacher: string | null;
   room: string | null;
   roomId: string | null;
@@ -34,6 +37,7 @@ interface GroupRow {
   endTime: string | null;
   capacity: number | null;
   studentCount: number;
+  agreement: Agreement;
 }
 
 interface GroupSummary {
@@ -46,20 +50,25 @@ interface GroupSummary {
 interface FormData {
   teachers: { id: string; name: string }[];
   rooms: { id: string; name: string }[];
-  branches: { id: string; name: string }[];
-  students: { id: string; name: string }[];
 }
 
-export function CenterGroupsPage() {
-  const { t } = useT();
+export default function CenterGroupsPage() {
+  const { t, lang } = useT();
+  const router = useRouter();
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
   const [debounced, setDebounced] = useState('');
+  const [teacherId, setTeacherId] = useState('');
+  const [roomId, setRoomId] = useState('');
+  const [showLink, setShowLink] = useState(false);
 
   const { data: summary } = useApi<GroupSummary>(() => api.get<GroupSummary>('/center/groups/summary'), []);
   const { data: groups, loading, error, reload } = useApi<GroupRow[]>(
-    () => api.get<GroupRow[]>('/center/groups', statusFilter ? { search: debounced || undefined, status: statusFilter } : { search: debounced || undefined }),
-    [debounced, statusFilter]
+    () => api.get<GroupRow[]>('/center/groups', {
+      search: debounced || undefined,
+      teacherId: teacherId || undefined,
+      roomId: roomId || undefined,
+    }),
+    [debounced, teacherId, roomId]
   );
   const { data: formData } = useApi<FormData>(() => api.get<FormData>('/center/groups/form-data'), []);
 
@@ -68,37 +77,48 @@ export function CenterGroupsPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const [showAdd, setShowAdd] = useState(false);
-
-  const dayLabel = (d: number | null) => (d == null ? '—' : DAY_NAMES[d]);
-
-  const timeRange = (s: string | null, e: string | null) => {
-    if (!s && !e) return '—';
-    return `${s ?? ''}–${e ?? ''}`;
-  };
-
   const pillFor = (s: string) => {
     if (s === 'ACTIVE') return 'green' as const;
     if (s === 'NEEDS_ROOM') return 'amber' as const;
     return 'slate' as const;
   };
 
+  const pillLabel = (s: string) => {
+    if (s === 'ACTIVE') return t('groupActive');
+    if (s === 'NEEDS_ROOM') return t('groupNeedsAction');
+    return t('groupPaused');
+  };
+
+  const scheduleLine = (g: GroupRow) => {
+    const time = `${formatTime(g.startTime)}–${formatTime(g.endTime)}`;
+    if (g.dayOfWeek === null || g.dayOfWeek === undefined) return '—';
+    return `${dayName(g.dayOfWeek, lang)} · ${time}`;
+  };
+
+  const agreementLine = (g: GroupRow) => {
+    const amount = formatCurrency(g.agreement.amount, lang);
+    return g.agreement.type === 'monthly'
+      ? `${t('agreementMonthly')} · ${amount}`
+      : `${t('agreementSession')} · ${amount}`;
+  };
+
   return (
     <div className="space-y-5">
       <CenterPageHeader
+        eyebrow={t('groupsEyebrow')}
         title={t('groupsTitle')}
         description={t('groupsSub')}
       >
-        <button type="button" className="mj-btn mj-btn--primary" onClick={() => setShowAdd(true)}>
-          <Plus className="h-4 w-4" />
-          {t('addGroup')}
+        <button type="button" className="mj-btn mj-btn--primary" onClick={() => setShowLink(true)}>
+          <Link2 className="h-4 w-4" />
+          {t('linkGroupToBooking')}
         </button>
       </CenterPageHeader>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <CenterStatCard value={summary?.active ?? '—'} label={t('groupActive')} />
-        <CenterStatCard value={summary?.needsRoom ?? '—'} label={t('groupNeedsRoom')} />
-        <CenterStatCard value={summary?.students ?? '—'} label={t('groupStudents')} />
+        <CenterStatCard value={summary?.active ?? '—'} label={t('groupsStatActive')} />
+        <CenterStatCard value={summary?.needsRoom ?? '—'} label={t('groupsStatNeedsRoom')} />
+        <CenterStatCard value={summary?.students ?? '—'} label={t('groupsStatStudents')} />
       </div>
 
       <div className="mj-card mj-card--padding">
@@ -107,19 +127,36 @@ export function CenterGroupsPage() {
             <CenterSearchInput
               value={search}
               onChange={setSearch}
-              placeholder={t('searchPlaceholder')}
+              placeholder={t('searchGroupsPlaceholder')}
+              aria-label={t('searchGroupsPlaceholder')}
             />
           </div>
-          <select
-            className="mj-select sm:w-48"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">{t('allStatuses')}</option>
-            <option value="ACTIVE">{t('groupActive')}</option>
-            <option value="NEEDS_ROOM">{t('groupNeedsRoom')}</option>
-            <option value="INACTIVE">{t('groupInactive')}</option>
-          </select>
+          <div className="min-w-0 sm:w-44">
+            <select
+              className="mj-select"
+              value={teacherId}
+              onChange={(e) => setTeacherId(e.target.value)}
+              aria-label={t('teacherField')}
+            >
+              <option value="">{t('allTeachers')}</option>
+              {formData?.teachers.map((x) => (
+                <option key={x.id} value={x.id}>{x.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="min-w-0 sm:w-40">
+            <select
+              className="mj-select"
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              aria-label={t('groupRoom')}
+            >
+              <option value="">{t('allRooms')}</option>
+              {formData?.rooms.map((x) => (
+                <option key={x.id} value={x.id}>{x.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -132,48 +169,48 @@ export function CenterGroupsPage() {
             <table className="mj-table">
               <thead>
                 <tr>
-                  <th>{t('groupGeneric')}</th>
-                  <th>{t('teacher')}</th>
+                  <th>{t('groupColumn')}</th>
+                  <th>{t('teacherColumn')}</th>
                   <th>{t('groupStudents')}</th>
-                  <th>{t('groupRoom')}</th>
-                  <th>{t('status')}</th>
+                  <th>{t('groupRoomSchedule')}</th>
+                  <th>{t('agreement')}</th>
                 </tr>
               </thead>
               <tbody>
                 {groups.map((g) => (
-                  <tr key={g.id}>
+                  <tr
+                    key={g.id}
+                    className="is-clickable"
+                    onClick={() => router.push(`/center/groups/${g.slug ?? g.id}`)}
+                  >
                     <td>
-                      <Link
-                        href={`/center/groups/${g.slug ?? g.id}`}
-                        className="block"
-                      >
-                        <span className="font-bold text-[color:var(--mj-ink-strong)]">{g.name}</span>
-                        {g.stage && (
-                          <span className="mt-0.5 block text-xs text-[color:var(--mj-muted)]">{g.stage}</span>
-                        )}
-                      </Link>
+                      <span className="block font-bold text-[color:var(--mj-ink-strong)]">{g.name}</span>
+                      {g.stage && (
+                        <span className="mt-0.5 block text-xs text-[color:var(--mj-muted)]">{g.stage}</span>
+                      )}
                     </td>
                     <td>
-                      <span className="font-medium text-[color:var(--mj-ink-strong)]">{g.teacher || '—'}</span>
+                      <span className="block font-medium text-[color:var(--mj-ink-strong)]">{g.teacher || '—'}</span>
                       {g.subject && (
                         <span className="mt-0.5 block text-xs text-[color:var(--mj-muted)]">{g.subject}</span>
                       )}
                     </td>
                     <td>
                       <span className="font-semibold text-[color:var(--mj-ink-strong)]">
-                        {g.studentCount} / {g.capacity ?? '∞'}
+                        {t('groupCapacityFraction', { count: g.studentCount, capacity: g.capacity ?? '∞' })}
                       </span>
                     </td>
                     <td>
-                      <span className="font-medium text-[color:var(--mj-ink-strong)]">{g.room || t('groupNeedsRoom')}</span>
-                      <span className="mt-0.5 block text-xs text-[color:var(--mj-muted)]">
-                        {dayLabel(g.dayOfWeek)} · {timeRange(g.startTime, g.endTime)}
+                      <span className="block font-medium text-[color:var(--mj-ink-strong)]">
+                        {g.room || t('groupNeedsRoom')}
                       </span>
+                      <span className="mt-0.5 block text-xs text-[color:var(--mj-muted)]">{scheduleLine(g)}</span>
                     </td>
                     <td>
-                      <CenterPill tone={pillFor(g.status)}>
-                        {g.status === 'ACTIVE' ? t('groupActive') : g.status === 'NEEDS_ROOM' ? t('groupNeedsRoom') : t('groupInactive')}
-                      </CenterPill>
+                      <span className="block font-semibold text-[color:var(--mj-ink-strong)]">{agreementLine(g)}</span>
+                      <span className="mt-1 block">
+                        <CenterPill tone={pillFor(g.status)}>{pillLabel(g.status)}</CenterPill>
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -185,51 +222,63 @@ export function CenterGroupsPage() {
 
       {!loading && groups?.length === 0 && (
         <div className="mj-empty">
-          <p className="text-sm">{t('noClassrooms')}</p>
+          <Search className="mj-empty-icon" />
+          <p className="text-sm text-[color:var(--mj-ink-strong)]">{t('noGroups')}</p>
         </div>
       )}
 
-      {showAdd && formData && (
-        <AddGroupModal
-          formData={formData}
-          onClose={() => setShowAdd(false)}
-          onSuccess={() => { setShowAdd(false); reload(); }}
+      {showLink && formData && groups && (
+        <LinkGroupModal
+          groups={groups}
+          rooms={formData.rooms}
+          onClose={() => setShowLink(false)}
+          onSuccess={() => { setShowLink(false); reload(); }}
         />
       )}
     </div>
   );
 }
 
-const WEEKDAYS = Object.entries(DAY_NAMES).map(([value, label]) => ({ value, label }));
-const STAGES = [
-  { value: 'ابتدائي', label: 'ابتدائي' },
-  { value: 'اعدادي', label: 'اعدادي' },
-  { value: 'ثانوي', label: 'ثانوي' },
-];
-
-function AddGroupModal({ formData, onClose, onSuccess }: { formData: FormData; onClose: () => void; onSuccess: () => void }) {
+function LinkGroupModal({
+  groups,
+  rooms,
+  onClose,
+  onSuccess,
+}: {
+  groups: GroupRow[];
+  rooms: { id: string; name: string }[];
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
   const { t } = useT();
   const toast = useToast();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    name: '', stage: '', teacherId: '', roomId: '', branchId: '',
-    capacity: '', dayOfWeek: '', startTime: '', endTime: '', status: 'ACTIVE', studentIds: [] as string[],
+    groupId: '',
+    roomId: '',
+    dayOfWeek: '',
+    startTime: '16:00',
+    endTime: '17:30',
   });
 
-  const toggleStudent = (id: string) => {
-    setForm((f) => ({
-      ...f,
-      studentIds: f.studentIds.includes(id) ? f.studentIds.filter((s) => s !== id) : [...f.studentIds, id],
-    }));
-  };
+  const days = Array.from({ length: 7 }, (_, i) => ({
+    value: String(i),
+    label: dayName(i),
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) { toast.error(t('requiredFields')); return; }
+    if (!form.groupId) { toast.error(t('selectGroupPlaceholder')); return; }
     setSaving(true);
     try {
-      await api.post('/center/groups', form);
-      toast.success(t('groupCreatedToast'));
+      await api.put(`/center/groups/${form.groupId}`, {
+        roomId: form.roomId || null,
+        dayOfWeek: form.dayOfWeek !== '' ? Number(form.dayOfWeek) : null,
+        startTime: form.startTime || null,
+        endTime: form.endTime || null,
+        status: form.roomId ? 'ACTIVE' : 'NEEDS_ROOM',
+      });
+      toast.success(t('groupLinkedToast'));
       onSuccess();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -242,90 +291,59 @@ function AddGroupModal({ formData, onClose, onSuccess }: { formData: FormData; o
     <CenterModal
       open
       onClose={onClose}
-      title={t('addGroup')}
+      title={t('linkGroupDialogTitle')}
+      description={t('linkGroupDialogDesc')}
+      size="md"
       footer={
         <>
           <button type="button" className="mj-btn mj-btn--ghost" onClick={onClose}>{t('cancel')}</button>
-          <button type="button" className="mj-btn mj-btn--primary" onClick={handleSubmit} disabled={saving}>{t('save')}</button>
+          <button type="button" className="mj-btn mj-btn--primary" onClick={handleSubmit} disabled={saving}>
+            {t('saveLink')}
+          </button>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-0">
-        <div className="grid grid-cols-1 gap-x-4 gap-y-0 sm:grid-cols-2">
-          <div className="mj-field">
-            <label className="mj-label">{t('groupName')}</label>
-            <input type="text" className="mj-input" required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-          </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('groupStage')}</label>
-            <select className="mj-select" value={form.stage} onChange={(e) => setForm((f) => ({ ...f, stage: e.target.value }))}>
-              <option value="">{t('selectBranch')}</option>
-              {STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
-          </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('groupTeacher')}</label>
-            <select className="mj-select" value={form.teacherId} onChange={(e) => setForm((f) => ({ ...f, teacherId: e.target.value }))}>
-              <option value="">{t('selectBranch')}</option>
-              {formData.teachers.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-            </select>
-          </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('groupRoom')}</label>
-            <select className="mj-select" value={form.roomId} onChange={(e) => setForm((f) => ({ ...f, roomId: e.target.value }))}>
-              <option value="">{t('selectBranch')}</option>
-              {formData.rooms.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-            </select>
-          </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('groupBranch')}</label>
-            <select className="mj-select" value={form.branchId} onChange={(e) => setForm((f) => ({ ...f, branchId: e.target.value }))}>
-              <option value="">{t('selectBranch')}</option>
-              {formData.branches.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-            </select>
-          </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('groupCapacity')}</label>
-            <input type="number" className="mj-input" value={form.capacity} onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))} />
-          </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('groupDay')}</label>
-            <select className="mj-select" value={form.dayOfWeek} onChange={(e) => setForm((f) => ({ ...f, dayOfWeek: e.target.value }))}>
-              <option value="">{t('selectBranch')}</option>
-              {WEEKDAYS.map((w) => <option key={w.value} value={w.value}>{w.label}</option>)}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="mj-field">
-              <label className="mj-label">{t('groupStartTime')}</label>
-              <input type="time" className="mj-input" value={form.startTime} onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} />
-            </div>
-            <div className="mj-field">
-              <label className="mj-label">{t('groupEndTime')}</label>
-              <input type="time" className="mj-input" value={form.endTime} onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} />
-            </div>
-          </div>
-        </div>
-
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="mj-field">
-          <label className="mj-label">{t('groupStudents')}</label>
-          <div className="max-h-48 overflow-y-auto rounded-lg border border-[color:var(--mj-border)] p-2">
-            {formData.students.map((s) => (
-              <label key={s.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-[color:var(--mj-wash)]">
-                <input
-                  type="checkbox"
-                  className="accent-[color:var(--mj-accent)]"
-                  checked={form.studentIds.includes(s.id)}
-                  onChange={() => toggleStudent(s.id)}
-                />
-                {s.name}
-              </label>
+          <label className="mj-label">{t('groupColumn')}</label>
+          <select className="mj-select" value={form.groupId} onChange={(e) => setForm((f) => ({ ...f, groupId: e.target.value }))}>
+            <option value="">{t('selectGroupPlaceholder')}</option>
+            {groups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}{g.teacher ? ` · ${g.teacher}` : ''}
+              </option>
             ))}
+          </select>
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('groupRoom')}</label>
+          <select className="mj-select" value={form.roomId} onChange={(e) => setForm((f) => ({ ...f, roomId: e.target.value }))}>
+            <option value="">{t('groupNeedsRoom')}</option>
+            {rooms.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('groupDaysMeeting')}</label>
+          <select className="mj-select" value={form.dayOfWeek} onChange={(e) => setForm((f) => ({ ...f, dayOfWeek: e.target.value }))}>
+            <option value="">{t('selectBranch')}</option>
+            {days.map((d) => (
+              <option key={d.value} value={d.value}>{d.label}</option>
+            ))}
+          </select>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="mj-field">
+            <label className="mj-label">{t('groupStartTime')}</label>
+            <input type="time" className="mj-input" value={form.startTime} onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} />
+          </div>
+          <div className="mj-field">
+            <label className="mj-label">{t('groupEndTime')}</label>
+            <input type="time" className="mj-input" value={form.endTime} onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} />
           </div>
         </div>
       </form>
     </CenterModal>
   );
 }
-
-export default CenterGroupsPage;
