@@ -9,7 +9,12 @@ import { ApiError } from '../utils/ApiError';
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const permissionCache = new Map<string, { permissions: Set<string>; expiresAt: number }>();
 
-async function getPermissionsForRole(role: string): Promise<Set<string>> {
+/**
+ * Resolves the effective permission set for a role, backed by the
+ * `RolePermission` table. Exported so other features (e.g. the employees
+ * permission matrix) can render a truthful picture of what each role can do.
+ */
+export async function getPermissionsForRole(role: string): Promise<Set<string>> {
   const cached = permissionCache.get(role);
   if (cached && cached.expiresAt > Date.now()) {
     return cached.permissions;

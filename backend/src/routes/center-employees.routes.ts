@@ -4,6 +4,7 @@ import { requirePermission } from '../middleware/rbac';
 import {
   listCenterEmployees,
   getCenterEmployeeStats,
+  getCenterPermissionMatrix,
   getCenterEmployee,
   createCenterEmployee,
   updateCenterEmployee,
@@ -17,6 +18,7 @@ router.use(authenticate, requireCenterAdmin);
 
 router.get('/', requirePermission('teachers.view'), listCenterEmployees);
 router.get('/stats', requirePermission('teachers.view'), getCenterEmployeeStats);
+router.get('/permission-matrix', requirePermission('teachers.view'), getCenterPermissionMatrix);
 router.get('/:id', requirePermission('teachers.view'), getCenterEmployee);
 router.post('/', requirePermission('teachers.create'), createCenterEmployee);
 router.put('/:id', requirePermission('teachers.update'), updateCenterEmployee);

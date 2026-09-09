@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import type { Role } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { currentCenterId } from '../lib/tenant';
 import { fileUrl } from '../middleware/upload';
@@ -8,6 +9,9 @@ import { ApiError } from '../utils/ApiError';
 import { hashPassword } from '../utils/password';
 import { recordActivity } from '../services/activity.service';
 import { assertWithinPlanLimit } from '../services/subscription.service';
+
+const EMPLOYEE_ROLES: Role[] = ['CENTER_EMPLOYEE', 'RECEPTIONIST', 'TEACHER_ASSISTANT'];
+const MATRIX_ROLES: Role[] = ['CENTER_ADMIN', 'CENTER_EMPLOYEE', 'RECEPTIONIST', 'TEACHER_ASSISTANT'];
 
 export const listCenterEmployees = asyncHandler(async (req: Request, res: Response) => {
   const centerId = currentCenterId();
@@ -19,7 +23,7 @@ export const listCenterEmployees = asyncHandler(async (req: Request, res: Respon
 
   const where: any = {
     centerId,
-    role: { in: ['CENTER_EMPLOYEE', 'RECEPTIONIST', 'TEACHER_ASSISTANT'] },
+    role: { in: EMPLOYEE_ROLES },
   };
   if (role) where.role = role;
   if (status) where.status = status;
@@ -27,12 +31,13 @@ export const listCenterEmployees = asyncHandler(async (req: Request, res: Respon
     where.OR = [
       { fullName: { contains: search, mode: 'insensitive' } },
       { username: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
       { phone: { contains: search } },
     ];
   }
 
   const skip = (Number(page) - 1) * Number(limit);
-  const [items, total] = await Promise.all([
+  const [items, total, center] = await Promise.all([
     prisma.user.findMany({
       where,
       select: {
@@ -52,7 +57,31 @@ export const listCenterEmployees = asyncHandler(async (req: Request, res: Respon
       take: Number(limit),
     }),
     prisma.user.count({ where }),
+    prisma.center.findUnique({ where: { id: centerId }, select: { name: true } }),
   ]);
+
+  const ids = items.map((u) => u.id);
+
+  const [activities, taskGroups] = await Promise.all([
+    ids.length
+      ? prisma.activityLog.findMany({
+          where: { userId: { in: ids } },
+          orderBy: [{ userId: 'asc' }, { createdAt: 'desc' }],
+          distinct: ['userId'],
+          select: { userId: true, action: true, createdAt: true },
+        })
+      : Promise.resolve([]),
+    ids.length
+      ? prisma.employeeTask.groupBy({
+          by: ['assigneeId'],
+          where: { assigneeId: { in: ids }, status: { not: 'DONE' } },
+          _count: { _all: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const lastActivityByUser = new Map(activities.map((a) => [a.userId, { action: a.action, createdAt: a.createdAt.toISOString() }]));
+  const openTasksByUser = new Map(taskGroups.map((g) => [g.assigneeId, g._count._all]));
 
   const formattedItems = items.map((u) => ({
     id: u.id,
@@ -65,6 +94,9 @@ export const listCenterEmployees = asyncHandler(async (req: Request, res: Respon
     photo: fileUrl(u.photo),
     createdAt: u.createdAt.toISOString(),
     updatedAt: u.updatedAt.toISOString(),
+    lastActivity: lastActivityByUser.get(u.id) ?? null,
+    openTaskCount: openTasksByUser.get(u.id) ?? 0,
+    centerName: center?.name ?? null,
   }));
 
   return ok(res, formattedItems, 'Employees loaded', {
@@ -84,15 +116,15 @@ export const getCenterEmployeeStats = asyncHandler(async (req: Request, res: Res
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const [totalEmployees, activeEmployees, pendingEmployees, changesToday] = await Promise.all([
+  const [totalEmployees, activeEmployees, pendingEmployees, changesToday, openTasks, suspendedCount] = await Promise.all([
     prisma.user.count({
-      where: { centerId, role: { in: ['CENTER_EMPLOYEE', 'RECEPTIONIST', 'TEACHER_ASSISTANT'] } },
+      where: { centerId, role: { in: EMPLOYEE_ROLES } },
     }),
     prisma.user.count({
-      where: { centerId, role: { in: ['CENTER_EMPLOYEE', 'RECEPTIONIST', 'TEACHER_ASSISTANT'] }, status: 'ACTIVE' },
+      where: { centerId, role: { in: EMPLOYEE_ROLES }, status: 'ACTIVE' },
     }),
     prisma.user.count({
-      where: { centerId, role: { in: ['CENTER_EMPLOYEE', 'RECEPTIONIST', 'TEACHER_ASSISTANT'] }, status: 'PENDING' },
+      where: { centerId, role: { in: EMPLOYEE_ROLES }, status: 'PENDING' },
     }),
     prisma.activityLog.count({
       where: {
@@ -101,10 +133,16 @@ export const getCenterEmployeeStats = asyncHandler(async (req: Request, res: Res
         entity: 'User',
       },
     }),
+    prisma.employeeTask.count({
+      where: { centerId, status: { not: 'DONE' } },
+    }),
+    prisma.user.count({
+      where: { centerId, role: { in: EMPLOYEE_ROLES }, status: { in: ['SUSPENDED', 'INACTIVE'] } },
+    }),
   ]);
 
   const activeRoles = await prisma.user.findMany({
-    where: { centerId, role: { in: ['CENTER_EMPLOYEE', 'RECEPTIONIST', 'TEACHER_ASSISTANT'] } },
+    where: { centerId, role: { in: EMPLOYEE_ROLES } },
     distinct: ['role'],
     select: { role: true },
   });
@@ -114,8 +152,55 @@ export const getCenterEmployeeStats = asyncHandler(async (req: Request, res: Res
     activeEmployees,
     pendingInvitations: pendingEmployees,
     activeRoles: activeRoles.length,
+    openTasks,
+    suspendedCount,
     changesToday,
   });
+});
+
+/**
+ * Real permission matrix derived from the `RolePermission` table for the
+ * center-facing roles. Each role's permission names are grouped by module
+ * (the leading token of the permission name, e.g. `teachers.view` -> `teachers`)
+ * and the raw operations are exposed so the UI can render access levels.
+ */
+export const getCenterPermissionMatrix = asyncHandler(async (req: Request, res: Response) => {
+  const centerId = currentCenterId();
+  if (!centerId) {
+    throw ApiError.unauthorized();
+  }
+
+  const rows = await prisma.rolePermission.findMany({
+    where: { role: { in: MATRIX_ROLES as any } },
+    select: { role: true, permission: { select: { name: true } } },
+    orderBy: [{ role: 'asc' }],
+  });
+
+  const byRole: Record<string, Map<string, { ops: string[] }>> = {};
+  for (const role of MATRIX_ROLES) {
+    byRole[role] = new Map();
+  }
+
+  for (const row of rows) {
+    const name = row.permission.name;
+    const dot = name.indexOf('.');
+    const domain = dot === -1 ? name : name.slice(0, dot);
+    const op = dot === -1 ? '' : name.slice(dot + 1);
+    const map = byRole[row.role];
+    if (!map) continue;
+    const entry = map.get(domain) ?? { ops: [] };
+    if (op && !entry.ops.includes(op)) entry.ops.push(op);
+    map.set(domain, entry);
+  }
+
+  const roles = MATRIX_ROLES.map((role) => ({
+    role,
+    modules: Array.from(byRole[role].entries())
+      .map(([domain, module]) => ({ domain, ops: module.ops }))
+      .sort((a, b) => a.domain.localeCompare(b.domain)),
+  }));
+
+  return ok(res, { roles });
 });
 
 export const getCenterEmployee = asyncHandler(async (req: Request, res: Response) => {

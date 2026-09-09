@@ -1,5 +1,7 @@
 import type { Role } from '@prisma/client';
 import { currentCenterId, isPlatformScope } from '../lib/tenant';
+import { prisma } from '../lib/prisma';
+import { getPermissionsForRole } from '../middleware/rbac';
 import { ApiError } from '../utils/ApiError';
 import { hashPassword } from '../utils/password';
 import { userRepository } from '../repositories/user.repository';
@@ -148,6 +150,22 @@ export async function getEmployee(userId: string, centerId?: string) {
   if (user.centerId !== effectiveCenterId) {
     throw ApiError.forbidden('Access denied.');
   }
+
+  const [permissions, activity, openTaskCount, center] = await Promise.all([
+    getPermissionsForRole(user.role),
+    prisma.activityLog.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: { action: true, createdAt: true },
+    }),
+    prisma.employeeTask.count({
+      where: { assigneeId: userId, status: { not: 'DONE' } },
+    }),
+    user.centerId
+      ? prisma.center.findUnique({ where: { id: user.centerId }, select: { name: true } })
+      : Promise.resolve(null),
+  ]);
+
   return {
     id: user.id,
     username: user.username,
@@ -157,6 +175,10 @@ export async function getEmployee(userId: string, centerId?: string) {
     role: user.role,
     status: user.status,
     createdAt: user.createdAt,
+    permissions: Array.from(permissions),
+    openTaskCount,
+    lastActivity: activity ? { action: activity.action, createdAt: activity.createdAt.toISOString() } : null,
+    centerName: center?.name ?? null,
   };
 }
 
