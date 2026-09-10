@@ -31,7 +31,7 @@ export interface SessionSettlementInput {
  * Formula:
  *   platformCommission = round(grossAmount * commissionRate)
  *   teacherShare       = grossAmount - platformCommission
- *   centerShare        = 0 (teacher gets non-commission portion)
+ *   centerShare        = grossAmount - teacherShare (platform commission portion)
  *   netAmount          = teacherShare (amount that goes to teacher after platform cut)
  *
  * All values are integers (EGP piasters). Rounding uses Math.round.
@@ -48,7 +48,7 @@ export function calculatePaymentSplit(
 
   const platformCommission = Math.round(grossAmount * commissionRate);
   const teacherShare = grossAmount - platformCommission;
-  const centerShare = 0;
+  const centerShare = grossAmount - teacherShare;
 
   return {
     grossAmount,

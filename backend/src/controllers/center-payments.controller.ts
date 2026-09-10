@@ -109,24 +109,72 @@ export const recordCenterPayment = asyncHandler(async (req: Request, res: Respon
     throw ApiError.unauthorized();
   }
 
-  const { studentId, amount, dueDate, description, method } = req.body;
+  const { studentId, amount, dueDate, description, method, type, groupId, lessonId } = req.body;
 
   if (!studentId || !amount) {
     throw ApiError.badRequest('Student and amount are required');
+  }
+
+  const student = await prisma.student.findFirst({
+    where: { id: studentId, centerId },
+    include: { user: { select: { fullName: true } } },
+  });
+  if (!student) throw ApiError.badRequest('Student not found in this center');
+
+  let teacherId: string | null = null;
+  let resolvedLessonId: string | null = lessonId || null;
+  let resolvedType = type || 'MONTHLY';
+
+  if (groupId) {
+    const group = await prisma.group.findFirst({
+      where: { id: groupId, centerId },
+      include: { enrollments: { where: { studentId, status: 'ACTIVE' }, select: { id: true } } },
+    });
+    if (!group) throw ApiError.badRequest('Group not found in this center');
+    if (group.enrollments.length === 0) throw ApiError.badRequest('Student is not actively enrolled in this group');
+    teacherId = group.teacherId || null;
+  }
+
+  if (lessonId) {
+    const lesson = await prisma.lesson.findFirst({ where: { id: lessonId, centerId } });
+    if (!lesson) throw ApiError.badRequest('Lesson not found in this center');
+    if (lesson.studentId && lesson.studentId !== studentId) throw ApiError.badRequest('Lesson does not belong to this student');
+    teacherId = lesson.teacherId;
+    resolvedLessonId = lesson.id;
+    if (!groupId && lesson.status === 'COMPLETED') resolvedType = 'SESSION';
+  }
+
+  if (!teacherId) {
+    const enrolled = await prisma.groupEnrollment.findFirst({
+      where: { studentId, status: 'ACTIVE', group: { centerId, teacherId: { not: null } } },
+      include: { group: { select: { teacherId: true } } },
+    });
+    teacherId = enrolled?.group?.teacherId || null;
   }
 
   const payment = await prisma.payment.create({
     data: {
       centerId,
       studentId,
-      amount,
+      teacherId: teacherId || req.user!.id,
+      lessonId: resolvedLessonId,
+      amount: Math.round(Number(amount) * 100),
       method: method || 'CASH',
-      type: 'MONTHLY',
-      payerName: 'Center',
+      type: resolvedType,
+      payerName: student.user?.fullName || 'Center',
       payerId: req.user!.id,
-      teacherId: req.user!.id,
-      status: 'PENDING',
+      status: 'PAID',
+      paidAt: dueDate ? new Date(dueDate) : new Date(),
       paymentNumber: `PAY-${Date.now()}`,
+    },
+  });
+
+  await prisma.paymentStatusHistory.create({
+    data: {
+      paymentId: payment.id,
+      newStatus: 'PAID',
+      changedById: req.user!.id,
+      changedByName: 'Center',
     },
   });
 
@@ -135,7 +183,7 @@ export const recordCenterPayment = asyncHandler(async (req: Request, res: Respon
     action: 'recorded_payment',
     entity: 'Payment',
     entityId: payment.id,
-    details: JSON.stringify({ amount, studentId }),
+    details: JSON.stringify({ amount, studentId, teacherId }),
   });
 
   return ok(res, payment, 'Payment recorded');

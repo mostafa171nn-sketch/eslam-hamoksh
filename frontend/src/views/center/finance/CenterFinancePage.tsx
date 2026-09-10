@@ -16,12 +16,31 @@ import { CenterPill } from '../ui/CenterPill';
 import { CenterSearchInput } from '../ui/CenterSearchInput';
 import { CenterModal } from '../ui/CenterModal';
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 interface Overview {
   todayIncome: number;
   totalCollected: number;
   teacherDues: number;
   todayExpenses: number;
   pendingPayments: number;
+}
+
+interface CollectionRow {
+  id: string;
+  paymentNumber: string;
+  studentName: string;
+  teacherName: string;
+  type: string;
+  method: string;
+  status: string;
+  amount: number;
+  centerShare: number;
+  teacherShare: number;
+  paidAt: string;
+  lesson: { subject: string; date: string } | null;
 }
 
 interface LedgerRow {
@@ -32,6 +51,36 @@ interface LedgerRow {
   paymentCount: number;
   groupsCount: number;
   balance: number;
+}
+
+interface LedgerDetail {
+  id: string;
+  name: string;
+  phone: string | null;
+  totalPaid: number;
+  centerShareTotal: number;
+  teacherShareTotal: number;
+  paymentCount: number;
+  groups: { id: string; name: string; teacherName: string }[];
+  payments: {
+    id: string;
+    paymentNumber: string;
+    amount: number;
+    centerShare: number;
+    type: string;
+    method: string;
+    status: string;
+    paidAt: string;
+    teacherName: string;
+    lesson: { subject: string; date: string } | null;
+  }[];
+  attendance: {
+    id: string;
+    status: string;
+    lesson: string;
+    date: string;
+    markedAt: string;
+  }[];
 }
 
 interface ExpenseRow {
@@ -64,6 +113,8 @@ interface SettlementSummary {
 
 interface FormData {
   teachers: { id: string; name: string }[];
+  students: { id: string; name: string }[];
+  rooms: { id: string; name: string }[];
 }
 
 const EXPENSE_CATEGORIES = [
@@ -77,20 +128,50 @@ const EXPENSE_CATEGORIES = [
 const settleTone = (s: string) =>
   s === 'PAID' ? 'green' : s === 'CALCULATED' ? 'amber' : s === 'APPROVED' ? 'blue' : s === 'PENDING' ? 'slate' : 'red';
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function useMoney(lang: string) {
+  return (n: number | undefined) =>
+    `${(n ?? 0).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} EGP`;
+}
+
+function useFmtDate(lang: string) {
+  const loc = lang === 'ar' ? 'ar-EG' : 'en-GB';
+  return (iso: string | null) =>
+    iso ? new Date(iso).toLocaleDateString(loc, { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+}
+
+// ---------------------------------------------------------------------------
+// Root
+// ---------------------------------------------------------------------------
+
 export function CenterFinancePage() {
   const { t, lang } = useT();
   const [tab, setTab] = useState('overview');
+  const [showRecord, setShowRecord] = useState(false);
 
   const tabs = [
     { key: 'overview', label: t('financeOverview') },
-    { key: 'ledger', label: t('financeLedger') },
-    { key: 'settlements', label: t('financeSettlements') },
+    { key: 'collections', label: t('financeCollections') },
+    { key: 'ledger', label: t('financeStudentLedger') },
+    { key: 'settlements', label: t('financeTeacherSettlements') },
     { key: 'expenses', label: t('financeExpenses') },
   ];
 
   return (
     <div className="space-y-6">
-      <CenterPageHeader title={t('moduleFinance')} description={t('financeSub')} />
+      <CenterPageHeader
+        eyebrow={t('financeEyebrow')}
+        title={t('moduleFinance')}
+        description={t('financeSub')}
+      >
+        <button type="button" className="mj-btn mj-btn--primary" onClick={() => setShowRecord(true)}>
+          <Plus className="h-4 w-4" />
+          {t('recordCollection')}
+        </button>
+      </CenterPageHeader>
 
       <nav className="mj-tabs" aria-label={t('moduleFinance')}>
         {tabs.map((tb) => (
@@ -106,20 +187,31 @@ export function CenterFinancePage() {
 
       <div>
         {tab === 'overview' && <OverviewTab t={t} lang={lang} />}
+        {tab === 'collections' && <CollectionsTab t={t} lang={lang} />}
         {tab === 'ledger' && <LedgerTab t={t} lang={lang} />}
         {tab === 'settlements' && <SettlementsTab t={t} lang={lang} />}
         {tab === 'expenses' && <ExpensesTab t={t} lang={lang} />}
       </div>
+
+      {showRecord && (
+        <RecordCollectionModal
+          t={t}
+          onClose={() => setShowRecord(false)}
+          onDone={() => setShowRecord(false)}
+        />
+      )}
     </div>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Overview
+// ---------------------------------------------------------------------------
+
 function OverviewTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
+  const money = useMoney(lang);
   const { data, loading, error } = useApi<Overview>(() => api.get<Overview>('/center/account/finance'), []);
   const { data: recent } = useApi<ExpenseRow[]>(() => api.get<ExpenseRow[]>('/center/account/finance/expenses?take=6'), []);
-
-  const money = (n: number | undefined) =>
-    `${(n ?? 0).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} EGP`;
 
   if (loading) return <PencilLoader label={t('loading')} />;
   if (error) return <div className="mj-card mj-card--padding text-[color:var(--mj-danger)]">{error}</div>;
@@ -132,6 +224,10 @@ function OverviewTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
         <CenterStatCard label={t('teacherDues')} value={money(data?.teacherDues)} />
         <CenterStatCard label={t('todayExpenses')} value={money(data?.todayExpenses)} />
       </div>
+
+      <p className="rounded-lg border border-[color:var(--mj-border-soft)] bg-[color:var(--mj-wash)] px-4 py-2 text-xs text-[color:var(--mj-muted)]">
+        {t('financeFormula')}
+      </p>
 
       <div className="mj-card mj-card--padding">
         <div className="flex items-center justify-between gap-2">
@@ -170,17 +266,18 @@ function OverviewTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
   );
 }
 
-function LedgerTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
-  const [search, setSearch] = useState('');
-  const { data, loading, error } = useApi<LedgerRow[]>(
-    () => api.get<LedgerRow[]>('/center/account/finance/ledger', search ? { search } : {}),
-    [search]
-  );
+// ---------------------------------------------------------------------------
+// Collections
+// ---------------------------------------------------------------------------
 
-  const money = (n: number | undefined) =>
-    `${(n ?? 0).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} EGP`;
-  const fmtDate = (iso: string | null) =>
-    iso ? new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short' }) : '—';
+function CollectionsTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
+  const money = useMoney(lang);
+  const fmtDate = useFmtDate(lang);
+  const [search, setSearch] = useState('');
+  const { data, loading, error } = useApi<CollectionRow[]>(
+    () => api.get<CollectionRow[]>('/center/account/finance/collections', search ? { search } : {}),
+    [search],
+  );
 
   if (loading) return <PencilLoader label={t('loading')} />;
   if (error) return <div className="mj-card mj-card--padding text-[color:var(--mj-danger)]">{error}</div>;
@@ -188,41 +285,51 @@ function LedgerTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
   return (
     <div className="mj-card">
       <div className="mj-toolbar border-b border-[color:var(--mj-border-soft)] p-4">
-        <CenterSearchInput
-          placeholder={t('searchStudents') + '...'}
-          value={search}
-          onChange={setSearch}
-        />
-        <span className="text-xs text-[color:var(--mj-muted)]">{t('studentLedgerNote')}</span>
+        <CenterSearchInput placeholder={t('searchStudents') + '...'} value={search} onChange={setSearch} />
       </div>
       <div className="overflow-x-auto">
         <table className="mj-table">
           <thead>
             <tr>
               <th>{t('student')}</th>
-              <th>{t('groupCount')}</th>
-              <th>{t('paymentCount')}</th>
-              <th>{t('lastPayment')}</th>
-              <th>{t('studentTotalPaid')}</th>
-              <th>{t('balance')}</th>
+              <th>{t('teacher')}</th>
+              <th>{t('type')}</th>
+              <th>{t('method')}</th>
+              <th>{t('amount')}</th>
+              <th>{t('centerShare')}</th>
+              <th>{t('paidDate')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[color:var(--mj-border-soft)]">
-            {data?.map((s) => (
-              <tr key={s.id}>
-                <td>
-                  <div className="flex items-center gap-3">
-                    <span className="mj-avatar mj-avatar--sm">{s.name.charAt(0)}</span>
-                    <span className="font-medium text-[color:var(--mj-ink-strong)]">{s.name}</span>
+            {data && data.length > 0 ? (
+              data.map((c) => (
+                <tr key={c.id}>
+                  <td>
+                    <div className="flex items-center gap-3">
+                      <span className="mj-avatar mj-avatar--sm">{c.studentName.charAt(0)}</span>
+                      <span className="font-medium text-[color:var(--mj-ink-strong)]">{c.studentName}</span>
+                    </div>
+                  </td>
+                  <td className="text-sm text-[color:var(--mj-muted)]">{c.teacherName}</td>
+                  <td>
+                    <CenterPill tone="blue">{c.type === 'MONTHLY' ? t('typeMonthly') : t('typeSession')}</CenterPill>
+                  </td>
+                  <td className="text-sm">{c.method}</td>
+                  <td className="font-semibold">{money(c.amount)}</td>
+                  <td className="font-semibold text-[color:var(--mj-success)]">{money(c.centerShare)}</td>
+                  <td className="text-sm text-[color:var(--mj-muted)]">{fmtDate(c.paidAt)}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={7}>
+                  <div className="mj-empty">
+                    <Wallet className="mj-empty-icon" />
+                    <span>{t('noCollections')}</span>
                   </div>
                 </td>
-                <td>{s.groupsCount}</td>
-                <td>{s.paymentCount}</td>
-                <td>{fmtDate(s.lastPayment)}</td>
-                <td className="font-semibold text-[color:var(--mj-success)]">{money(s.totalPaid)}</td>
-                <td>{money(s.balance)}</td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -230,21 +337,203 @@ function LedgerTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Ledger
+// ---------------------------------------------------------------------------
+
+function LedgerTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
+  const money = useMoney(lang);
+  const fmtDate = useFmtDate(lang);
+  const [search, setSearch] = useState('');
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const { data, loading, error } = useApi<LedgerRow[]>(
+    () => api.get<LedgerRow[]>('/center/account/finance/ledger', search ? { search } : {}),
+    [search],
+  );
+
+  if (loading) return <PencilLoader label={t('loading')} />;
+  if (error) return <div className="mj-card mj-card--padding text-[color:var(--mj-danger)]">{error}</div>;
+
+  return (
+    <>
+      <div className="mj-card">
+        <div className="mj-toolbar border-b border-[color:var(--mj-border-soft)] p-4">
+          <CenterSearchInput placeholder={t('searchStudents') + '...'} value={search} onChange={setSearch} />
+          <span className="text-xs text-[color:var(--mj-muted)]">{t('studentLedgerNote')}</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="mj-table">
+            <thead>
+              <tr>
+                <th>{t('student')}</th>
+                <th>{t('groupCount')}</th>
+                <th>{t('paymentCount')}</th>
+                <th>{t('lastPayment')}</th>
+                <th>{t('studentTotalPaid')}</th>
+                <th>{t('balance')}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[color:var(--mj-border-soft)]">
+              {data?.map((s) => (
+                <tr key={s.id}>
+                  <td>
+                    <div className="flex items-center gap-3">
+                      <span className="mj-avatar mj-avatar--sm">{s.name.charAt(0)}</span>
+                      <span className="font-medium text-[color:var(--mj-ink-strong)]">{s.name}</span>
+                    </div>
+                  </td>
+                  <td>{s.groupsCount}</td>
+                  <td>{s.paymentCount}</td>
+                  <td>{fmtDate(s.lastPayment)}</td>
+                  <td className="font-semibold text-[color:var(--mj-success)]">{money(s.totalPaid)}</td>
+                  <td>{money(s.balance)}</td>
+                  <td>
+                    <button type="button" className="mj-btn mj-btn--ghost mj-btn--sm" onClick={() => setDetailId(s.id)}>
+                      {t('financeReview')}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {detailId && <LedgerDetailModal studentId={detailId} t={t} lang={lang} onClose={() => setDetailId(null)} />}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Ledger Detail Modal
+// ---------------------------------------------------------------------------
+
+function LedgerDetailModal({ studentId, t, lang, onClose }: { studentId: string; t: (k: DictKey) => string; lang: string; onClose: () => void }) {
+  const money = useMoney(lang);
+  const fmtDate = useFmtDate(lang);
+  const { data, loading, error } = useApi<LedgerDetail>(
+    () => api.get<LedgerDetail>(`/center/account/finance/ledger/${studentId}`),
+    [studentId],
+  );
+
+  if (loading) return <CenterModal open onClose={onClose} title={t('ledgerDetailTitle')} size="lg"><PencilLoader label={t('loading')} /></CenterModal>;
+  if (error || !data) return <CenterModal open onClose={onClose} title={t('ledgerDetailTitle')} size="lg"><div className="text-[color:var(--mj-danger)]">{error || t('noData')}</div></CenterModal>;
+
+  return (
+    <CenterModal open onClose={onClose} title={t('ledgerDetailTitle')} size="lg">
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <span className="mj-avatar mj-avatar--lg">{data.name.charAt(0)}</span>
+          <div>
+            <p className="text-lg font-bold text-[color:var(--mj-ink-strong)]">{data.name}</p>
+            {data.phone && <p className="text-sm text-[color:var(--mj-muted)]">{data.phone}</p>}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <CenterStatCard label={t('studentTotalPaid')} value={money(data.totalPaid)} />
+          <CenterStatCard label={t('centerShare')} value={money(data.centerShareTotal)} />
+          <CenterStatCard label={t('teacherShare')} value={money(data.teacherShareTotal)} />
+          <CenterStatCard label={t('groupCount')} value={String(data.groups.length)} />
+        </div>
+
+        {data.groups.length > 0 && (
+          <div>
+            <p className="mb-2 text-sm font-semibold text-[color:var(--mj-ink-strong)]">{t('columnGroups')}</p>
+            <div className="flex flex-wrap gap-2">
+              {data.groups.map((g) => (
+                <CenterPill key={g.id} tone="blue">{g.name} — {g.teacherName}</CenterPill>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div>
+          <p className="mb-2 text-sm font-semibold text-[color:var(--mj-ink-strong)]">{t('financeCollections')}</p>
+          {data.payments.length > 0 ? (
+            <div className="overflow-x-auto rounded-lg border border-[color:var(--mj-border-soft)]">
+              <table className="mj-table">
+                <thead>
+                  <tr>
+                    <th>{t('date')}</th>
+                    <th>{t('teacher')}</th>
+                    <th>{t('type')}</th>
+                    <th>{t('amount')}</th>
+                    <th>{t('centerShare')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[color:var(--mj-border-soft)]">
+                  {data.payments.map((p) => (
+                    <tr key={p.id}>
+                      <td className="text-sm">{fmtDate(p.paidAt)}</td>
+                      <td className="text-sm">{p.teacherName}</td>
+                      <td><CenterPill tone="blue">{p.type === 'MONTHLY' ? t('typeMonthly') : t('typeSession')}</CenterPill></td>
+                      <td className="font-semibold">{money(p.amount)}</td>
+                      <td className="font-semibold text-[color:var(--mj-success)]">{money(p.centerShare)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-[color:var(--mj-muted)]">{t('noStudentPayments')}</p>
+          )}
+        </div>
+
+        <div>
+          <p className="mb-2 text-sm font-semibold text-[color:var(--mj-ink-strong)]">{t('financeTeacherSettlements')}</p>
+          {data.attendance.length > 0 ? (
+            <div className="overflow-x-auto rounded-lg border border-[color:var(--mj-border-soft)]">
+              <table className="mj-table">
+                <thead>
+                  <tr>
+                    <th>{t('date')}</th>
+                    <th>{t('lesson')}</th>
+                    <th>{t('status')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[color:var(--mj-border-soft)]">
+                  {data.attendance.map((a) => (
+                    <tr key={a.id}>
+                      <td className="text-sm">{fmtDate(a.date)}</td>
+                      <td className="text-sm">{a.lesson}</td>
+                      <td>
+                        <CenterPill tone={a.status === 'PRESENT' ? 'green' : a.status === 'LATE' ? 'amber' : 'red'}>
+                          {a.status}
+                        </CenterPill>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-[color:var(--mj-muted)]">{t('noAttendance')}</p>
+          )}
+        </div>
+      </div>
+    </CenterModal>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Settlements
+// ---------------------------------------------------------------------------
+
 function SettlementsTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
   const toast = useToast();
   const { data: summary, reload: reloadSummary } = useApi<SettlementSummary>(
     () => api.get<SettlementSummary>('/center/account/finance/settlements/summary'),
-    []
+    [],
   );
   const { data: settlements, loading, error, reload } = useApi<SettlementRow[]>(
     () => api.get<SettlementRow[]>('/center/account/finance/settlements'),
-    []
+    [],
   );
   const { data: formData } = useApi<FormData>(() => api.get<FormData>('/center/groups/form-data'), []);
   const [showCalc, setShowCalc] = useState(false);
-
-  const money = (n: number | undefined) =>
-    `${(n ?? 0).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} EGP`;
+  const money = useMoney(lang);
 
   const act = async (url: string, msg: string) => {
     try {
@@ -336,10 +625,21 @@ function SettlementsTab({ t, lang }: { t: (k: DictKey) => string; lang: string }
         )}
       </div>
 
-      {showCalc && formData && <CalculateModal t={t} teachers={formData.teachers} onClose={() => setShowCalc(false)} onDone={() => { setShowCalc(false); reload(); reloadSummary(); }} />}
+      {showCalc && formData && (
+        <CalculateModal
+          t={t}
+          teachers={formData.teachers}
+          onClose={() => setShowCalc(false)}
+          onDone={() => { setShowCalc(false); reload(); reloadSummary(); }}
+        />
+      )}
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Summary chip
+// ---------------------------------------------------------------------------
 
 function SummaryChip({ label, value, tone }: { label: string; value: number; tone: 'slate' | 'amber' | 'blue' | 'green' | 'red' | 'brand' }) {
   const textTone =
@@ -356,6 +656,10 @@ function SummaryChip({ label, value, tone }: { label: string; value: number; ton
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Calculate settlement modal
+// ---------------------------------------------------------------------------
 
 function CalculateModal({ t, teachers, onClose, onDone }: { t: (k: DictKey) => string; teachers: { id: string; name: string }[]; onClose: () => void; onDone: () => void }) {
   const toast = useToast();
@@ -401,18 +705,19 @@ function CalculateModal({ t, teachers, onClose, onDone }: { t: (k: DictKey) => s
   );
 }
 
+// ---------------------------------------------------------------------------
+// Expenses
+// ---------------------------------------------------------------------------
+
 function ExpensesTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
   const toast = useToast();
   const [showAdd, setShowAdd] = useState(false);
   const { data: expenses, loading, error, reload } = useApi<ExpenseRow[]>(
     () => api.get<ExpenseRow[]>('/center/account/finance/expenses'),
-    []
+    [],
   );
-
-  const money = (n: number | undefined) =>
-    `${(n ?? 0).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')} EGP`;
-  const fmtDate = (iso: string) =>
-    new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const money = useMoney(lang);
+  const fmtDate = useFmtDate(lang);
 
   const remove = async (id: string) => {
     if (!confirm(t('confirmDelete'))) return;
@@ -478,6 +783,10 @@ function ExpensesTab({ t, lang }: { t: (k: DictKey) => string; lang: string }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Add Expense Modal
+// ---------------------------------------------------------------------------
+
 function AddExpenseModal({ t, onClose, onDone }: { t: (k: DictKey) => string; onClose: () => void; onDone: () => void }) {
   const toast = useToast();
   const [saving, setSaving] = useState(false);
@@ -529,6 +838,88 @@ function AddExpenseModal({ t, onClose, onDone }: { t: (k: DictKey) => string; on
         <div className="mj-field">
           <label className="mj-label" htmlFor="exp-note">{t('expenseNote')}</label>
           <textarea id="exp-note" rows={3} className="mj-textarea" value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} />
+        </div>
+      </form>
+    </CenterModal>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Record Collection Modal
+// ---------------------------------------------------------------------------
+
+function RecordCollectionModal({ t, onClose, onDone }: { t: (k: DictKey) => string; onClose: () => void; onDone: () => void }) {
+  const toast = useToast();
+  const [saving, setSaving] = useState(false);
+  const [studentId, setStudentId] = useState('');
+  const [groupId, setGroupId] = useState('');
+  const [type, setType] = useState('MONTHLY');
+  const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState('CASH');
+
+  const { data: formData } = useApi<FormData>(() => api.get<FormData>('/center/groups/form-data'), []);
+  const { data: groups } = useApi<{ id: string; name: string }[]>(() => api.get<{ id: string; name: string }[]>('/center/groups'), []);
+
+  const METHODS = ['CASH', 'VODAFONE_CASH', 'ETISALAT_CASH', 'ORANGE_CASH', 'INSTAPAY', 'TELDA', 'WALLET'];
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentId || !amount) { toast.error(t('requiredFields')); return; }
+    setSaving(true);
+    try {
+      await api.post('/center/account/payments', {
+        studentId,
+        groupId: groupId || undefined,
+        type,
+        amount: Number(amount),
+        method,
+      });
+      toast.success(t('collectionRecordedToast'));
+      onDone();
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <CenterModal open onClose={onClose} title={t('recordCollection')} description={t('recordCollectionDesc')} size="sm"
+      footer={<>
+        <button type="button" className="mj-btn mj-btn--ghost" onClick={onClose}>{t('cancel')}</button>
+        <button type="submit" form="record-form" className="mj-btn mj-btn--primary" disabled={saving}>{t('save')}</button>
+      </>}>
+      <form id="record-form" onSubmit={submit} noValidate className="space-y-4">
+        <div className="mj-field">
+          <label className="mj-label">{t('student')}</label>
+          <select required className="mj-select" value={studentId} onChange={(e) => setStudentId(e.target.value)}>
+            <option value="" disabled>{t('selectStudent')}</option>
+            {formData?.students?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('groups')}</label>
+          <select className="mj-select" value={groupId} onChange={(e) => setGroupId(e.target.value)}>
+            <option value="">{t('selectGroup')}</option>
+            {groups?.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+          </select>
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('type')}</label>
+          <select required className="mj-select" value={type} onChange={(e) => setType(e.target.value)}>
+            <option value="MONTHLY">{t('typeMonthly')}</option>
+            <option value="SESSION">{t('typeSession')}</option>
+          </select>
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('amount')}</label>
+          <input type="number" required min="1" className="mj-input" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        </div>
+        <div className="mj-field">
+          <label className="mj-label">{t('method')}</label>
+          <select required className="mj-select" value={method} onChange={(e) => setMethod(e.target.value)}>
+            {METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+          </select>
         </div>
       </form>
     </CenterModal>
