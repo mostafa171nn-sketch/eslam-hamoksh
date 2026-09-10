@@ -496,12 +496,15 @@ model Broadcast {
   sentAt         DateTime?
   recipientCount Int              @default(0)
   readCount      Int              @default(0)
+  groupId        String?
+  groupName      String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   center         Center           @relation(fields: [centerId], references: [id], onDelete: Cascade)
 
   @@index([centerId])
   @@index([status])
+  @@index([groupId])
 }
 
 model TransportRoute {
@@ -802,17 +805,19 @@ model ExamAnswer {
 }
 
 model Notification {
-  id        String           @id @default(uuid())
-  userId    String
-  type      NotificationType @default(GENERAL)
-  title     String
-  message   String
-  read      Boolean          @default(false)
-  createdAt DateTime         @default(now())
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String           @id @default(uuid())
+  userId      String
+  type        NotificationType @default(GENERAL)
+  title       String
+  message     String
+  read        Boolean          @default(false)
+  broadcastId String?
+  createdAt   DateTime         @default(now())
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
   @@index([createdAt])
+  @@index([broadcastId])
 }
 
 model ActivityLog {
@@ -1514,6 +1519,8 @@ enum BroadcastAudience {
   EMPLOYEES
   TEACHERS
   STUDENTS
+  PARENTS
+  GROUP
 }
 
 enum BroadcastChannel {
@@ -1523,6 +1530,7 @@ enum BroadcastChannel {
 }
 
 enum BroadcastStatus {
+  DRAFT
   SCHEDULED
   SENT
   CANCELLED

@@ -5,6 +5,7 @@ import {
   listBroadcasts,
   getBroadcastSummary,
   createBroadcast,
+  duplicateBroadcast,
   sendBroadcastNow,
   cancelBroadcast,
   deleteBroadcast,
@@ -17,6 +18,7 @@ router.use(authenticate, requireCenterAdmin);
 router.get('/', requirePermission('centers.view'), listBroadcasts);
 router.get('/summary', requirePermission('centers.view'), getBroadcastSummary);
 router.post('/', requirePermission('centers.update'), createBroadcast);
+router.post('/:id/duplicate', requirePermission('centers.update'), duplicateBroadcast);
 router.post('/:id/send', requirePermission('centers.update'), sendBroadcastNow);
 router.post('/:id/cancel', requirePermission('centers.update'), cancelBroadcast);
 router.delete('/:id', requirePermission('centers.update'), deleteBroadcast);
