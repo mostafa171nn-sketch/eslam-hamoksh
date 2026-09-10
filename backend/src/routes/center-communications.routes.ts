@@ -4,6 +4,7 @@ import { requirePermission } from '../middleware/rbac';
 import {
   listComplaints,
   getComplaintsSummary,
+  getCommunicationsSummary,
   createComplaint,
   updateComplaint,
   listCenterMessages,
@@ -16,6 +17,7 @@ const router = Router();
 
 router.use(authenticate, requireCenterAdmin);
 
+router.get('/summary', requirePermission('centers.view'), getCommunicationsSummary);
 router.get('/complaints', requirePermission('centers.view'), listComplaints);
 router.get('/complaints/summary', requirePermission('centers.view'), getComplaintsSummary);
 router.post('/complaints', requirePermission('centers.update'), createComplaint);

@@ -472,6 +472,7 @@ model Complaint {
   assigneeId         String?
   status             ComplaintStatus  @default(OPEN)
   internalAssessment String?
+  internalNotes      String?
   resolvedAt         DateTime?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
@@ -1504,6 +1505,7 @@ enum ComplaintSeverity {
 enum ComplaintStatus {
   OPEN
   IN_PROGRESS
+  WAITING_CUSTOMER
   RESOLVED
   CLOSED
 }
