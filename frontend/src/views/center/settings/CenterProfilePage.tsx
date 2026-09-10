@@ -1,31 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import {
-  Edit,
-  Save,
-  X,
-  CheckCircle,
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-} from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Eye, EyeOff, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 import { PencilLoader } from '../../../components/ui/PencilLoader';
 import { Alert } from '../../../components/ui/ErrorAlert';
 import { CenterPageHeader } from '../ui/CenterPageHeader';
-import { CenterStatCard } from '../ui/CenterStatCard';
 import { CenterPill } from '../ui/CenterPill';
 import { api } from '../../../lib/api';
-import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
 import { useT } from '../../../i18n';
 
-interface CenterProfile {
+interface ProfilePhoto {
+  url: string;
+  isCover: boolean;
+}
+
+interface CenterProfileData {
   id: string;
   name: string;
   nameEn: string | null;
   slug: string;
   description: string | null;
+  shortDescription: string | null;
+  published: boolean;
   logoUrl: string | null;
   coverUrl: string | null;
   phone: string | null;
@@ -40,37 +37,57 @@ interface CenterProfile {
   youtube: string | null;
   linkedin: string | null;
   whatsapp: string | null;
+  workingHoursText: string | null;
+  equipment: string[];
+  photos: ProfilePhoto[];
   status: string;
   subscriptionStatus: string;
-  workingHours: {
-    [key: string]: { open: string; close: string; closed: boolean } | null;
-  };
-  stats: {
-    totalTeachers: number;
-    totalStudents: number;
-    totalEmployees: number;
-    totalBranches: number;
-    totalRooms: number;
-  };
+  stats: { totalRooms: number };
 }
 
-const DAYS = [
-  'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'
-];
-
-const DAYS_AR = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+const EMPTY_PROFILE: CenterProfileData = {
+  id: '',
+  name: '',
+  nameEn: null,
+  slug: '',
+  description: null,
+  shortDescription: null,
+  published: true,
+  logoUrl: null,
+  coverUrl: null,
+  phone: null,
+  email: null,
+  website: null,
+  city: null,
+  address: null,
+  latitude: null,
+  longitude: null,
+  facebook: null,
+  instagram: null,
+  youtube: null,
+  linkedin: null,
+  whatsapp: null,
+  workingHoursText: null,
+  equipment: [],
+  photos: [],
+  status: 'ACTIVE',
+  subscriptionStatus: 'ACTIVE',
+  stats: { totalRooms: 0 },
+};
 
 export default function CenterProfilePage() {
-  const { t, dir } = useT();
-  const Arrow = dir === 'rtl' ? ArrowLeft : ArrowRight;
+  const { t } = useT();
   const toast = useToast();
-  const { center } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [profile, setProfile] = useState<CenterProfile | null>(null);
-  const [editingSection, setEditingSection] = useState<string | null>(null);
-  const [form, setForm] = useState<Partial<CenterProfile>>({});
+  const [form, setForm] = useState<CenterProfileData>(EMPTY_PROFILE);
+  const [dirty, setDirty] = useState(false);
+
+  const [equipmentInput, setEquipmentInput] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -80,9 +97,9 @@ export default function CenterProfilePage() {
     setLoading(true);
     setError('');
     try {
-      const res = await api.get<CenterProfile>('/center/account/profile');
-      setProfile(res.data);
+      const res = await api.get<CenterProfileData>('/center/account/profile');
       setForm(res.data);
+      setDirty(false);
     } catch (err: any) {
       setError(err.message || 'Failed to load center profile');
     } finally {
@@ -90,13 +107,28 @@ export default function CenterProfilePage() {
     }
   };
 
-  const handleSave = async (_section: string) => {
+  const updateField = <K extends keyof CenterProfileData>(key: K, value: CenterProfileData[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    setDirty(true);
+  };
+
+  const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put('/center/account/profile', form);
-      toast.success(t('profileSaved'));
-      setEditingSection(null);
-      loadProfile();
+      const payload = {
+        name: form.name,
+        shortDescription: form.shortDescription,
+        description: form.description,
+        city: form.city,
+        address: form.address,
+        phone: form.phone,
+        whatsapp: form.whatsapp,
+        workingHoursText: form.workingHoursText,
+        equipment: form.equipment,
+      };
+      await api.put('/center/account/profile', payload);
+      toast.success(t('profileUpdated'));
+      await loadProfile();
     } catch (err: any) {
       toast.error(err.message || 'Failed to save');
     } finally {
@@ -104,310 +136,387 @@ export default function CenterProfilePage() {
     }
   };
 
-  const setField = (key: string, value: any) => {
-    setForm((f) => ({ ...f, [key]: value }));
+  const handleTogglePublish = async () => {
+    try {
+      await api.put('/center/account/profile', { published: !form.published });
+      setForm((prev) => ({ ...prev, published: !prev.published }));
+      toast.success(form.published ? 'تم إيقاف النشر' : 'تم النشر');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to toggle publish');
+    }
+  };
+
+  const handleAddEquipment = () => {
+    const trimmed = equipmentInput.trim();
+    if (!trimmed || form.equipment.includes(trimmed)) return;
+    updateField('equipment', [...form.equipment, trimmed]);
+    setEquipmentInput('');
+  };
+
+  const handleRemoveEquipment = (item: string) => {
+    updateField('equipment', form.equipment.filter((e) => e !== item));
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const res = await api.postForm<ProfilePhoto[]>('/center/account/profile/photos', formData);
+      setForm((prev) => ({ ...prev, photos: res.data }));
+      setDirty(true);
+      toast.success('تم رفع الصورة');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeletePhoto = async (index: number) => {
+    try {
+      const res = await api.delete<ProfilePhoto[]>(`/center/account/profile/photos/${index}`);
+      setForm((prev) => ({ ...prev, photos: res.data }));
+      setDirty(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete');
+    }
+  };
+
+  const handleSetCover = async (index: number) => {
+    try {
+      const res = await api.patch<ProfilePhoto[]>(`/center/account/profile/photos/${index}/cover`);
+      setForm((prev) => ({ ...prev, photos: res.data }));
+      setDirty(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to set cover');
+    }
   };
 
   if (loading) return <PencilLoader label={t('loading')} />;
   if (error) return <Alert message={error} />;
-  if (!profile) return null;
 
-  const editActions = (section: string) =>
-    editingSection === section ? (
-      <div className="flex gap-2">
-        <button type="button" className="mj-btn mj-btn--ghost mj-btn--sm" onClick={() => { setEditingSection(null); setForm(profile); }}>
-          <X className="h-4 w-4" />
-        </button>
-        <button type="button" className="mj-btn mj-btn--primary mj-btn--sm" onClick={() => handleSave(section)} disabled={saving}>
-          <Save className="h-4 w-4" /> {saving ? t('loading') : t('save')}
-        </button>
-      </div>
-    ) : (
-      <button type="button" className="mj-btn mj-btn--ghost mj-btn--sm" onClick={() => setEditingSection(section)}>
-        <Edit className="h-4 w-4" /> {t('edit')}
-      </button>
-    );
+  const coverPhoto = form.photos.find((p) => p.isCover) ?? form.photos[0] ?? null;
+  const roomsCount = form.stats.totalRooms;
 
   return (
     <div className="space-y-6">
       <CenterPageHeader
-        eyebrow={t('centerDashboard')}
-        title={t('centerProfile')}
-        description={center?.name || ''}
-      />
+        eyebrow={t('publicPagePortal')}
+        title={t('publicPageTitle')}
+        description={t('publicPageDescription')}
+      >
+        <button
+          type="button"
+          className="mj-btn mj-btn--ghost mj-btn--sm"
+          onClick={handleTogglePublish}
+        >
+          {form.published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {form.published ? t('stopPublishing') : t('publish')}
+        </button>
+        <button
+          type="button"
+          className="mj-btn mj-btn--primary mj-btn--sm"
+          onClick={handleSave}
+          disabled={saving || !dirty}
+        >
+          {saving ? t('loading') : t('saveChanges')}
+        </button>
+      </CenterPageHeader>
 
-      <div className={`flex items-center justify-between gap-3 rounded-xl p-4 ${
-        profile.status === 'ACTIVE'
-          ? 'bg-[color:var(--mj-success-soft)] border border-[color:var(--mj-success)]/30'
-          : 'bg-[color:var(--mj-amber-soft)] border border-[color:var(--mj-amber)]/30'
-      }`}>
-        <div className="flex items-center gap-3">
-          {profile.status === 'ACTIVE' ? (
-            <CheckCircle className="h-6 w-6 text-[color:var(--mj-success)]" />
-          ) : (
-            <AlertCircle className="h-6 w-6 text-[color:var(--mj-amber)]" />
-          )}
-          <div>
-            <p className="font-bold text-[color:var(--mj-ink-strong)]">
-              {profile.status === 'ACTIVE' ? t('centerActive') : t('centerPending')}
-            </p>
-            <p className="text-sm text-[color:var(--mj-muted)]">
-              {profile.subscriptionStatus === 'ACTIVE' ? t('subscriptionActive') : t('subscriptionInactive')}
-            </p>
-          </div>
-        </div>
-        <CenterPill tone={profile.status === 'ACTIVE' ? 'green' : 'amber'}>{profile.status}</CenterPill>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <CenterStatCard value={profile.stats.totalBranches} label={t('branches')} />
-        <CenterStatCard value={profile.stats.totalTeachers} label={t('teachers')} />
-        <CenterStatCard value={profile.stats.totalStudents} label={t('students')} />
-        <CenterStatCard value={profile.stats.totalEmployees} label={t('employees')} />
-        <CenterStatCard value={profile.stats.totalRooms} label={t('classrooms')} />
-        <CenterStatCard value="4.5" label={t('rating')} />
-      </div>
-
-      <div className="mj-card p-5">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="mj-title">{t('basicInformation')}</h2>
-          {editActions('basic')}
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="mj-field">
-            <label className="mj-label">{t('centerName')}</label>
-            <input
-              className="mj-input"
-              value={form.name || ''}
-              onChange={(e) => setField('name', e.target.value)}
-              disabled={editingSection !== 'basic'}
-            />
-          </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('centerNameEn')}</label>
-            <input
-              className="mj-input"
-              value={form.nameEn || ''}
-              onChange={(e) => setField('nameEn', e.target.value)}
-              disabled={editingSection !== 'basic'}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="mj-label">{t('description')}</label>
-            <textarea
-              className="mj-textarea"
-              rows={3}
-              value={form.description || ''}
-              onChange={(e) => setField('description', e.target.value)}
-              disabled={editingSection !== 'basic'}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="mj-card p-5">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="mj-title">{t('contactInformation')}</h2>
-          {editActions('contact')}
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="mj-field">
-            <label className="mj-label">{t('phone')}</label>
-            <input
-              className="mj-input"
-              value={form.phone || ''}
-              onChange={(e) => setField('phone', e.target.value)}
-              disabled={editingSection !== 'contact'}
-            />
-          </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('whatsapp')}</label>
-            <input
-              className="mj-input"
-              value={form.whatsapp || ''}
-              onChange={(e) => setField('whatsapp', e.target.value)}
-              disabled={editingSection !== 'contact'}
-            />
-          </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('email')}</label>
-            <input
-              className="mj-input"
-              type="email"
-              value={form.email || ''}
-              onChange={(e) => setField('email', e.target.value)}
-              disabled={editingSection !== 'contact'}
-            />
-          </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('website')}</label>
-            <input
-              className="mj-input"
-              value={form.website || ''}
-              onChange={(e) => setField('website', e.target.value)}
-              disabled={editingSection !== 'contact'}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="mj-card p-5">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="mj-title">{t('location')}</h2>
-          {editActions('location')}
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="mj-field">
-            <label className="mj-label">{t('city')}</label>
-            <input
-              className="mj-input"
-              value={form.city || ''}
-              onChange={(e) => setField('city', e.target.value)}
-              disabled={editingSection !== 'location'}
-            />
-          </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('address')}</label>
-            <input
-              className="mj-input"
-              value={form.address || ''}
-              onChange={(e) => setField('address', e.target.value)}
-              disabled={editingSection !== 'location'}
-            />
-          </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('latitude')}</label>
-            <input
-              className="mj-input"
-              type="number"
-              step="any"
-              value={form.latitude || ''}
-              onChange={(e) => setField('latitude', e.target.value ? parseFloat(e.target.value) : null)}
-              disabled={editingSection !== 'location'}
-            />
-          </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('longitude')}</label>
-            <input
-              className="mj-input"
-              type="number"
-              step="any"
-              value={form.longitude || ''}
-              onChange={(e) => setField('longitude', e.target.value ? parseFloat(e.target.value) : null)}
-              disabled={editingSection !== 'location'}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="mj-card p-5">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="mj-title">{t('workingHours')}</h2>
-          {editActions('hours')}
-        </div>
-        <div className="space-y-3">
-          {DAYS.map((day, index) => {
-            const hours = form.workingHours?.[day];
-            return (
-              <div key={day} className="flex items-center gap-4">
-                <span className="w-24 text-sm font-medium text-[color:var(--mj-ink-strong)]">{DAYS_AR[index]}</span>
-                {editingSection === 'hours' ? (
-                  <>
-                    <label className="flex items-center gap-2 text-sm text-[color:var(--mj-ink)]">
-                      <input
-                        type="checkbox"
-                        checked={!hours?.closed}
-                        onChange={(e) => {
-                          const newHours = { ...form.workingHours };
-                          if (e.target.checked) {
-                            newHours[day] = { open: '09:00', close: '21:00', closed: false };
-                          } else {
-                            newHours[day] = null;
-                          }
-                          setField('workingHours', newHours);
-                        }}
-                        className="accent-[color:var(--mj-accent)]"
-                      />
-                      {t('open')}
-                    </label>
-                    {hours && !hours.closed && (
-                      <>
-                        <input
-                          type="time"
-                          className="mj-input w-32"
-                          value={hours.open}
-                          onChange={(e) => {
-                            const newHours = { ...form.workingHours, [day]: { ...hours, open: e.target.value } };
-                            setField('workingHours', newHours);
-                          }}
-                        />
-                        <Arrow className="h-4 w-4 text-[color:var(--mj-muted)]" />
-                        <input
-                          type="time"
-                          className="mj-input w-32"
-                          value={hours.close}
-                          onChange={(e) => {
-                            const newHours = { ...form.workingHours, [day]: { ...hours, close: e.target.value } };
-                            setField('workingHours', newHours);
-                          }}
-                        />
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <span className="text-sm text-[color:var(--mj-ink)]">
-                    {hours?.closed ? t('closed') : `${hours?.open} → ${hours?.close}`}
-                  </span>
-                )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Main form area */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Public display data */}
+          <div className="mj-card p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="mj-title">{t('publicDisplayData')}</h2>
+                <p className="text-sm text-[color:var(--mj-muted)]">{t('publicDisplayDataHint')}</p>
               </div>
-            );
-          })}
+              <CenterPill tone={form.published ? 'green' : 'amber'} dot>
+                {form.published ? t('publishedBadge') : t('unpublishedBadge')}
+              </CenterPill>
+            </div>
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="mj-field">
+                  <label htmlFor="cp-name" className="mj-label">{t('centerNameField')}</label>
+                  <input
+                    id="cp-name"
+                    className="mj-input"
+                    value={form.name}
+                    onChange={(e) => updateField('name', e.target.value)}
+                  />
+                </div>
+                <div className="mj-field">
+                  <label htmlFor="cp-area" className="mj-label">{t('areaField')}</label>
+                  <input
+                    id="cp-area"
+                    className="mj-input"
+                    value={form.city || ''}
+                    onChange={(e) => updateField('city', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="mj-field">
+                <label htmlFor="cp-short" className="mj-label">{t('shortTitleField')}</label>
+                <input
+                  id="cp-short"
+                  className="mj-input"
+                  value={form.shortDescription || ''}
+                  onChange={(e) => updateField('shortDescription', e.target.value)}
+                />
+              </div>
+              <div className="mj-field">
+                <label htmlFor="cp-about" className="mj-label">{t('aboutField')}</label>
+                <textarea
+                  id="cp-about"
+                  className="mj-textarea"
+                  rows={3}
+                  value={form.description || ''}
+                  onChange={(e) => updateField('description', e.target.value)}
+                />
+              </div>
+              <div className="mj-field">
+                <label htmlFor="cp-address" className="mj-label">{t('fullAddressField')}</label>
+                <input
+                  id="cp-address"
+                  className="mj-input"
+                  value={form.address || ''}
+                  onChange={(e) => updateField('address', e.target.value)}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="mj-field">
+                  <label htmlFor="cp-phone" className="mj-label">{t('phoneField')}</label>
+                  <input
+                    id="cp-phone"
+                    className="mj-input"
+                    value={form.phone || ''}
+                    onChange={(e) => updateField('phone', e.target.value)}
+                  />
+                </div>
+                <div className="mj-field">
+                  <label htmlFor="cp-whatsapp" className="mj-label">{t('whatsappField')}</label>
+                  <input
+                    id="cp-whatsapp"
+                    className="mj-input"
+                    value={form.whatsapp || ''}
+                    onChange={(e) => updateField('whatsapp', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="mj-field">
+                <label htmlFor="cp-hours" className="mj-label">{t('workingHoursField')}</label>
+                <input
+                  id="cp-hours"
+                  className="mj-input"
+                  value={form.workingHoursText || ''}
+                  onChange={(e) => updateField('workingHoursText', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Equipment & Services */}
+          <div className="mj-card p-5">
+            <h3 className="mj-title mb-3">{t('equipmentAndServices')}</h3>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {form.equipment.map((item) => (
+                <span
+                  key={item}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--mj-surface-2)] px-3 py-1 text-sm font-medium text-[color:var(--mj-ink-strong)]"
+                >
+                  {item}
+                  <button
+                    type="button"
+                    className="text-[color:var(--mj-muted)] hover:text-[color:var(--mj-danger)]"
+                    onClick={() => handleRemoveEquipment(item)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                className="mj-input flex-1"
+                placeholder={t('equipmentPlaceholder')}
+                value={equipmentInput}
+                onChange={(e) => setEquipmentInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddEquipment();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className="mj-btn mj-btn--ghost mj-btn--sm"
+                onClick={handleAddEquipment}
+                disabled={!equipmentInput.trim()}
+              >
+                {t('add')}
+              </button>
+            </div>
+          </div>
         </div>
+
+        {/* Preview */}
+        <aside className="space-y-6">
+          <div className="mj-card p-5">
+            <h2 className="mj-title mb-1">{t('publicPreview')}</h2>
+            <p className="text-sm text-[color:var(--mj-muted)] mb-4">{t('lastUpdatedNow')}</p>
+
+            {/* Preview card */}
+            <div className="rounded-xl overflow-hidden border border-[color:var(--mj-border)]">
+              {/* Cover image */}
+              <div className="relative aspect-video bg-[color:var(--mj-surface-2)]">
+                {coverPhoto ? (
+                  <img
+                    src={coverPhoto.url}
+                    alt={form.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-[color:var(--mj-muted)]">
+                    <ImageIcon className="h-12 w-12" />
+                  </div>
+                )}
+                <span className="absolute top-3 inset-inline-end-3 rounded-full bg-[color:var(--mj-success)] px-3 py-1 text-xs font-bold text-white">
+                  {t('availableForBooking')}
+                </span>
+              </div>
+
+              {/* Info */}
+              <div className="p-4 space-y-3">
+                {form.city && (
+                  <span className="text-xs font-medium text-[color:var(--mj-muted)]">{form.city}</span>
+                )}
+                <h3 className="text-lg font-bold text-[color:var(--mj-ink-strong)]">{form.name}</h3>
+                {form.shortDescription && (
+                  <p className="text-sm font-bold text-[color:var(--mj-ink-strong)]">{form.shortDescription}</p>
+                )}
+                {form.description && (
+                  <p className="text-sm text-[color:var(--mj-muted)]">{form.description}</p>
+                )}
+                <div className="flex flex-wrap gap-2 text-xs text-[color:var(--mj-muted)]">
+                  {roomsCount > 0 && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--mj-surface-2)] px-2.5 py-1 font-medium">
+                      {t('roomsCount', { count: roomsCount })}
+                    </span>
+                  )}
+                  {form.workingHoursText && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--mj-surface-2)] px-2.5 py-1 font-medium">
+                      {form.workingHoursText}
+                    </span>
+                  )}
+                  {form.phone && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--mj-surface-2)] px-2.5 py-1 font-medium">
+                      {form.phone}
+                    </span>
+                  )}
+                </div>
+                {form.equipment.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {form.equipment.map((item) => (
+                      <span
+                        key={item}
+                        className="rounded-full bg-[color:var(--mj-surface-2)] px-2.5 py-1 text-xs font-medium text-[color:var(--mj-ink-strong)]"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <a
+                  href="/rooms"
+                  className="block text-center text-sm font-bold text-[color:var(--mj-link)] hover:underline pt-2"
+                >
+                  {t('viewRoomsAndSchedule')}
+                </a>
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
 
+      {/* Gallery section */}
       <div className="mj-card p-5">
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="mj-title">{t('socialMedia')}</h2>
-          {editActions('social')}
+          <div>
+            <h2 className="mj-title">{t('galleryTitle')}</h2>
+            <p className="text-sm text-[color:var(--mj-muted)]">{t('galleryDescription')}</p>
+          </div>
+          <button
+            type="button"
+            className="mj-btn mj-btn--ghost mj-btn--sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            <Upload className="h-4 w-4" />
+            {uploading ? t('loading') : t('addImage')}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={handlePhotoUpload}
+          />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="mj-field">
-            <label className="mj-label">{t('facebook')}</label>
-            <input
-              className="mj-input"
-              value={form.facebook || ''}
-              onChange={(e) => setField('facebook', e.target.value)}
-              disabled={editingSection !== 'social'}
-            />
+
+        {form.photos.length === 0 ? (
+          <div className="rounded-xl border-2 border-dashed border-[color:var(--mj-border)] p-8 text-center">
+            <ImageIcon className="h-12 w-12 mx-auto text-[color:var(--mj-muted)] mb-3" />
+            <p className="text-sm text-[color:var(--mj-muted)]">{t('noImagesYet')}</p>
           </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('instagram')}</label>
-            <input
-              className="mj-input"
-              value={form.instagram || ''}
-              onChange={(e) => setField('instagram', e.target.value)}
-              disabled={editingSection !== 'social'}
-            />
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {form.photos.map((photo, index) => (
+              <div
+                key={photo.url}
+                className="rounded-xl border border-[color:var(--mj-border)] overflow-hidden"
+              >
+                <div className="aspect-video bg-[color:var(--mj-surface-2)]">
+                  <img
+                    src={photo.url}
+                    alt={t('imageAlt', { name: form.name, index: index + 1 })}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-2 flex items-center justify-between gap-2">
+                  <CenterPill tone={photo.isCover ? 'green' : 'slate'}>
+                    {photo.isCover ? t('currentCover') : `${index + 1}`}
+                  </CenterPill>
+                  <div className="flex gap-1">
+                    {!photo.isCover && (
+                      <button
+                        type="button"
+                        className="mj-btn mj-btn--ghost mj-btn--sm !px-2"
+                        onClick={() => handleSetCover(index)}
+                      >
+                        {t('setAsCover')}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="mj-btn mj-btn--ghost mj-btn--sm !px-2 text-[color:var(--mj-danger)]"
+                      onClick={() => handleDeletePhoto(index)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('youtube')}</label>
-            <input
-              className="mj-input"
-              value={form.youtube || ''}
-              onChange={(e) => setField('youtube', e.target.value)}
-              disabled={editingSection !== 'social'}
-            />
-          </div>
-          <div className="mj-field">
-            <label className="mj-label">{t('linkedin')}</label>
-            <input
-              className="mj-input"
-              value={form.linkedin || ''}
-              onChange={(e) => setField('linkedin', e.target.value)}
-              disabled={editingSection !== 'social'}
-            />
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

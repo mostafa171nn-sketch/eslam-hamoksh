@@ -1,9 +1,13 @@
 import { Router } from 'express';
 import { authenticate, requireCenterAdmin } from '../middleware/auth';
 import { requirePermission } from '../middleware/rbac';
+import { upload } from '../middleware/upload';
 import {
   getCenterProfile,
   updateCenterProfile,
+  uploadProfilePhoto,
+  setCoverPhoto,
+  deleteProfilePhoto,
   getCenterDashboardStats,
   getTodayLessons,
   getCenterAlerts,
@@ -25,6 +29,9 @@ router.use(authenticate, requireCenterAdmin);
 
 router.get('/profile', requirePermission('centers.view'), getCenterProfile);
 router.put('/profile', requirePermission('centers.update'), updateCenterProfile);
+router.post('/profile/photos', requirePermission('centers.update'), upload.single('photo'), uploadProfilePhoto);
+router.patch('/profile/photos/:index/cover', requirePermission('centers.update'), setCoverPhoto);
+router.delete('/profile/photos/:index', requirePermission('centers.update'), deleteProfilePhoto);
 
 router.get('/dashboard', requirePermission('centers.view'), getCenterDashboardOverview);
 router.get('/stats', requirePermission('centers.view'), getCenterDashboardStats);

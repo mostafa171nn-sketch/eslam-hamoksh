@@ -959,6 +959,11 @@ model Center {
   youtube               String?
   linkedin              String?
   whatsapp              String?
+  published             Boolean                     @default(true)
+  shortDescription      String?
+  workingHoursText      String?
+  equipment             Json?
+  photos                Json?
   status                CenterStatus                @default(PENDING)
   subscriptionStatus    SubscriptionStatus          @default(PENDING)
   planId                String?

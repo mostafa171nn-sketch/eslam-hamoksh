@@ -1,7 +1,9 @@
 import type { Request, Response } from 'express';
+import path from 'path';
+import fs from 'fs/promises';
 import { prisma } from '../lib/prisma';
 import { currentCenterId } from '../lib/tenant';
-import { fileUrl } from '../middleware/upload';
+import { fileUrl, uploadRootPath } from '../middleware/upload';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ok } from '../utils/response';
 import { ApiError } from '../utils/ApiError';
@@ -39,14 +41,23 @@ export const getCenterProfile = asyncHandler(async (req: Request, res: Response)
     where: { centerId },
   });
 
+  const rawPhotos = ((center as any).photos as { url: string; isCover?: boolean }[] | null) ?? [];
+  const photos = rawPhotos.map((p, i) => ({
+    url: fileUrl(p.url),
+    isCover: p.isCover ?? i === 0,
+  }));
+  const coverPhoto = photos.find(p => p.isCover) ?? photos[0] ?? null;
+
   return ok(res, {
     id: center.id,
     name: center.name,
     nameEn: center.nameEn,
     slug: center.slug,
     description: center.description,
+    shortDescription: (center as any).shortDescription ?? null,
+    published: (center as any).published ?? true,
     logoUrl: center.logoUrl,
-    coverUrl: null,
+    coverUrl: coverPhoto?.url ?? center.logoUrl,
     phone: center.phone,
     email: center.email,
     website: center.website,
@@ -59,22 +70,12 @@ export const getCenterProfile = asyncHandler(async (req: Request, res: Response)
     youtube: (center as any).youtube || null,
     linkedin: (center as any).linkedin || null,
     whatsapp: (center as any).whatsapp || null,
+    workingHoursText: (center as any).workingHoursText ?? null,
+    equipment: ((center as any).equipment as string[] | null) ?? [],
+    photos,
     status: center.status,
     subscriptionStatus: center.subscriptionStatus,
-    workingHours: settings ? {
-      sunday: { open: '09:00', close: '21:00', closed: false },
-      monday: { open: '09:00', close: '21:00', closed: false },
-      tuesday: { open: '09:00', close: '21:00', closed: false },
-      wednesday: { open: '09:00', close: '21:00', closed: false },
-      thursday: { open: '09:00', close: '21:00', closed: false },
-      friday: { open: '09:00', close: '21:00', closed: false },
-      saturday: { open: '09:00', close: '21:00', closed: false },
-    } : null,
     stats: {
-      totalTeachers: center._count.teachers,
-      totalStudents: center._count.students,
-      totalEmployees: center._count.users,
-      totalBranches: center.locations.length,
       totalRooms: center._count.rooms,
     },
   });
@@ -102,13 +103,20 @@ export const updateCenterProfile = asyncHandler(async (req: Request, res: Respon
     youtube,
     linkedin,
     whatsapp,
-    workingHours,
+    published,
+    shortDescription,
+    workingHoursText,
+    equipment,
   } = req.body;
 
   const updateData: any = {};
   if (name !== undefined) updateData.name = name;
   if (nameEn !== undefined) updateData.nameEn = nameEn;
   if (description !== undefined) updateData.description = description;
+  if (shortDescription !== undefined) updateData.shortDescription = shortDescription;
+  if (published !== undefined) updateData.published = published;
+  if (workingHoursText !== undefined) updateData.workingHoursText = workingHoursText;
+  if (equipment !== undefined) updateData.equipment = equipment;
   if (phone !== undefined) updateData.phone = phone;
   if (email !== undefined) updateData.email = email;
   if (website !== undefined) updateData.website = website;
@@ -128,6 +136,67 @@ export const updateCenterProfile = asyncHandler(async (req: Request, res: Respon
   });
 
   return ok(res, center, 'Center profile updated');
+});
+
+export const uploadProfilePhoto = asyncHandler(async (req: Request, res: Response) => {
+  const centerId = currentCenterId();
+  if (!centerId) throw ApiError.unauthorized();
+  if (!req.file) throw ApiError.badRequest('No file uploaded');
+
+  const center = await prisma.center.findUnique({ where: { id: centerId } });
+  if (!center) throw ApiError.notFound('Center not found');
+
+  const photos = ((center as any).photos as { url: string; isCover?: boolean }[] | null) ?? [];
+  photos.push({ url: req.file.filename, isCover: photos.length === 0 });
+  await prisma.center.update({ where: { id: centerId }, data: { photos } as any });
+
+  const formatted = photos.map((p) => ({ url: fileUrl(p.url), isCover: p.isCover ?? false }));
+  return ok(res, formatted, 'Photo uploaded');
+});
+
+export const setCoverPhoto = asyncHandler(async (req: Request, res: Response) => {
+  const centerId = currentCenterId();
+  if (!centerId) throw ApiError.unauthorized();
+  const index = parseInt(req.params.index, 10);
+  const center = await prisma.center.findUnique({ where: { id: centerId } });
+  if (!center) throw ApiError.notFound('Center not found');
+
+  const photos = ((center as any).photos as { url: string; isCover?: boolean }[] | null) ?? [];
+  if (isNaN(index) || index < 0 || index >= photos.length) {
+    throw ApiError.badRequest('Invalid photo index');
+  }
+
+  photos.forEach((p, i) => { p.isCover = i === index; });
+  await prisma.center.update({ where: { id: centerId }, data: { photos } as any });
+
+  const formatted = photos.map((p) => ({ url: fileUrl(p.url), isCover: p.isCover ?? false }));
+  return ok(res, formatted, 'Cover updated');
+});
+
+export const deleteProfilePhoto = asyncHandler(async (req: Request, res: Response) => {
+  const centerId = currentCenterId();
+  if (!centerId) throw ApiError.unauthorized();
+  const index = parseInt(req.params.index, 10);
+  const center = await prisma.center.findUnique({ where: { id: centerId } });
+  if (!center) throw ApiError.notFound('Center not found');
+
+  const photos = ((center as any).photos as { url: string; isCover?: boolean }[] | null) ?? [];
+  if (isNaN(index) || index < 0 || index >= photos.length) {
+    throw ApiError.badRequest('Invalid photo index');
+  }
+
+  const removed = photos.splice(index, 1)[0];
+  if (removed.isCover && photos.length) photos[0].isCover = true;
+
+  try {
+    const filename = removed.url.split('/').pop()!;
+    await fs.unlink(path.join(uploadRootPath, filename));
+  } catch {}
+
+  await prisma.center.update({ where: { id: centerId }, data: { photos } as any });
+
+  const formatted = photos.map((p) => ({ url: fileUrl(p.url), isCover: p.isCover ?? false }));
+  return ok(res, formatted, 'Photo deleted');
 });
 
 export const getCenterDashboardStats = asyncHandler(async (req: Request, res: Response) => {
