@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { Role } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../utils/ApiError';
+import { recordActivity } from '../services/activity.service';
 
 // In-memory permission cache keyed by role string.  Entries are lazily populated
 // and invalidated every 5 minutes so newly inserted RolePermission rows are
@@ -78,6 +79,15 @@ export function requirePermission(permissionName: string) {
 
       const permissions = await getPermissionsForRole(role);
       if (!permissions.has(permissionName)) {
+        await recordActivity({
+          userId: req.user.id,
+          role: req.user.role,
+          action: 'access_denied',
+          entity: 'Permission',
+          details: permissionName,
+          category: 'SECURITY',
+          result: 'DENIED',
+        });
         return next(
           ApiError.forbidden(
             'You do not have permission to perform this action.',
@@ -121,6 +131,15 @@ export function requireAnyPermission(...permissionNames: string[]) {
       const permissions = await getPermissionsForRole(role);
       const hasAny = permissionNames.some((p) => permissions.has(p));
       if (!hasAny) {
+        await recordActivity({
+          userId: req.user.id,
+          role: req.user.role,
+          action: 'access_denied',
+          entity: 'Permission',
+          details: permissionNames.join(', '),
+          category: 'SECURITY',
+          result: 'DENIED',
+        });
         return next(
           ApiError.forbidden(
             'You do not have permission to perform this action.',

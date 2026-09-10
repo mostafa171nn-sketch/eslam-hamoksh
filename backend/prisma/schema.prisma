@@ -623,6 +623,10 @@ model CenterSettings {
   attendanceGraceMinutes Int      @default(10)
   timezone               String   @default("Africa/Cairo")
   currency               String   @default("EGP")
+  navOrder               Json?
+  hiddenPages            Json?
+  escalation             Json?
+  comparisonMode         String   @default("LAST_MONTH")
   updatedAt              DateTime @updatedAt
   centerId               String?  @unique
   center                 Center?  @relation(fields: [centerId], references: [id], onDelete: Cascade)
@@ -828,6 +832,8 @@ model ActivityLog {
   entity    String
   entityId  String?
   details   String?
+  category  String   @default("OPERATIONS")
+  result    String   @default("SUCCESS")
   createdAt DateTime @default(now())
   centerId  String?
   user      User?    @relation(fields: [userId], references: [id])
@@ -836,6 +842,8 @@ model ActivityLog {
   @@index([userId])
   @@index([centerId])
   @@index([entity, entityId])
+  @@index([category])
+  @@index([result])
 }
 
 model TeacherPaymentSettings {

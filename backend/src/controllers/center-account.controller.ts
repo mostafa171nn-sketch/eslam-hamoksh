@@ -7,6 +7,7 @@ import { fileUrl, uploadRootPath } from '../middleware/upload';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ok } from '../utils/response';
 import { ApiError } from '../utils/ApiError';
+import { recordActivity } from '../services/activity.service';
 
 export const getCenterProfile = asyncHandler(async (req: Request, res: Response) => {
   const centerId = currentCenterId();
@@ -705,16 +706,110 @@ export const getCenterBranches = asyncHandler(async (req: Request, res: Response
   return ok(res, branches);
 });
 
+const PORTAL_PAGE_KEYS = [
+  'dashboard',
+  'rooms',
+  'teachers',
+  'groups',
+  'students',
+  'employees',
+  'finance',
+  'transport',
+  'communications',
+  'broadcast',
+  'reports',
+  'profile',
+  'settings',
+] as const;
+
+const BASIC_PORTAL_PAGE_KEYS = new Set(['dashboard', 'settings']);
+
+const DEFAULT_NAV_ORDER = [...PORTAL_PAGE_KEYS];
+
+const DEFAULT_ESCALATION = {
+  highAfter: '2h',
+  normalAfter: '24h',
+  complaintResolveAfter: '4d',
+} as const;
+
+const ESCALATION_OPTIONS = {
+  highAfter: new Set(['1h', '2h', '4h']),
+  normalAfter: new Set(['12h', '24h', '48h']),
+  complaintResolveAfter: new Set(['1d', '2d', '4d', '7d']),
+} as const;
+
+const COMPARISON_MODES = new Set(['LAST_MONTH', 'SAME_MONTH_LAST_YEAR', 'TARGET']);
+
+function sanitizeNavOrder(value: unknown): string[] {
+  if (!Array.isArray(value)) throw ApiError.badRequest('navigation order must be an array', 'INVALID_NAV_ORDER');
+  const allowed = new Set<string>(PORTAL_PAGE_KEYS);
+  const seen = new Set<string>();
+  const clean: string[] = [];
+  for (const key of value) {
+    if (typeof key !== 'string' || !allowed.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    clean.push(key);
+  }
+  for (const key of PORTAL_PAGE_KEYS) {
+    if (!seen.has(key)) clean.push(key);
+  }
+  return clean;
+}
+
+function sanitizeHiddenPages(value: unknown): string[] {
+  if (!Array.isArray(value)) throw ApiError.badRequest('hidden pages must be an array', 'INVALID_HIDDEN_PAGES');
+  const allowed = new Set<string>(PORTAL_PAGE_KEYS);
+  const seen = new Set<string>();
+  const clean: string[] = [];
+  for (const key of value) {
+    if (typeof key !== 'string' || !allowed.has(key) || BASIC_PORTAL_PAGE_KEYS.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    clean.push(key);
+  }
+  return clean;
+}
+
+function sanitizeEscalation(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object') throw ApiError.badRequest('escalation must be an object', 'INVALID_ESCALATION');
+  const input = value as Record<string, unknown>;
+  const pick = (key: string, fallback: string, allowed: Set<string>): string => {
+    const v = input[key];
+    if (v === undefined || v === null) return fallback;
+    if (typeof v !== 'string' || !allowed.has(v)) {
+      throw ApiError.badRequest(`invalid escalation value: ${key}`, 'INVALID_ESCALATION');
+    }
+    return v;
+  };
+  return {
+    highAfter: pick('highAfter', '2h', ESCALATION_OPTIONS.highAfter),
+    normalAfter: pick('normalAfter', '24h', ESCALATION_OPTIONS.normalAfter),
+    complaintResolveAfter: pick('complaintResolveAfter', '4d', ESCALATION_OPTIONS.complaintResolveAfter),
+  };
+}
+
 export const getCenterSettings = asyncHandler(async (req: Request, res: Response) => {
   const centerId = currentCenterId();
   if (!centerId) throw ApiError.unauthorized();
 
   const settings = await prisma.centerSettings.findUnique({ where: { centerId } });
-  return ok(res, settings || {
-    timezone: 'Africa/Cairo',
-    currency: 'EGP',
-    radiusMeters: 100,
-    attendanceGraceMinutes: 10,
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const [auditRecentCount] = await Promise.all([
+    prisma.activityLog.count({ where: { createdAt: { gte: todayStart } } }),
+  ]);
+
+  return ok(res, {
+    name: settings?.name ?? 'Center',
+    timezone: settings?.timezone ?? 'Africa/Cairo',
+    currency: settings?.currency ?? 'EGP',
+    radiusMeters: settings?.radiusMeters ?? 100,
+    attendanceGraceMinutes: settings?.attendanceGraceMinutes ?? 10,
+    navOrder: Array.isArray(settings?.navOrder) ? settings!.navOrder : DEFAULT_NAV_ORDER,
+    hiddenPages: Array.isArray(settings?.hiddenPages) ? settings!.hiddenPages : [],
+    escalation: settings?.escalation && typeof settings.escalation === 'object' ? settings.escalation : DEFAULT_ESCALATION,
+    comparisonMode: settings?.comparisonMode ?? 'LAST_MONTH',
+    auditRecentCount,
   });
 });
 
@@ -724,12 +819,23 @@ export const updateCenterSettings = asyncHandler(async (req: Request, res: Respo
 
   const { timezone, currency, radiusMeters, attendanceGraceMinutes, name } = req.body;
 
-  const updateData: any = {};
+  const updateData: Record<string, unknown> = {};
   if (timezone !== undefined) updateData.timezone = timezone;
   if (currency !== undefined) updateData.currency = currency;
   if (radiusMeters !== undefined) updateData.radiusMeters = radiusMeters;
   if (attendanceGraceMinutes !== undefined) updateData.attendanceGraceMinutes = attendanceGraceMinutes;
   if (name !== undefined) updateData.name = name;
+
+  if (req.body.navOrder !== undefined) updateData.navOrder = sanitizeNavOrder(req.body.navOrder);
+  if (req.body.hiddenPages !== undefined) updateData.hiddenPages = sanitizeHiddenPages(req.body.hiddenPages);
+  if (req.body.escalation !== undefined) updateData.escalation = sanitizeEscalation(req.body.escalation);
+  if (req.body.comparisonMode !== undefined) {
+    const mode = req.body.comparisonMode;
+    if (typeof mode !== 'string' || !COMPARISON_MODES.has(mode)) {
+      throw ApiError.badRequest('invalid comparison mode', 'INVALID_COMPARISON_MODE');
+    }
+    updateData.comparisonMode = mode;
+  }
 
   const settings = await prisma.centerSettings.upsert({
     where: { centerId },
@@ -737,5 +843,137 @@ export const updateCenterSettings = asyncHandler(async (req: Request, res: Respo
     create: { centerId, ...updateData },
   });
 
-  return ok(res, settings, 'Settings saved');
+  await recordActivity({
+    userId: req.user?.id,
+    role: req.user?.role,
+    action: 'settings_changed',
+    entity: 'CenterSettings',
+    details: Object.keys(updateData).join(', ') || 'no changes',
+    category: 'SETTINGS',
+    result: 'SUCCESS',
+  });
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const auditRecentCount = await prisma.activityLog.count({ where: { createdAt: { gte: todayStart } } });
+
+  return ok(res, {
+    name: settings.name,
+    timezone: settings.timezone,
+    currency: settings.currency,
+    radiusMeters: settings.radiusMeters,
+    attendanceGraceMinutes: settings.attendanceGraceMinutes,
+    navOrder: Array.isArray(settings.navOrder) ? settings.navOrder : DEFAULT_NAV_ORDER,
+    hiddenPages: Array.isArray(settings.hiddenPages) ? settings.hiddenPages : [],
+    escalation: settings.escalation && typeof settings.escalation === 'object' ? settings.escalation : DEFAULT_ESCALATION,
+    comparisonMode: settings.comparisonMode ?? 'LAST_MONTH',
+    auditRecentCount,
+  }, 'Settings saved');
+});
+
+export const getCenterAuditLog = asyncHandler(async (req: Request, res: Response) => {
+  const centerId = currentCenterId();
+  if (!centerId) throw ApiError.unauthorized();
+
+  const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+  const category = typeof req.query.category === 'string' ? req.query.category : 'ALL';
+  const result = typeof req.query.result === 'string' ? req.query.result : 'ALL';
+  const page = Math.max(1, Number.parseInt(String(req.query.page ?? '1'), 10) || 1);
+  const limit = Math.min(50, Math.max(1, Number.parseInt(String(req.query.limit ?? '15'), 10) || 15));
+
+  const where: Record<string, unknown> = {};
+  if (category && category !== 'ALL') where.category = category;
+  if (result && result !== 'ALL') where.result = result;
+  if (q) {
+    where.OR = [
+      { action: { contains: q, mode: 'insensitive' } },
+      { details: { contains: q, mode: 'insensitive' } },
+      { user: { fullName: { contains: q, mode: 'insensitive' } } },
+    ];
+  }
+
+  const [items, total] = await Promise.all([
+    prisma.activityLog.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+      include: { user: { select: { id: true, fullName: true } } },
+    }),
+    prisma.activityLog.count({ where }),
+  ]);
+
+  const rows = items.map((log) => ({
+    id: log.id,
+    time: log.createdAt.toISOString(),
+    action: log.action,
+    category: log.category,
+    target: log.entity,
+    entityId: log.entityId,
+    details: log.details ?? '',
+    actorName: log.user?.fullName ?? '',
+    actorRole: log.role ?? '',
+    result: log.result,
+  }));
+
+  return ok(res, rows, 'Audit log loaded', {
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+  });
+});
+
+function csvCell(value: unknown): string {
+  let s = value === null || value === undefined ? '' : String(value);
+  // Guard against CSV formula injection in spreadsheet apps.
+  if (/^[=+\-@]/.test(s)) s = `'${s}`;
+  return `"${s.replace(/"/g, '""')}"`;
+}
+
+export const exportCenterAuditLogCsv = asyncHandler(async (req: Request, res: Response) => {
+  const centerId = currentCenterId();
+  if (!centerId) throw ApiError.unauthorized();
+
+  const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+  const category = typeof req.query.category === 'string' ? req.query.category : 'ALL';
+  const result = typeof req.query.result === 'string' ? req.query.result : 'ALL';
+
+  const where: Record<string, unknown> = {};
+  if (category && category !== 'ALL') where.category = category;
+  if (result && result !== 'ALL') where.result = result;
+  if (q) {
+    where.OR = [
+      { action: { contains: q, mode: 'insensitive' } },
+      { details: { contains: q, mode: 'insensitive' } },
+      { user: { fullName: { contains: q, mode: 'insensitive' } } },
+    ];
+  }
+
+  const items = await prisma.activityLog.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    take: 5000,
+    include: { user: { select: { fullName: true } } },
+  });
+
+  const header = ['time', 'action', 'category', 'target', 'details', 'actor', 'role', 'result'];
+  const lines = items.map((log) =>
+    [
+      log.createdAt.toISOString(),
+      log.action,
+      log.category,
+      log.entity,
+      log.details ?? '',
+      log.user?.fullName ?? '',
+      log.role ?? '',
+      log.result,
+    ]
+      .map(csvCell)
+      .join(','),
+  );
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="audit-log.csv"');
+  res.send([header.map(csvCell).join(','), ...lines].join('\n'));
 });

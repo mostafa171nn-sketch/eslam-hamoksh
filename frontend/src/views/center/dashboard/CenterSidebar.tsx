@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -25,28 +25,48 @@ import { useAuth } from '../../../context/AuthContext';
 import { useT, type DictKey } from '../../../i18n';
 import { useCenterBranch } from './CenterBranchContext';
 
+type PortalPageKey =
+  | 'dashboard'
+  | 'rooms'
+  | 'teachers'
+  | 'groups'
+  | 'students'
+  | 'employees'
+  | 'finance'
+  | 'transport'
+  | 'communications'
+  | 'broadcast'
+  | 'reports'
+  | 'profile'
+  | 'settings';
+
 interface NavItem {
   to: string;
   labelKey: DictKey;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number | string }>;
   end?: boolean;
+  pageKey: PortalPageKey;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/center', labelKey: 'followUpNav', icon: LayoutDashboard, end: true },
-  { to: '/center/classrooms', labelKey: 'roomsNav', icon: DoorOpen },
-  { to: '/center/teachers', labelKey: 'teachers', icon: GraduationCap },
-  { to: '/center/groups', labelKey: 'groups', icon: Group },
-  { to: '/center/students', labelKey: 'students', icon: Users },
-  { to: '/center/employees', labelKey: 'employees', icon: ContactRound },
-  { to: '/center/finance', labelKey: 'finance', icon: Wallet },
-  { to: '/center/transport', labelKey: 'transport', icon: Bus },
-  { to: '/center/communications', labelKey: 'communications', icon: MessagesSquare },
-  { to: '/center/broadcast', labelKey: 'broadcast', icon: Radio },
-  { to: '/center/reports', labelKey: 'reports', icon: FileBarChart },
-  { to: '/center/profile', labelKey: 'centerPage', icon: Globe },
-  { to: '/center/settings', labelKey: 'settings', icon: Settings },
+  { to: '/center', labelKey: 'followUpNav', icon: LayoutDashboard, end: true, pageKey: 'dashboard' },
+  { to: '/center/classrooms', labelKey: 'roomsNav', icon: DoorOpen, pageKey: 'rooms' },
+  { to: '/center/teachers', labelKey: 'teachers', icon: GraduationCap, pageKey: 'teachers' },
+  { to: '/center/groups', labelKey: 'groups', icon: Group, pageKey: 'groups' },
+  { to: '/center/students', labelKey: 'students', icon: Users, pageKey: 'students' },
+  { to: '/center/employees', labelKey: 'employees', icon: ContactRound, pageKey: 'employees' },
+  { to: '/center/finance', labelKey: 'finance', icon: Wallet, pageKey: 'finance' },
+  { to: '/center/transport', labelKey: 'transport', icon: Bus, pageKey: 'transport' },
+  { to: '/center/communications', labelKey: 'communications', icon: MessagesSquare, pageKey: 'communications' },
+  { to: '/center/broadcast', labelKey: 'broadcast', icon: Radio, pageKey: 'broadcast' },
+  { to: '/center/reports', labelKey: 'reports', icon: FileBarChart, pageKey: 'reports' },
+  { to: '/center/profile', labelKey: 'centerPage', icon: Globe, pageKey: 'profile' },
+  { to: '/center/settings', labelKey: 'settings', icon: Settings, pageKey: 'settings' },
 ];
+
+// Portal pages that are always visible (mirrors the backend portal settings).
+const BASIC_PAGE_KEYS = new Set<string>(['dashboard', 'settings']);
+const NAV_RECONFIGURED_EVENT = 'maarej:nav-config-changed';
 
 function isActive(pathname: string | null, item: NavItem): boolean {
   return item.end ? pathname === item.to : (pathname ?? '').startsWith(item.to);
@@ -68,6 +88,46 @@ export function CenterSidebar({
   const [branchOpen, setBranchOpen] = useState(false);
   const branchRef = useRef<HTMLDivElement>(null);
   const loadedBranches = useRef(false);
+  const [navConfig, setNavConfig] = useState<{ order: string[]; hidden: string[] } | null>(null);
+  const [navVersion, setNavVersion] = useState(0);
+
+  useEffect(() => {
+    const onNavReconfigured = () => setNavVersion((v) => v + 1);
+    window.addEventListener(NAV_RECONFIGURED_EVENT, onNavReconfigured);
+    return () => window.removeEventListener(NAV_RECONFIGURED_EVENT, onNavReconfigured);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    import('../../../lib/api').then(({ api }) => {
+      api
+        .get<{ navOrder?: string[]; hiddenPages?: string[] }>('/center/account/settings')
+        .then((res) => {
+          if (cancelled) return;
+          setNavConfig({
+            order: Array.isArray(res.data?.navOrder) ? res.data.navOrder : [],
+            hidden: Array.isArray(res.data?.hiddenPages) ? res.data.hiddenPages : [],
+          });
+        })
+        .catch(() => {
+          if (!cancelled) setNavConfig(null);
+        });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [navVersion]);
+
+  const navItems = useMemo(() => {
+    const order = navConfig && navConfig.order.length > 0 ? navConfig.order : NAV_ITEMS.map((i) => i.pageKey);
+    const hidden = new Set(navConfig?.hidden ?? []);
+    const ordered = order
+      .map((key) => NAV_ITEMS.find((i) => i.pageKey === key))
+      .filter((item): item is NavItem => Boolean(item));
+    const fallback = NAV_ITEMS.filter((item) => !order.includes(item.pageKey));
+    const all = [...ordered, ...fallback];
+    return all.filter((item) => !hidden.has(item.pageKey) || BASIC_PAGE_KEYS.has(item.pageKey));
+  }, [navConfig]);
 
   useEffect(() => {
     if (loadedBranches.current) return;
@@ -185,7 +245,7 @@ export function CenterSidebar({
         {/* Nav */}
         <nav className="relative flex-1 overflow-y-auto overflow-x-hidden px-3 py-2">
           <ul className="space-y-0.5">
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const active = isActive(pathname, item);
               const Icon = item.icon;
               return (

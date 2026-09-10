@@ -8,6 +8,8 @@ interface ActivityLogCreateData {
   entity: string;
   entityId?: string | null;
   details?: string | null;
+  category?: string;
+  result?: string;
 }
 
 export const activityRepository = {

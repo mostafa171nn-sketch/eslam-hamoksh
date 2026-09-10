@@ -19,6 +19,8 @@ import {
   cancelCenterLesson,
   getCenterSettings,
   updateCenterSettings,
+  getCenterAuditLog,
+  exportCenterAuditLogCsv,
   getCenterBranches,
 } from '../controllers/center-account.controller';
 import { getCenterDashboardOverview } from '../controllers/center-dashboard.controller';
@@ -47,6 +49,8 @@ router.patch('/schedule/lessons/:id/cancel', requirePermission('lessons.update')
 
 router.get('/settings', requirePermission('centers.view'), getCenterSettings);
 router.put('/settings', requirePermission('centers.update'), updateCenterSettings);
+router.get('/settings/audit-log', requirePermission('centers.view'), getCenterAuditLog);
+router.get('/settings/audit-log/export', requirePermission('centers.view'), exportCenterAuditLogCsv);
 
 router.get('/branches', requirePermission('centers.view'), getCenterBranches);
 
