@@ -133,20 +133,27 @@ export default function RegisterPage() {
       if (validRole === 'student') {
         Object.assign(base, { subjects, gradeId });
       }
-      const ROLE_TO_API: Record<string, 'TEACHER' | 'STUDENT' | 'PARENT'> = {
+      if (validRole === 'student') {
+        // Students must prove phone ownership before an account exists. The
+        // backend validates + stores the (encrypted) registration payload and
+        // creates the account only after the OTP is verified.
+        const res = await api.requestOtp({
+          phone: normalizedPhone,
+          purpose: 'REGISTER_STUDENT',
+          payload: base,
+        });
+        router.push(
+          `/register/verify?v=${encodeURIComponent(res.data?.verificationId ?? '')}&m=${encodeURIComponent(res.data?.maskedPhone ?? '')}`,
+        );
+        return;
+      }
+      const ROLE_TO_API: Record<'teacher' | 'parent', 'TEACHER' | 'PARENT'> = {
         teacher: 'TEACHER',
-        student: 'STUDENT',
         parent: 'PARENT',
       };
       const roleForApi = ROLE_TO_API[validRole];
-      const res = await api.register({ role: roleForApi, ...(base as any) });
-      const data: any = res.data;
-      if (validRole === 'student' && data?.studentNumber) {
-        // Show student number before redirect – keep existing UI pattern
-        router.push('/login?registered=1&studentNumber=' + encodeURIComponent(data.studentNumber));
-      } else {
-        router.push('/login?registered=1');
-      }
+      await api.register({ role: roleForApi, ...(base as any) });
+      router.push('/login?registered=1');
     } catch (err: unknown) {
       const raw = errorMessage(err, t('registrationFailed'));
       if (raw.toLowerCase().includes('phone') && raw.toLowerCase().includes('already')) {

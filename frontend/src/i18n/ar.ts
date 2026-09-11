@@ -984,6 +984,11 @@ sessionExpired: 'انتهت صلاحية جلسة التحقق. يرجى الت�
   passwordChangedDoneTitle: 'تم تغيير كلمة المرور',
   passwordChangedDoneSub: 'تم تغيير كلمة المرور بنجاح.',
   codeResentToast: 'تم إرسال رمز جديد.',
+  // --- Registration via phone OTP ---
+  registerVerifySubtitle: 'أدخل الرمز المكون من 6 أرقام الذي أرسلناه إلى هاتفك لتفعيل حسابك.',
+  accountCreatedTitle: 'اكتمل تسجيلك',
+  accountCreatedMsg: 'حسابك جاهز. يرجى تسجيل الدخول للمتابعة.',
+  backToRegister: 'العودة إلى التسجيل',
   phoneRequired: 'أدخل رقم هاتفك.',
   goHome: 'العودة إلى الرئيسية',
   searchForTeachersCenters: 'ابحث عن معلمين أو مراكز...',

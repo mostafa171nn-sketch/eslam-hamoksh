@@ -34,6 +34,32 @@ export interface RegisterResult {
   studentNumber?: string;
 }
 
+/** Response of POST /auth/otp/verify for a REGISTER_* purpose. */
+export interface RegisterVerificationResult {
+  purpose: string;
+  role: string | null;
+  loggedIn: boolean;
+  studentId?: string;
+  studentNumber?: string;
+  teacherId?: string;
+  parentId?: string;
+  centerId?: string;
+  centerName?: string;
+  status?: string;
+  subscriptionStatus?: string;
+  requiresApproval?: boolean;
+  locationStatus?: string;
+}
+
+/** Response of POST /auth/otp/request|resend. */
+export interface OtpRequestResult {
+  verificationId: string;
+  maskedPhone: string;
+  expiresAt: string;
+  resendCooldown: number;
+  devOtp?: string;
+}
+
 export interface LoginPayload {
   username: string;
   password: string;
@@ -391,14 +417,14 @@ export const api = {
   getPublicCenterPlans() {
     return request<CenterPackage[]>('/subscriptions/public/center-plans', { method: 'GET' });
   },
-  requestOtp(payload: { phone: string; purpose: string; payload: any }) {
-    return request<{ verificationId: string; maskedPhone: string; expiresAt: string; devOtp?: string }>('/auth/otp/request', jsonOptions('POST', payload));
+  requestOtp(payload: { phone: string; purpose: string; payload: Record<string, unknown> }) {
+    return request<OtpRequestResult>('/auth/otp/request', jsonOptions('POST', payload));
   },
   verifyOtp(payload: { verificationId: string; code: string }) {
-    return request<any>('/auth/otp/verify', jsonOptions('POST', payload));
+    return request<RegisterVerificationResult>('/auth/otp/verify', jsonOptions('POST', payload));
   },
   resendOtp(verificationId: string) {
-    return request<{ verificationId: string; maskedPhone: string; expiresAt: string }>('/auth/otp/resend', jsonOptions('POST', { verificationId }));
+    return request<OtpRequestResult>('/auth/otp/resend', jsonOptions('POST', { verificationId }));
   },
   // Forgot password via phone OTP
   requestPasswordResetOtp(phone: string) {

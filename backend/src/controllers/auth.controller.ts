@@ -5,7 +5,6 @@ import {
   refreshSession,
   registerCenter,
   registerParent,
-  registerStudent,
   registerTeacher,
   resetPassword,
 } from '../services/auth.service';
@@ -32,7 +31,7 @@ const COOKIE_OPTS = {
   path: '/',
 };
 
-function setAuthCookies(res: Response, accessToken: string, refreshToken: string, refreshExpiresAt: Date) {
+export function setAuthCookies(res: Response, accessToken: string, refreshToken: string, refreshExpiresAt: Date) {
   res.cookie('accessToken', accessToken, {
     ...COOKIE_OPTS,
     maxAge: 30 * 60 * 1000,
@@ -57,16 +56,11 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     return created(res, { userId: result.user.id, teacherId: result.teacherId, role: 'TEACHER' }, 'Account created successfully.');
   }
   if (role === 'STUDENT') {
-    const result = await registerStudent(body);
-    return created(
-      res,
-      {
-        userId: result.user.id,
-        studentId: result.studentId,
-        studentNumber: result.studentNumber,
-        role: 'STUDENT',
-      },
-      'Account created successfully.',
+    // Students must verify their phone via the OTP flow before an account is
+    // created. Reject direct registration so phone ownership can't be bypassed.
+    throw ApiError.badRequest(
+      'Student accounts require phone verification. Please complete the phone verification flow.',
+      'OTP_REQUIRED',
     );
   }
   if (role === 'PARENT') {

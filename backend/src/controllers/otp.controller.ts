@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ok } from '../utils/response';
 import * as otpService from '../services/otp.service';
+import { setAuthCookies } from './auth.controller';
 
 export const requestOtpHandler = asyncHandler(async (req: Request, res: Response) => {
   const { phone, purpose, payload } = (req as Request & { validatedBody: { phone: string; purpose: 'REGISTER_STUDENT' | 'REGISTER_PARENT' | 'REGISTER_TEACHER' | 'REGISTER_CENTER'; payload: unknown } }).validatedBody;
@@ -12,7 +13,13 @@ export const requestOtpHandler = asyncHandler(async (req: Request, res: Response
 export const verifyOtpHandler = asyncHandler(async (req: Request, res: Response) => {
   const { verificationId, code } = (req as Request & { validatedBody: { verificationId: string; code: string } }).validatedBody;
   const result = await otpService.verifyOtp(verificationId, code);
-  return ok(res, result, 'Phone verified. Registration completed.');
+  const { auth, ...publicResult } = result;
+  // Open a real session (httpOnly cookies) when the account is ACTIVE so the
+  // student lands on the dashboard right after verifying their phone.
+  if (auth) {
+    setAuthCookies(res, auth.accessToken, auth.refreshToken, auth.refreshExpiresAt);
+  }
+  return ok(res, publicResult, 'Phone verified. Registration completed.');
 });
 
 export const resendOtpHandler = asyncHandler(async (req: Request, res: Response) => {

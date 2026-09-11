@@ -12,6 +12,13 @@ import {
   registerTeacherSchema,
   registerCenterSchema,
 } from '../validation';
+import { signAccessToken, createRefreshToken } from './token.service';
+
+export interface OtpAuthInfo {
+  accessToken: string;
+  refreshToken: string;
+  refreshExpiresAt: Date;
+}
 
 const OTP_LEN = 6;
 
@@ -316,7 +323,54 @@ export async function verifyOtp(verificationId: string, code: string) {
     throw e;
   }
 
-  return result;
+  // ── Auto sign-in after successful registration ─────────────────────────
+  // The account exists and (for student/teacher/parent) is ACTIVE, so open a
+  // real session with the same httpOnly cookie mechanism as login. Center admins
+  // stay PENDING until approval so they are never auto-signed-in here.
+  let auth: OtpAuthInfo | null = null;
+  let role: string | null = null;
+  const createdUserId = (result as { user?: { id: string } })?.user?.id ?? (result as { userId?: string })?.userId;
+  if (createdUserId) {
+    const createdUser = await prisma.user.findUnique({ where: { id: createdUserId } });
+    if (createdUser && createdUser.status === 'ACTIVE') {
+      role = createdUser.role as string;
+      const { token: refreshToken, expiresAt } = await createRefreshToken(createdUser.id);
+      auth = {
+        accessToken: signAccessToken(createdUser.id, createdUser.role as string),
+        refreshToken,
+        refreshExpiresAt: expiresAt,
+      };
+    }
+  }
+
+  const purpose = verification.purpose;
+  const publicResult: { purpose: string; role: string | null; loggedIn: boolean } & Record<string, unknown> = {
+    purpose,
+    role: role ?? (result as { user?: { role?: string } })?.user?.role ?? null,
+    loggedIn: !!auth,
+  };
+  if (purpose === 'REGISTER_STUDENT') {
+    const st = result as { studentId: string; studentNumber: string };
+    publicResult.studentId = st.studentId;
+    publicResult.studentNumber = st.studentNumber;
+  } else if (purpose === 'REGISTER_TEACHER') {
+    publicResult.teacherId = (result as { teacherId: string }).teacherId;
+  } else if (purpose === 'REGISTER_PARENT') {
+    publicResult.parentId = (result as { parentId: string }).parentId;
+  } else if (purpose === 'REGISTER_CENTER') {
+    const c = result as {
+      center: { id: string; name: string; status: string; subscriptionStatus: string; requiresApproval: boolean };
+      locationStatus: string;
+    };
+    publicResult.centerId = c.center.id;
+    publicResult.centerName = c.center.name;
+    publicResult.status = c.center.status;
+    publicResult.subscriptionStatus = c.center.subscriptionStatus;
+    publicResult.requiresApproval = c.center.requiresApproval;
+    publicResult.locationStatus = c.locationStatus;
+  }
+
+  return { ...publicResult, auth };
 }
 
 export async function resendOtp(verificationId: string) {
