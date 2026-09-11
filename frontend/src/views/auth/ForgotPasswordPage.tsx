@@ -2,33 +2,42 @@
 
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AuthLayout } from '../../layouts/AuthLayout';
-import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { InlineError } from '../../components/ui/ErrorAlert';
+import { PhoneInput } from '../../components/ui/PhoneInput';
 import { api } from '../../lib/api';
 import { errorMessage } from '../../hooks/useApi';
 import { useT } from '../../i18n';
-import { MailCheck } from 'lucide-react';
+import { normalizePhone } from '../../lib/phone';
 
 export default function ForgotPasswordPage() {
   const { t } = useT();
-  const [usernameOrEmail, setUsernameOrEmail] = useState('');
+  const router = useRouter();
+
+  const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('+20');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!usernameOrEmail.trim()) {
-      setError(t('enterUsernameOrEmail'));
+    let e164: string;
+    try {
+      e164 = normalizePhone(phone.trim(), countryCode);
+      if (!/^\+\d{8,15}$/.test(e164)) throw new Error('invalid');
+    } catch {
+      setError(t('validPhone'));
       return;
     }
     setLoading(true);
     setError('');
     try {
-      await api.post('/auth/forgot-password', { usernameOrEmail: usernameOrEmail.trim() });
-      setSent(true);
+      const res = await api.requestPasswordResetOtp(e164);
+      router.push(
+        `/forgot-password/verify?v=${encodeURIComponent(res.data?.verificationId ?? '')}&m=${encodeURIComponent(res.data?.maskedPhone ?? '')}`,
+      );
     } catch (err) {
       setError(errorMessage(err, t('requestFailed')));
     } finally {
@@ -36,35 +45,25 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  if (sent) {
-    return (
-      <AuthLayout title={t('checkEmailTitle')} subtitle={t('checkEmailSubtitle')}>
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
-          <MailCheck className="mx-auto h-10 w-10 text-emerald-600" />
-          <p className="mt-3 text-sm text-emerald-800">
-            {t('checkEmailSentPre')} <strong>{usernameOrEmail}</strong>{t('checkEmailSentPost')}
-          </p>
-          <Link href="/login" className="mt-4 inline-block text-sm font-medium text-brand-600 hover:text-brand-700">
-            {t('backToSignIn')}
-          </Link>
-        </div>
-      </AuthLayout>
-    );
-  }
-
   return (
-    <AuthLayout title={t('resetPasswordTitle')} subtitle={t('resetPasswordSubtitle')}>
+    <AuthLayout title={t('forgotPasswordPhoneTitle')} subtitle={t('forgotPasswordPhoneSubtitle')}>
       <form onSubmit={submit} className="space-y-4">
         <InlineError message={error} />
-        <Input
-          label={t('usernameOrEmail')}
-          value={usernameOrEmail}
-          onChange={(e) => setUsernameOrEmail(e.target.value)}
-          placeholder={t('usernamePlaceholder')}
+        <PhoneInput
+          label={t('phone')}
+          value={phone}
+          countryCode={countryCode}
+          onValueChange={setPhone}
+          onCountryChange={setCountryCode}
+          error={error}
+          placeholder="10 1234 5678"
         />
         <Button type="submit" loading={loading} className="w-full" size="lg">
-          {t('sendResetLink')}
+          {t('sendCode')}
         </Button>
+        <p className="text-center text-sm text-slate-500">
+          {t('ifAccountExistsMsg')}
+        </p>
         <p className="text-center text-sm text-slate-500">
           {t('rememberedIt')}{' '}
           <Link href="/login" className="font-medium text-brand-600 hover:text-brand-700">

@@ -13,6 +13,11 @@ import { revokeRefreshToken } from '../services/token.service';
 import { getUserProfile } from '../services/user.service';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ok, created } from '../utils/response';
+import {
+  requestPasswordResetOtp,
+  verifyPasswordResetOtp,
+  resendPasswordResetOtp,
+} from '../services/password-reset.service';
 import { env } from '../config/env';
 import { ApiError } from '../utils/ApiError';
 import { recordActivity } from '../services/activity.service';
@@ -177,4 +182,25 @@ export const resetPasswordHandler = asyncHandler(async (req: Request, res: Respo
   const { token, newPassword } = req.validatedBody as { token: string; newPassword: string };
   await resetPassword(token, newPassword);
   return ok(res, null, 'Your password has been reset. You can now log in.');
+});
+
+// ── Forgot password via phone OTP ─────────────────────────────────────────
+
+export const requestPasswordResetOtpHandler = asyncHandler(async (req: Request, res: Response) => {
+  const { phone } = req.validatedBody as { phone: string };
+  const result = await requestPasswordResetOtp(phone);
+  // Generic message regardless of whether the account exists.
+  return ok(res, result, 'If an account exists with this phone number, a verification code has been sent.');
+});
+
+export const verifyPasswordResetOtpHandler = asyncHandler(async (req: Request, res: Response) => {
+  const { verificationId, code } = req.validatedBody as { verificationId: string; code: string };
+  const result = await verifyPasswordResetOtp(verificationId, code);
+  return ok(res, result, 'Phone verified. You can now set a new password.');
+});
+
+export const resendPasswordResetOtpHandler = asyncHandler(async (req: Request, res: Response) => {
+  const { verificationId } = req.validatedBody as { verificationId: string };
+  const result = await resendPasswordResetOtp(verificationId);
+  return ok(res, result, 'Verification code resent.');
 });

@@ -399,6 +399,28 @@ export const api = {
   },
   resendOtp(verificationId: string) {
     return request<{ verificationId: string; maskedPhone: string; expiresAt: string }>('/auth/otp/resend', jsonOptions('POST', { verificationId }));
+  },
+  // Forgot password via phone OTP
+  requestPasswordResetOtp(phone: string) {
+    return request<{ verificationId: string; maskedPhone: string; expiresAt: string; resendCooldown: number; devOtp?: string }>(
+      '/auth/forgot-password/phone',
+      jsonOptions('POST', { phone }),
+    );
+  },
+  verifyPasswordResetOtp(payload: { verificationId: string; code: string }) {
+    return request<{ resetToken: string; expiresAt: string; maskedPhone: string }>(
+      '/auth/forgot-password/verify',
+      jsonOptions('POST', payload),
+    );
+  },
+  resendPasswordResetOtp(verificationId: string) {
+    return request<{ verificationId: string; maskedPhone: string; expiresAt: string; resendCooldown: number; devOtp?: string }>(
+      '/auth/forgot-password/resend',
+      jsonOptions('POST', { verificationId }),
+    );
+  },
+  resetPassword(payload: { token: string; newPassword: string }) {
+    return request('/auth/reset-password', jsonOptions('POST', payload));
   },  registerCenter(payload: RegisterCenterPayload) {
     return request<RegisterCenterResult>('/centers/register', jsonOptions('POST', payload));
   },

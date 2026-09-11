@@ -168,6 +168,23 @@ export const resetPasswordSchema = z.object({
   newPassword: password,
 });
 
+// ── Forgot password via phone OTP ─────────────────────────────────────────
+export const forgotPasswordPhoneSchema = z.object({
+  phone: z.string().min(8, 'Phone number is required.').max(20),
+});
+
+export const forgotPasswordVerifySchema = z.object({
+  verificationId: z.string().uuid('Invalid verification id.'),
+  code: z
+    .string()
+    .length(6, 'Code must be 6 digits.')
+    .regex(/^\d{6}$/, 'Code must be 6 digits.'),
+});
+
+export const forgotPasswordResendSchema = z.object({
+  verificationId: z.string().uuid('Invalid verification id.'),
+});
+
 export const updateTeacherProfileSchema = z.object({
   fullName: z.string().min(2).max(100).optional(),
   phone: phone.optional(),

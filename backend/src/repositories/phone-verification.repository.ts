@@ -6,5 +6,6 @@ export const phoneVerificationRepository = {
     return prisma.phoneVerification.findFirst({ where: { phoneE164, purpose, verifiedAt: null }, orderBy: { createdAt: 'desc' } });
   },
   update(id: string, data: any) { return prisma.phoneVerification.update({ where: { id }, data }); },
+  delete(id: string) { return prisma.phoneVerification.delete({ where: { id } }); },
   deleteExpired() { return prisma.phoneVerification.deleteMany({ where: { expiresAt: { lt: new Date() }, verifiedAt: null } }); },
 };
