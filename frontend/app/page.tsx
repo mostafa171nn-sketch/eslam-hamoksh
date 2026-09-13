@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type MouseEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -28,6 +28,7 @@ import type { PublicCenter } from '@/src/lib/api';
 import type { PublicTeacher } from '@/src/lib/types';
 import { formatCurrency } from '@/src/lib/format';
 import { useT } from '@/src/i18n';
+import { useAuth } from '@/src/context/AuthContext';
 import { AscentScene } from '@/src/components/illustrations/EducationArt';
 
 function SectionHeader({ title, sub, href, viewAll }: { title: string; sub: string; href: string; viewAll: string }) {
@@ -51,6 +52,8 @@ function SectionHeader({ title, sub, href, viewAll }: { title: string; sub: stri
 
 function MiniTeacherCard({ teacher }: { teacher: PublicTeacher }) {
   const { t } = useT();
+  const { user } = useAuth();
+  const router = useRouter();
   const subjects = teacher.subjects ?? [];
   const grades = teacher.grades ?? [];
   const meta = [
@@ -61,6 +64,18 @@ function MiniTeacherCard({ teacher }: { teacher: PublicTeacher }) {
     .join(' · ');
   const visibleGrades = grades.slice(0, 3);
   const price = `${formatCurrency(teacher.hourlyRate)} ${t('perSession')}`;
+
+  const handleBookNow = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    const profilePath = `/teachers/${teacher.id}`;
+    if (!user) {
+      router.push(`/login?next=${encodeURIComponent(`${profilePath}?book=1`)}`);
+    } else if (user.role === 'STUDENT') {
+      router.push(`${profilePath}?book=1`);
+    } else {
+      router.push(profilePath);
+    }
+  };
 
   return (
     <article className="group flex h-full flex-col rounded-[22px] border border-slate-200/70 bg-white p-4 shadow-[0_2px_10px_rgba(20,73,137,0.05)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(20,73,137,0.14)] dark:border-slate-700 dark:bg-slate-800">
@@ -97,12 +112,17 @@ function MiniTeacherCard({ teacher }: { teacher: PublicTeacher }) {
           <span className="text-[15px] font-extrabold leading-none text-[#0b1b61] dark:text-white">{teacher.rating.toFixed(1)}</span>
           <span className="text-[10px] text-slate-400 dark:text-slate-500">({teacher.ratingCount})</span>
         </span>
-        <Link
-          href={`/teachers/${teacher.id}`}
-          className="text-right text-[11px] font-bold leading-snug text-[#0878f8] transition-colors hover:text-[#0656c4] dark:text-sky-300 dark:hover:text-sky-200"
-        >
-          {price} · {t('bookNow')}
-        </Link>
+        <span className="flex flex-col items-end gap-1.5">
+          <span className="text-[11px] font-bold leading-none text-[#0b1b61] dark:text-white">{price}</span>
+          <button
+            type="button"
+            onClick={handleBookNow}
+            aria-label={`${t('bookNow')} — ${teacher.fullName}`}
+            className="inline-flex min-h-[38px] items-center justify-center rounded-[13px] bg-gradient-to-br from-[#1499ff] to-[#0878f8] px-4 py-2 text-xs font-bold text-white shadow-[0_6px_16px_rgba(8,120,248,0.35)] transition-all duration-150 hover:brightness-110 hover:shadow-[0_8px_20px_rgba(8,120,248,0.45)] active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0878f8] dark:shadow-[0_6px_16px_rgba(20,100,255,0.25)]"
+          >
+            {t('bookNow')}
+          </button>
+        </span>
       </div>
     </article>
   );

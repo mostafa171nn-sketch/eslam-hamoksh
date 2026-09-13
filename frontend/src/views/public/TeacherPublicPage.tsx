@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, type FormEvent, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, type FormEvent, useEffect, useRef } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CalendarPlus, CheckCircle2, Heart, MapPin, MessageSquare, Star } from 'lucide-react';
 import { Avatar } from '../../components/ui/Avatar';
@@ -55,8 +55,10 @@ export default function TeacherPublicPage() {
   const router = useRouter();
   const toast = useToast();
   const { t, lang } = useT();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
   const path = `/teachers/${id}`;
+  const bookingIntentHandled = useRef(false);
 
   const requireAuth = (action: () => void) => {
     if (!user) {
@@ -130,6 +132,17 @@ export default function TeacherPublicPage() {
     setBookOpen(true);
     loadSlots(todayStr);
   };
+
+  // Auto-open the existing booking modal when arriving with ?book=1.
+  useEffect(() => {
+    if (bookingIntentHandled.current) return;
+    if (initialLoading || error || !data || authLoading) return;
+    bookingIntentHandled.current = true;
+    if (user?.role === 'STUDENT' && searchParams.get('book') === '1') {
+      openBook();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialLoading, error, data, user, authLoading, searchParams]);
 
   useEffect(() => {
     if (bookOpen && date) loadSlots(date);
