@@ -1,111 +1,14 @@
 'use client';
 
-import 'leaflet/dist/leaflet.css';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
+import { useMemo, useRef, useState } from 'react';
+import { MapPin, Star, ExternalLink, Share2, Users, GraduationCap, Check } from 'lucide-react';
 import Link from 'next/link';
-import { MapPin, Search, Star, X, ZoomIn, ExternalLink, Share2, Users, GraduationCap, Check } from 'lucide-react';
 import { useT } from '../../i18n';
 import type { Dict } from '../../i18n';
 import type { PublicCenter } from '../../lib/api';
+import LocationMap from '../map/LocationMap';
 
 type TFunction = (key: keyof Dict) => string;
-
-/* ------------------------------------------------------------------ */
-/*  Custom marker icon (pin + name label)                              */
-/* ------------------------------------------------------------------ */
-
-/** Escape a string for safe insertion into the divIcon HTML. */
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function makePinIcon(name: string, active: boolean) {
-  const wrapCls = active ? 'ecms-pin-wrap ecms-pin-wrap--active' : 'ecms-pin-wrap';
-  const pinCls = active ? 'ecms-pin ecms-pin--active' : 'ecms-pin';
-  const labelCls = active ? 'ecms-marker-label ecms-marker-label--active' : 'ecms-marker-label';
-  return L.divIcon({
-    className: wrapCls,
-    html: `
-      <div class="${pinCls}"><span class="ecms-pin__dot"></span></div>
-      <div class="${labelCls}" role="button" aria-label="${escapeHtml(name)}">${escapeHtml(name)}</div>
-    `,
-    iconSize: [30, 38],
-    iconAnchor: [15, 38],
-    popupAnchor: [0, -34],
-  });
-}
-
-/* ------------------------------------------------------------------ */
-/*  Map resize helper                                                  */
-/* ------------------------------------------------------------------ */
-
-function MapResize() {
-  const map = useMap();
-  useEffect(() => {
-    const id = window.setTimeout(() => map.invalidateSize(), 150);
-    return () => window.clearTimeout(id);
-  }, [map]);
-  return null;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Map controller: fit bounds + flyTo                                 */
-/* ------------------------------------------------------------------ */
-
-function MapController({
-  centers,
-  focusCenterId,
-  fitKey,
-  visibleIds,
-}: {
-  centers: PublicCenter[];
-  focusCenterId: string | null;
-  fitKey: number;
-  visibleIds: Set<string>;
-}) {
-  const map = useMap();
-
-  useEffect(() => {
-    const coords = centers.filter(
-      (c) =>
-        typeof c.latitude === 'number' &&
-        typeof c.longitude === 'number' &&
-        Number.isFinite(c.latitude) &&
-        Number.isFinite(c.longitude),
-    );
-    if (coords.length === 0) {
-      map.setView([30.0444, 31.2357], 6);
-      return;
-    }
-    const bounds = L.latLngBounds(coords.map((c) => L.latLng(c.latitude as number, c.longitude as number)));
-    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fitKey, visibleIds]);
-
-  useEffect(() => {
-    if (!focusCenterId) return;
-    const c = centers.find((x) => x.id === focusCenterId);
-    if (
-      c &&
-      typeof c.latitude === 'number' &&
-      typeof c.longitude === 'number' &&
-      Number.isFinite(c.latitude) &&
-      Number.isFinite(c.longitude)
-    ) {
-      map.flyTo([c.latitude, c.longitude], Math.max(map.getZoom(), 13), { duration: 0.8 });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusCenterId]);
-
-  return null;
-}
 
 /* ------------------------------------------------------------------ */
 /*  Popup content                                                      */
@@ -120,31 +23,18 @@ function CenterPopupContent({ center, t }: { center: PublicCenter; t: TFunction 
     return `https://www.google.com/maps?q=${center.latitude},${center.longitude}`;
   }, [center.latitude, center.longitude]);
 
-  const handleShare = useCallback(async () => {
+  const handleShare = () => {
     if (!mapsUrl) return;
     if (navigator.share) {
-      try {
-        await navigator.share({ title: center.name, url: mapsUrl });
-      } catch {
-        /* user cancelled */
-      }
+      navigator.share({ title: center.name, url: mapsUrl }).catch(() => {});
     } else {
-      try {
-        await navigator.clipboard.writeText(mapsUrl);
+      navigator.clipboard.writeText(mapsUrl).then(() => {
         setCopied(true);
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => setCopied(false), 2000);
-      } catch {
-        /* clipboard not available */
-      }
+      }).catch(() => {});
     }
-  }, [mapsUrl, center.name]);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
+  };
 
   return (
     <div className="ecms-popup-card min-w-[220px] max-w-[280px]">
@@ -227,103 +117,41 @@ export interface CenterMapProps {
 
 export default function CenterMap({ centers, focusCenterId, onFocusCenter, defaultPos, fitSignal }: CenterMapProps) {
   const { t } = useT();
-  const [query, setQuery] = useState('');
-  const [fitKey, setFitKey] = useState(0);
-  const effectiveFitKey = fitSignal && fitSignal > 0 ? fitSignal : fitKey;
 
-  const withCoords = useMemo(
+  const items = useMemo(
     () =>
-      centers.filter(
-        (c) =>
-          typeof c.latitude === 'number' &&
-          typeof c.longitude === 'number' &&
-          Number.isFinite(c.latitude) &&
-          Number.isFinite(c.longitude),
-      ),
+      centers.map((center) => ({
+        id: center.id,
+        name: center.name,
+        city: center.city,
+        latitude: center.latitude,
+        longitude: center.longitude,
+        image: center.photoUrl ?? null,
+        rating: center.ratingAverage ?? null,
+        ratingCount: center.ratingCount ?? null,
+        kind: 'center' as const,
+      })),
     [centers],
   );
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return withCoords;
-    return withCoords.filter(
-      (c) => c.name.toLowerCase().includes(q) || (c.city ?? '').toLowerCase().includes(q),
-    );
-  }, [withCoords, query]);
-
-  const visibleIds = useMemo(() => new Set(filtered.map((c) => c.id)), [filtered]);
-  const startPos = defaultPos ?? { lat: 30.0444, lng: 31.2357, zoom: 6 };
+  const centerById = useMemo(() => new Map(centers.map((center) => [center.id, center])), [centers]);
 
   return (
-    <div className="ecms-map-box relative h-full w-full">
-      {/* Floating search */}
-      <div className="pointer-events-none absolute start-3 top-3 z-[1000] w-[calc(100%-6rem)] max-w-xs">
-        <div className="pointer-events-auto flex items-center gap-2 rounded-xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-800/95">
-          <Search className="h-4 w-4 shrink-0 text-slate-400" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('searchOnMap')}
-            className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-white"
-          />
-          {query && (
-            <button type="button" onClick={() => setQuery('')} aria-label={t('clear')} className="text-slate-400 hover:text-slate-600">
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      <MapContainer
-        center={[startPos.lat, startPos.lng]}
-        zoom={startPos.zoom ?? 6}
-        scrollWheelZoom
-        className="ecms-map"
-        style={{ height: '100%', width: '100%' }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <MapResize />
-        <MapController centers={withCoords} focusCenterId={focusCenterId} fitKey={effectiveFitKey} visibleIds={visibleIds} />
-        {filtered.map((c) => (
-          <Marker
-            key={c.id}
-            position={[c.latitude as number, c.longitude as number]}
-            icon={makePinIcon(c.name, c.id === focusCenterId)}
-            eventHandlers={{
-              click: () => onFocusCenter(c.id),
-            }}
-          >
-            <Popup maxWidth={300} closeButton={false} className="ecms-center-popup">
-              <CenterPopupContent center={c} t={t} />
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
-
-      {/* Fit-all button */}
-      {withCoords.length > 0 && (
-        <div className="pointer-events-none absolute bottom-3 end-3 z-[1000]">
-          <button
-            type="button"
-            onClick={() => setFitKey((k) => k + 1)}
-            className="pointer-events-auto flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 shadow-lg transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-          >
-            <ZoomIn className="h-4 w-4" /> {t('fitAllCenters')}
-          </button>
-        </div>
+    <LocationMap
+      items={items}
+      focusItemId={focusCenterId}
+      onFocusItem={onFocusCenter}
+      renderPopup={(item) => (
+        <CenterPopupContent center={centerById.get(item.id) ?? centers[0]} t={t} />
       )}
-
-      {/* Empty state: no centers with coordinates */}
-      {withCoords.length === 0 && (
-        <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center">
-          <div className="pointer-events-auto max-w-xs rounded-xl border border-slate-200 bg-white/95 px-4 py-3 text-center text-sm text-slate-600 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-800/95 dark:text-slate-300">
-            {t('noCenterLocations')}
-          </div>
-        </div>
-      )}
-    </div>
+      labels={{
+        searchPlaceholder: t('searchOnMap'),
+        fitAll: t('fitAllCenters'),
+        empty: t('noCenterLocations'),
+        clear: t('clear'),
+      }}
+      defaultPos={defaultPos}
+      fitSignal={fitSignal}
+    />
   );
 }
