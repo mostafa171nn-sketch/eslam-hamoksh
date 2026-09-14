@@ -255,6 +255,8 @@ export default function CenterEmployeesPage() {
                                   alt=""
                                   className="mj-avatar mj-avatar--md"
                                   style={{ objectFit: 'cover' }}
+                                  loading="lazy"
+                                  decoding="async"
                                 />
                               ) : (
                                 <span className="mj-avatar mj-avatar--md">

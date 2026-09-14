@@ -237,7 +237,7 @@ function SearchPageInner() {
                   <Card bodyClassName="p-5 transition group-hover:border-brand-300 group-hover:shadow dark:group-hover:border-brand-500/50">
                     <div className="flex items-start gap-4">
                       {teacher.photo ? (
-                        <img src={teacher.photo} alt={teacher.fullName} className="h-12 w-12 rounded-full object-cover" />
+                        <img src={teacher.photo} alt={teacher.fullName} className="h-12 w-12 rounded-full object-cover" loading="lazy" decoding="async" />
                       ) : (
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white text-lg font-semibold">
                           {teacher.fullName.charAt(0)}

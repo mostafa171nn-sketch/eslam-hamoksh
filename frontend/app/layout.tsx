@@ -5,6 +5,7 @@ import { Inter, Noto_Sans_Arabic } from 'next/font/google';
 import './globals.css';
 import { AppProviders } from '../src/components/AppProviders';
 import { ConditionalFooter } from '../src/components/layout/ConditionalFooter';
+import { RouteTransition } from '../src/components/RouteTransition';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -57,7 +58,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="flex min-h-[100dvh] flex-col bg-slate-50 font-sans text-slate-900 antialiased dark:bg-slate-900 dark:text-slate-100">
         <AppProviders>
-          <div className="flex-1">{children}</div>
+          <RouteTransition mode="page" className="flex-1">
+            {children}
+          </RouteTransition>
           <ConditionalFooter />
         </AppProviders>
       </body>

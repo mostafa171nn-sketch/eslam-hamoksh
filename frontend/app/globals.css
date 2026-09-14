@@ -488,6 +488,23 @@
 .stagger-children > *:nth-child(5) { animation-delay: 240ms; }
 .stagger-children > *:nth-child(6) { animation-delay: 300ms; }
 
+/* Page-enter fallback — mirrors the Web-Animations-driven RouteTransition so
+   the whole-page rise still works where `Element.animate` is unavailable. */
+@keyframes route-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.route-page-enter {
+  animation: route-page-enter 0.4s var(--ease-out-expo) backwards;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

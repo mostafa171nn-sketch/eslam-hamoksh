@@ -226,6 +226,7 @@ export function CenterCard({ center, index, isActive, onFocus, onShowOnMap, imag
               alt={center.name}
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
               loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand-500 via-brand-600 to-violet-600">

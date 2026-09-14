@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { QrCode, MapPin, RefreshCw, AlertTriangle } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -14,6 +14,17 @@ import { api } from '../../lib/api';
 import { useT, type Dict } from '../../i18n';
 import type { AttendanceQrResponse, Lesson } from '../../lib/types';
 import { formatTime } from '../../lib/format';
+
+// qrcode.react is only needed to render the attendance QR; keep it out of the
+// initial bundle and render a light placeholder while it loads.
+const QRCodeSVG = dynamic(() => import('qrcode.react').then((m) => m.QRCodeSVG), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[200px] w-[200px] items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
+      <PencilLoader size="sm" label="" />
+    </div>
+  ),
+});
 
 interface QrState {
   status: 'idle' | 'locating' | 'active' | 'expired' | 'error';

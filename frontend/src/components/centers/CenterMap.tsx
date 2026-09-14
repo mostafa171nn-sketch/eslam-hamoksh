@@ -41,7 +41,7 @@ function CenterPopupContent({ center, t }: { center: PublicCenter; t: TFunction 
       {center.photoUrl && (
         <div className="mb-2.5 overflow-hidden rounded-lg">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={center.photoUrl} alt={center.name} className="h-28 w-full object-cover" />
+          <img src={center.photoUrl} alt={center.name} className="h-28 w-full object-cover" loading="lazy" decoding="async" />
         </div>
       )}
       <p className="text-sm font-semibold text-slate-900 leading-tight">{center.name}</p>

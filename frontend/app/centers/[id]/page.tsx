@@ -234,7 +234,7 @@ export default function CenterDetailPage() {
               <div className="flex items-start gap-4">
                 {center.photoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={center.photoUrl} alt={center.name} className="h-20 w-20 rounded-2xl object-cover" />
+                  <img src={center.photoUrl} alt={center.name} className="h-20 w-20 rounded-2xl object-cover" loading="lazy" decoding="async" />
                 ) : (
                   <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-50 text-2xl font-bold text-brand-600 dark:bg-brand-900/40 dark:text-brand-300">
                     {center.name.charAt(0)}
@@ -349,7 +349,7 @@ export default function CenterDetailPage() {
                         <div className="flex items-center gap-3">
                           {teacher.photo ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={teacher.photo} alt={teacher.fullName} className="h-10 w-10 rounded-full object-cover" />
+                            <img src={teacher.photo} alt={teacher.fullName} className="h-10 w-10 rounded-full object-cover" loading="lazy" decoding="async" />
                           ) : (
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700">
                               <UserIcon className="h-5 w-5 text-slate-400" />

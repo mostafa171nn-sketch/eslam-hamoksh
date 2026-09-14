@@ -39,6 +39,8 @@ export function Avatar({
         src={src}
         alt={name}
         className={`${sizes[size]} shrink-0 rounded-full object-cover ${className}`}
+        loading="lazy"
+        decoding="async"
       />
     );
   }

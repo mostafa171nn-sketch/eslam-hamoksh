@@ -171,6 +171,8 @@ export default function CenterAttendancePage() {
                             src={record.studentPhoto}
                             alt={record.studentName}
                             className="mj-avatar mj-avatar--sm overflow-hidden rounded-full object-cover"
+                            loading="lazy"
+                            decoding="async"
                           />
                         ) : (
                           <span className="mj-avatar mj-avatar--sm">

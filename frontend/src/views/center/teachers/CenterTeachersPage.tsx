@@ -320,7 +320,7 @@ export default function CenterTeachersPage() {
                         <td>
                           <span className="flex items-center gap-3">
                             <span className="mj-teacher-avatar">
-                              {teacher.photo ? <img src={teacher.photo} alt="" className="h-8 w-8 rounded-full object-cover" /> : toInitials(teacher.fullName)}
+                              {teacher.photo ? <img src={teacher.photo} alt="" className="h-8 w-8 rounded-full object-cover" loading="lazy" decoding="async" /> : toInitials(teacher.fullName)}
                             </span>
                             <span className="min-w-0">
                               <span className="flex items-center gap-1.5">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { QrCode, CheckCircle2, Clock, ScanLine, UserX } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
@@ -11,13 +12,26 @@ import { Badge } from '../../components/ui/Badge';
 import { PencilLoader } from '../../components/ui/PencilLoader';
 import { Alert, InlineError } from '../../components/ui/ErrorAlert';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { QrScanner } from '../../components/attendance/QrScanner';
 import { useApi, errorMessage } from '../../hooks/useApi';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 import { useT, type Dict } from '../../i18n';
 import type { Lesson, LessonAttendanceLive, ScanResult } from '../../lib/types';
 import { formatTime } from '../../lib/format';
+
+// html5-qrcode pulls in a large camera stack; load it only when the user
+// actually opens the scanner instead of shipping it in the initial chunk.
+const QrScanner = dynamic(
+  () => import('../../components/attendance/QrScanner').then((m) => m.QrScanner),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex aspect-square w-full max-w-sm items-center justify-center rounded-2xl bg-slate-900">
+        <PencilLoader size="md" label="" />
+      </div>
+    ),
+  },
+);
 
 function todayISO() {
   const d = new Date();

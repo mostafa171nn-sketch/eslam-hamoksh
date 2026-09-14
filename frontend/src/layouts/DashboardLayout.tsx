@@ -2,14 +2,28 @@
 
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from '../../src/components/layout/Sidebar';
 import { Topbar } from '../../src/components/layout/Topbar';
 import { BottomNav } from '../../src/components/layout/BottomNav';
 import { PageBackButton } from '../../src/components/layout/PageBackButton';
-import { CenterDashboardShell } from '../../src/views/center/dashboard/CenterDashboardShell';
+import { RouteTransition } from '../../src/components/RouteTransition';
 
 const SIDEBAR_STORAGE_KEY = 'maarech-sidebar';
+
+// The center dashboard shell is heavy (feat reports/tables/charts) and only
+// used by center admins, so it is code-split and rendered only on demand.
+const CenterDashboardShell = dynamic(
+  () =>
+    import('../../src/views/center/dashboard/CenterDashboardShell').then(
+      (m) => m.CenterDashboardShell,
+    ),
+  {
+    ssr: false,
+    loading: () => <div className="min-h-screen bg-slate-50 dark:bg-slate-900" />,
+  },
+);
 
 const NO_BACK = new Set([
   '/student',
@@ -85,9 +99,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 <PageBackButton fallback={fallbackFor(pathname ?? '/')} />
               </div>
             )}
-            <div key={pathname} className="animate-fade-in">
-              {children}
-            </div>
+            <RouteTransition mode="shell">{children}</RouteTransition>
           </div>
         </main>
         <BottomNav />

@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from 'react';
 import { ar, type Dict } from './ar';
-import { en } from './en';
 import { setFormatLang } from '../lib/format';
 
 export type { Dict };
@@ -30,7 +29,21 @@ interface I18nContextValue {
 
 export const STORAGE_KEY = 'maarech-lang';
 
-const dictionaries: Record<Lang, Dict> = { ar, en };
+// Arabic is the only static dictionary (the default + SEO locale). English is
+// loaded lazily on first use so bilingual users don't pay for the whole en
+// bundle at startup.
+const dictionaries: Partial<Record<Lang, Dict>> = { ar };
+let enPromise: Promise<Dict> | null = null;
+
+function loadEn(): Promise<Dict> {
+  if (!enPromise) {
+    enPromise = import('./en').then((m) => {
+      dictionaries.en = m.en;
+      return m.en;
+    });
+  }
+  return enPromise;
+}
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
@@ -72,10 +85,10 @@ function persistLang(lang: Lang) {
  */
 function translate(lang: Lang, key: DictKey, params?: TranslateParams): string {
   const dict = dictionaries[lang];
-  let template: string | undefined = dict[key];
+  let template: string | undefined = dict?.[key];
   if (template === undefined) {
-    const fallback = lang === 'en' ? 'ar' : 'en';
-    template = dictionaries[fallback][key];
+    const fallback: Lang = lang === 'en' ? 'ar' : 'en';
+    template = dictionaries[fallback]?.[key];
   }
   if (template === undefined) {
     if (typeof console !== 'undefined' && !warnedKeys.has(key)) {
@@ -95,22 +108,35 @@ function translate(lang: Lang, key: DictKey, params?: TranslateParams): string {
 
 export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>('ar');
+  const [enReady, setEnReady] = useState(false);
 
   // Run once on mount: adopt the persisted language and mirror it onto the
   // <html> element. The anti-flash script in the root layout already applied
-  // the stored direction before first paint, so there is no visible flash and
-  // no hydration mismatch (this effect runs client-side only).
+  // the stored direction before first paint. English is fetched lazily so the
+  // initial render stays Arabic-only (same tree shape for SSR + hydration);
+  // `enReady` flips once the dictionary is in memory to trigger a re-render.
   useEffect(() => {
     const initial = getInitialLang();
-    setLangState(initial);
     applyLang(initial);
+    if (initial === 'en') {
+      void loadEn().then(() => {
+        setLangState('en');
+        setEnReady(true);
+      });
+    }
   }, []);
 
-  const setLang = useCallback((next: Lang) => {
-    setLangState(next);
-    applyLang(next);
-    persistLang(next);
-  }, []);
+  const setLang = useCallback(
+    (next: Lang) => {
+      setLangState(next);
+      applyLang(next);
+      persistLang(next);
+      if (next === 'en' && !dictionaries.en) {
+        void loadEn().then(() => setEnReady(true));
+      }
+    },
+    [],
+  );
 
   const toggleLang = useCallback(() => {
     setLang(lang === 'ar' ? 'en' : 'ar');
@@ -118,7 +144,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback(
     (key: DictKey, params?: TranslateParams) => translate(lang as Lang, key, params),
-    [lang],
+    [lang, enReady],
   );
 
   return (

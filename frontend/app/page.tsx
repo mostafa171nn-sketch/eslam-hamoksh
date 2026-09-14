@@ -147,7 +147,7 @@ function MiniCenterCard({ center }: { center: PublicCenter }) {
       <Link href={`/centers/${center.id}`} className="relative block aspect-[16/10] overflow-hidden rounded-t-[22px] bg-slate-100 dark:bg-slate-700">
         {center.photoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={center.photoUrl} alt={center.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" loading="lazy" />
+          <img src={center.photoUrl} alt={center.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" loading="lazy" decoding="async" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1499ff] to-[#0878f8]">
             <span className="text-4xl font-extrabold tracking-tight text-white/95">{center.name.charAt(0).toUpperCase()}</span>

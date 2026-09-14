@@ -21,6 +21,9 @@ if (isProd && !process.env.NEXT_PUBLIC_API_URL) {
 
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
   async rewrites() {
     return [
       { source: '/api/:path*', destination: `${backendUrl}/api/:path*` },

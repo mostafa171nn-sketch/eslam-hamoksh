@@ -3,7 +3,7 @@ import type { PublicTeacher, TeacherProfile, User } from './types';
 const BASE = '/api';
 
 /** Hard cap for every API call so a stalled backend can never block the UI. */
-export const REQUEST_TIMEOUT_MS = 12_000;
+export const REQUEST_TIMEOUT_MS = 20_000;
 /** Abort errors surface as network failures with a clear message. */
 import { getFormatLang } from './format';
 export function timeoutMessage(): string {
@@ -127,6 +127,7 @@ export interface SearchTeachersParams {
   name?: string;
   subjectId?: string;
   gradeId?: string;
+  grades?: string[];
   locationId?: string;
   centerId?: string;
   day?: number;
@@ -339,9 +340,27 @@ function jsonOptions(method: string, body?: unknown): RequestInit {
   };
 }
 
+// In-flight GET dedup. During navigation many views mount simultaneously and
+// some pages request the same collection twice (notifications, my-teachers,
+// branch/group form-data...). Collapsing identical in-flight GETs cuts those
+// duplicate round-trips to a single network request. The entry is removed as
+// soon as the promise settles so later independent loads still hit the API.
+const inflightGets = new Map<string, Promise<ApiResponse<unknown>>>();
+
+function apiGet<T>(path: string, params?: Record<string, string | number | undefined | null>) {
+  const url = path + qs(params);
+  const inflight = inflightGets.get(url);
+  if (inflight) return inflight as Promise<ApiResponse<T>>;
+  const promise = request<T>(url, { method: 'GET' });
+  inflightGets.set(url, promise as Promise<ApiResponse<unknown>>);
+  const settled = () => inflightGets.delete(url);
+  promise.then(settled, settled);
+  return promise;
+}
+
 export const api = {
   get<T>(path: string, params?: Record<string, string | number | undefined | null>) {
-    return request<T>(path + qs(params), { method: 'GET' });
+    return apiGet<T>(path, params);
   },
   post<T>(path: string, body?: unknown) {
     return request<T>(path, jsonOptions('POST', body));
@@ -378,8 +397,12 @@ export const api = {
     return request<RegisterResult>(`/auth/register/${role.toLowerCase()}`, jsonOptions('POST', rest));
   },
   searchTeachers(params?: SearchTeachersParams) {
+    const query = {
+      ...params,
+      grades: params?.grades?.join(','),
+    };
     return request<PublicTeacher[]>(
-      '/teachers' + qs(params as Record<string, string | number | undefined | null>),
+      '/teachers' + qs(query as Record<string, string | number | undefined | null>),
       { method: 'GET' },
     );
   },

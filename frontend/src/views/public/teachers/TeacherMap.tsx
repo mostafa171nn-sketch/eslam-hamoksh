@@ -69,7 +69,7 @@ function TeacherPopupContent({ teacher, t }: { teacher: PublicTeacher; t: TFunct
       {teacher.photo && (
         <div className="mb-2.5 overflow-hidden rounded-lg">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={teacher.photo} alt={teacher.fullName} className="h-28 w-full object-cover" />
+          <img src={teacher.photo} alt={teacher.fullName} className="h-28 w-full object-cover" loading="lazy" decoding="async" />
         </div>
       )}
       <p className="text-sm font-semibold text-slate-900 leading-tight">{teacher.fullName}</p>
