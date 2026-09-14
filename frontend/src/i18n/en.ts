@@ -244,6 +244,8 @@ export const en: Dict = {
   searchOnMap: 'Search on map',
   fitAllCenters: 'Fit all centers',
   noCenterLocations: 'No center locations are available yet.',
+  fitAllTeachers: 'Fit all teachers',
+  noTeacherLocations: 'No teacher locations are available yet.',
   shareLocation: 'Share location',
   locationCopied: 'Location link copied',
   viewCenter: 'View center',

@@ -241,6 +241,8 @@
   searchOnMap: 'البحث على الخريطة',
   fitAllCenters: 'عرض جميع المراكز',
   noCenterLocations: 'لا توجد مواقع مراكز متاحة بعد.',
+  fitAllTeachers: 'عرض جميع المدرسين',
+  noTeacherLocations: 'لا توجد مواقع مدرسين متاحة بعد.',
   shareLocation: 'مشاركة الموقع',
   locationCopied: 'تم نسخ رابط الموقع',
   viewCenter: 'عرض المركز',
