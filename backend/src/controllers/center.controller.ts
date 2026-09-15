@@ -2,12 +2,13 @@ import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import {
   approveCenter,
+  batchCenterStatistics,
   centerStatistics,
   getCenter,
   getPublicCenterById,
-  getCenterPublicMetadata,
   getCenterPublicMetadataExtended,
   listCenters,
+  listPublicCenters,
   platformStatistics,
   reactivateCenter,
   rejectCenter,
@@ -50,29 +51,20 @@ function publicCenterView(center: any) {
 
 export const searchCenters = asyncHandler(async (req: Request, res: Response) => {
   const { q, city, subject, grade, page, limit } = req.validatedQuery as any;
-  const result = await listCenters({
+  // `subject` + `grade` are forwarded to `listCenters`, which filters centers by
+  // a matching teacher carrying that subject/grade. Previously both were
+  // silently dropped and only q/city applied.
+  const result = await listPublicCenters({
     q,
     city,
+    subject,
+    grade,
     status: 'ACTIVE',
     subscriptionStatus: 'ACTIVE',
     page,
     limit,
   });
-  // Attach lightweight public metadata per center.
-  const items = await Promise.all(
-    result.items.map(async (c: any) => {
-      const [meta, rating] = await Promise.all([
-        getCenterPublicMetadata(c.id),
-        getCenterRatingSummary(c.id),
-      ]);
-      return publicCenterView({
-        ...c,
-        ...meta,
-        ratingAverage: rating.average,
-        ratingCount: rating.count,
-      });
-    }),
-  );
+  const items = result.items.map((c: any) => publicCenterView(c));
   return ok(res, { items, total: result.total, page: result.page, limit: result.limit, totalPages: result.totalPages });
 });
 
@@ -129,14 +121,29 @@ export const getPublicCenterTeachers = asyncHandler(async (req: Request, res: Re
       location: { select: { id: true, name: true } },
       subjects: { select: { subject: { select: { id: true, name: true } } } },
       grades: { select: { grade: { select: { id: true, name: true } } } },
-      ratings: { select: { stars: true } },
     },
     orderBy: { createdAt: 'desc' },
+    take: 200,
   });
 
+  const teacherIds = teachers.map((t) => t.id);
+  const ratingRows = teacherIds.length
+    ? await prisma.rating.groupBy({
+        by: ['teacherId'],
+        where: { teacherId: { in: teacherIds } },
+        _avg: { stars: true },
+        _count: { stars: true },
+      })
+    : [];
+  const ratingById = new Map(
+    ratingRows.map((r) => [
+      r.teacherId,
+      { average: Number((r._avg.stars ?? 0).toFixed(1)), count: r._count.stars },
+    ]),
+  );
+
   const items = teachers.map((t) => {
-    const count = t.ratings.length;
-    const avg = count ? t.ratings.reduce((s, r) => s + r.stars, 0) / count : 0;
+    const rating = ratingById.get(t.id);
     return {
       id: t.id,
       userId: t.user.id,
@@ -148,8 +155,8 @@ export const getPublicCenterTeachers = asyncHandler(async (req: Request, res: Re
       location: t.location,
       subjects: t.subjects.map((s) => s.subject),
       grades: t.grades.map((g) => g.grade),
-      rating: Number(avg.toFixed(1)),
-      ratingCount: count,
+      rating: rating?.average ?? 0,
+      ratingCount: rating?.count ?? 0,
       centerId: id,
     };
   });
@@ -163,12 +170,10 @@ export const listAllCenters = asyncHandler(async (req: Request, res: Response) =
   const { q, status, subscriptionStatus, planId, page, limit } = req.validatedQuery as any;
   const result = await listCenters({ q, status, subscriptionStatus, planId, page, limit });
 
-  const items = await Promise.all(
-    result.items.map(async (c: any) => {
-      const stats = await centerStatistics(c.id);
-      return { ...c, statistics: stats };
-    }),
+  const statsMap = await batchCenterStatistics(
+    result.items.map((c) => c as unknown as { id: string; _count: { teachers: number; students: number; parents: number; lessons: number } }),
   );
+  const items = result.items.map((c: any) => ({ ...c, statistics: statsMap[c.id] }));
   return ok(res, { items, total: result.total, page: result.page, limit: result.limit, totalPages: result.totalPages });
 });
 

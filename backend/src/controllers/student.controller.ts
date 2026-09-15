@@ -23,7 +23,7 @@ import { ApiError } from '../utils/ApiError';
 export const studentDashboardHandler = asyncHandler(async (req: Request, res: Response) => {
   const { studentId } = await resolveRoleEntity(req.user!.id, req.user!.role);
   if (!studentId) throw ApiError.notFound('Student profile not found.');
-  const data = await getStudentDashboard(studentId);
+  const data = await getStudentDashboard(studentId, req.user!.id);
   return ok(res, data, 'Dashboard loaded.');
 });
 

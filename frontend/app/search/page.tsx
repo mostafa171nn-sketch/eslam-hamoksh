@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Star, GraduationCap } from 'lucide-react';
@@ -50,6 +50,12 @@ function SearchPageInner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Sequence guard for the async search: keystrokes debounce into a new
+  // request while the previous one may still be in flight. Only the newest
+  // invocation may publish results/loading/error, so a slow stale response
+  // can never overwrite a faster newer one.
+  const searchSeq = useRef(0);
+
   useEffect(() => {
     const id = window.setTimeout(() => setDebounced(filters), 300);
     return () => window.clearTimeout(id);
@@ -69,6 +75,8 @@ function SearchPageInner() {
   }, [debounced]);
 
   const search = async () => {
+    const seq = searchSeq.current + 1;
+    searchSeq.current = seq;
     setLoading(true);
     setError('');
     try {
@@ -90,17 +98,22 @@ function SearchPageInner() {
         limit: 12,
       });
 
+      if (seq !== searchSeq.current) return;
+
       const teachers = teacherRes.data ?? [];
       setTeacherResults(teachers);
 
-      setMeta({
-        total: teachers.length,
-        totalPages: Math.max(1, Math.ceil(teachers.length / 12)),
-      });
+      // Use the server's pagination metadata: the list is capped at `limit`,
+      // so "teachers.length" is NOT the real total beyond page one (e.g. the
+      // wrong total kill pagination on filtered searches).
+      const total = teacherRes.meta?.total ?? teachers.length;
+      const totalPages = teacherRes.meta?.totalPages ?? Math.max(1, Math.ceil(total / 12));
+      setMeta({ total, totalPages });
     } catch (err) {
+      if (seq !== searchSeq.current) return;
       setError(t('failedLoadSearchResults'));
     } finally {
-      setLoading(false);
+      if (seq === searchSeq.current) setLoading(false);
     }
   };
 

@@ -40,9 +40,24 @@ export const TENANT_MODELS = new Set<string>([
 // Single Prisma client instance reused across the whole app.
 // Prisma manages its own connection pool internally; we never open a new
 // connection per request.
+const enableQueryLog = process.env.PRISMA_LOG === 'query';
 const basePrisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
+  log: enableQueryLog
+    ? [{ emit: 'event', level: 'query' }]
+    : process.env.NODE_ENV === 'development'
+      ? ['warn', 'error']
+      : ['error'],
 });
+
+if (enableQueryLog) {
+  // Line-per-query trace used by the query-count benchmarks. Every SQL
+  // statement is printed as `[q] <sql> (<duration ms>)`; stmt counts are
+  // derived by grepping the log for SELECT/INSERT/UPDATE/DELETE.
+  (basePrisma as PrismaClient & { $on: (e: 'query', cb: (x: { query: string; duration: number }) => void) => void }).$on('query', (e) => {
+    // eslint-disable-next-line no-console
+    console.log(`[q] ${e.query.replace(/\s+/g, ' ').trim()} (${e.duration} ms)`);
+  });
+}
 
 const extended = basePrisma.$extends({
 

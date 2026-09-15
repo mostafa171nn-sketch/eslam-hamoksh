@@ -18,6 +18,7 @@ export const DAYS = [
 export interface TeacherSearchFilters {
   subjectId?: string;
   gradeId?: string;
+  grades?: string[];
   day?: number;
   time?: string;
   locationId?: string;
@@ -36,7 +37,11 @@ const TEACHER_BASE_SELECT = {
   hourlyRate: true,
   createdAt: true,
   centerId: true,
-  user: { select: { id: true, fullName: true, photo: true, createdAt: true, status: true } },
+  // Only the fields actually emitted by `shapeTeacher` (fullName, photo) plus
+  // `status` (used by the public profile guard) are selected. Dropping the
+  // unused user `id`/`createdAt` avoids fetching those columns on every
+  // search/detail row for the same joined User row.
+  user: { select: { fullName: true, photo: true, status: true } },
   location: { select: { id: true, name: true } },
   subjects: { select: { subject: { select: { id: true, name: true } } } },
   grades: { select: { grade: { select: { id: true, name: true } } } },
@@ -71,6 +76,7 @@ export async function searchTeachers(filters: TeacherSearchFilters) {
   const {
     subjectId,
     gradeId,
+    grades,
     day,
     time,
     locationId,
@@ -90,7 +96,8 @@ export async function searchTeachers(filters: TeacherSearchFilters) {
   };
 
   if (subjectId) where.subjects = { some: { subjectId } };
-  if (gradeId) where.grades = { some: { gradeId } };
+  if (gradeId && !grades?.length) where.grades = { some: { gradeId } };
+  if (grades?.length) where.grades = { some: { gradeId: { in: grades } } };
   if (locationId) where.locationId = locationId;
   // Direct center relationship — never approximate by city/state.
   if (centerId) where.centerId = centerId;
@@ -109,13 +116,25 @@ export async function searchTeachers(filters: TeacherSearchFilters) {
   }
 
   if (name) {
-    where.user = { fullName: { contains: name, mode: 'insensitive' } };
+    // Merge, do not replace: without this, providing a name dropped the
+    // `status: 'ACTIVE'` guard on `user`, exposing deactivated accounts.
+    where.user = { ...where.user, fullName: { contains: name, mode: 'insensitive' } };
   }
 
   let allowedIds: string[] | undefined;
   if (minRating !== undefined && minRating !== null) {
     const grouped = await prisma.rating.groupBy({
       by: ['teacherId'],
+      // Only ratings of publicly browsable teachers are taken into account so
+      // the filter stays consistent with the `where` above (previously this
+      // aggregated ratings of ALL teachers, including deactivated ones and
+      // tenants in non-ACTIVE states).
+      where: {
+        teacher: {
+          user: { status: 'ACTIVE' },
+          center: { status: 'ACTIVE', subscriptionStatus: 'ACTIVE' },
+        },
+      },
       _avg: { stars: true },
       having: { stars: { _avg: { gte: minRating } } },
     });
@@ -179,32 +198,36 @@ export async function getTeacherPublicProfile(teacherId: string, viewerStudentId
   if (teacher.user.status !== 'ACTIVE') {
     throw ApiError.notFound('Teacher not found.');
   }
+
+  // Run every supporting lookup in parallel (single client round-trip batch)
+  // so a slow remote database does not serialize the profile response.
+  const [center, rating, studentCount, completedLessons, reviews, enrollment, myLessonsCount] =
+    await Promise.all([
+      teacher.centerId
+        ? prisma.center.findUnique({
+            where: { id: teacher.centerId },
+            select: { status: true, subscriptionStatus: true },
+          })
+        : Promise.resolve(null),
+      teacherRepository.aggregateRating(teacherId),
+      teacherRepository.countTeacherStudents(teacherId),
+      prisma.lesson.count({ where: { teacherId, status: 'COMPLETED' } }),
+      ratingRepository.findRecentReviews(teacherId, 10),
+      viewerStudentId
+        ? teacherRepository.findTeacherStudent(teacherId, viewerStudentId)
+        : Promise.resolve(null),
+      viewerStudentId
+        ? prisma.lesson.count({
+            where: { teacherId, studentId: viewerStudentId, status: { in: ['SCHEDULED', 'RESCHEDULED'] } },
+          })
+        : Promise.resolve(0),
+    ]);
+
   if (teacher.centerId) {
-    const center = await prisma.center.findUnique({
-      where: { id: teacher.centerId },
-      select: { status: true, subscriptionStatus: true },
-    });
     if (!center || center.status !== 'ACTIVE' || center.subscriptionStatus !== 'ACTIVE') {
       throw ApiError.notFound('Teacher not found.');
     }
   }
-
-  const [rating, studentCount, completedLessons, reviews, reviewsTotal, enrollment] = await Promise.all([
-    teacherRepository.aggregateRating(teacherId),
-    teacherRepository.countTeacherStudents(teacherId),
-    prisma.lesson.count({ where: { teacherId, status: 'COMPLETED' } }),
-    ratingRepository.findRecentReviews(teacherId, 10),
-    ratingRepository.count({ teacherId }),
-    viewerStudentId
-      ? teacherRepository.findTeacherStudent(teacherId, viewerStudentId)
-      : Promise.resolve(null),
-  ]);
-
-  const myLessonsCount = viewerStudentId
-    ? await prisma.lesson.count({
-        where: { teacherId, studentId: viewerStudentId, status: { in: ['SCHEDULED', 'RESCHEDULED'] } },
-      })
-    : 0;
 
   return {
     ...shapeTeacher(teacher),
@@ -214,6 +237,9 @@ export async function getTeacherPublicProfile(teacherId: string, viewerStudentId
     completedLessons,
     isEnrolled: !!enrollment,
     myLessonsCount,
+    // The full rating aggregate already counts every rating row (stars is NOT
+    // NULL on all rows), so no additional COUNT(*) query is needed here.
+    reviewsTotal: rating._count.stars,
     reviews: reviews.map((r) => ({
       id: r.id,
       stars: r.stars,
@@ -227,7 +253,6 @@ export async function getTeacherPublicProfile(teacherId: string, viewerStudentId
             photo: fileUrl(r.parent?.user.photo ?? null),
           },
     })),
-    reviewsTotal,
   };
 }
 

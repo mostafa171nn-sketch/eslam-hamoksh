@@ -11,7 +11,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { PencilLoader } from '../../components/ui/PencilLoader';
 import { Alert, InlineError } from '../../components/ui/ErrorAlert';
 import { useApi, errorMessage } from '../../hooks/useApi';
-import { api } from '../../lib/api';
+import { api, invalidateCatalog } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 import { useT } from '../../i18n';
 import { Tags } from 'lucide-react';
@@ -90,6 +90,7 @@ export default function CatalogManager({
         toast.success(t('created'));
       }
       setModalOpen(false);
+      invalidateCatalog(endpoint);
       reload();
     } catch (err) {
       setFormError(errorMessage(err));
@@ -105,6 +106,7 @@ export default function CatalogManager({
       await api.delete(`${endpoint}/${deleting.id}`);
       toast.success(t('deleted'));
       setDeleting(null);
+      invalidateCatalog(endpoint);
       reload();
     } catch (err) {
       toast.error(errorMessage(err));

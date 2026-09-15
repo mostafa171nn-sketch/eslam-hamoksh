@@ -138,6 +138,10 @@ export const searchTeachersQuerySchema = z.object({
   name: z.string().max(120).optional(),
   subjectId: z.string().uuid().optional(),
   gradeId: z.string().uuid().optional(),
+  // Comma-separated list of grade ids (e.g. `?grades=a,b,c`) for stage-level
+  // filtering (all grades belonging to a stage). Existing gradeId callers are
+  // unaffected; when both are present they are combined.
+  grades: z.union([z.string().min(1), z.array(z.string().min(1)).min(1)]).optional(),
   locationId: z.string().uuid().optional(),
   centerId: z.string().uuid('Invalid center id.').optional(),
   day: z.coerce.number().int().min(0).max(6).optional(),

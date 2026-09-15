@@ -8,8 +8,15 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { api, setUnauthorizedHandler, type Center } from '../lib/api';
+import {
+  api,
+  clearAuthSessionRecord,
+  recordAuthSession,
+  setUnauthorizedHandler,
+  type Center,
+} from '../lib/api';
 import type { User } from '../lib/types';
+import { dataCache } from '../lib/dataCache';
 
 interface AuthContextValue {
   user: User | null;
@@ -64,7 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api
       .get<User>('/auth/me')
       .then((res) => {
-        if (active) setUser(res.data);
+        if (active) {
+          setUser(res.data);
+          recordAuthSession();
+        }
       })
       .catch(() => {
         if (active) setUser(null);
@@ -86,6 +96,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setCenter(null);
       setLoading(false);
+      // Session is gone/invalid — drop every cached response so no private
+      // data (my-teachers, follows, children, cached dashboards) survives.
+      dataCache.clear();
     };
     setUnauthorizedHandler(onUnauthorized);
     return () => setUnauthorizedHandler(() => {});
@@ -93,6 +106,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (username: string, password: string, centerId?: string) => {
     const res = await api.login({ username, password, ...(centerId ? { centerId } : {}) });
+    // Clear first so a previously cached session's private keys can never leak
+    // into a different account using the same browser tab.
+    dataCache.clear();
     setUser(res.data.user);
     setCenter(res.data.center ?? null);
   }, [setCenter]);
@@ -103,11 +119,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUser(null);
       setCenter(null);
+      clearAuthSessionRecord();
+      // Private dashboard/search caches must not survive the session.
+      dataCache.clear();
     }
   }, [setCenter]);
 
   const refreshUser = useCallback(async () => {
     const res = await api.get<User>('/auth/me');
+    // Clear stale cached private data (dashboards, follows, etc.) so a
+    // session swap via OTP login never leaks one user's data to another.
+    dataCache.clear();
     setUser(res.data);
   }, []);
 

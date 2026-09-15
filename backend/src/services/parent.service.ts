@@ -52,15 +52,15 @@ export async function assertParentOwnsChild(parentUserId: string, studentId: str
 
 export async function getChildDashboard(parentUserId: string, studentId: string) {
   await assertParentOwnsChild(parentUserId, studentId);
-  const dash = await getStudentDashboard(studentId);
   const student = await studentRepository.findUnique({
     where: { id: studentId },
     include: {
-      user: { select: { fullName: true, photo: true } },
+      user: { select: { id: true, fullName: true, photo: true } },
       grade: true,
       teachers: { include: { teacher: { include: { user: { select: { fullName: true, photo: true } } } } } },
     },
   }) as any;
+  const dash = await getStudentDashboard(studentId, student?.user?.id);
   return {
     student: {
       id: studentId,

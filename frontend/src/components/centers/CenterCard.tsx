@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { memo, useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Star,
@@ -120,7 +120,7 @@ export interface CenterCardProps {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export function CenterCard({ center, index, isActive, onFocus, onShowOnMap, images: imagesProp, priceRange, className = '' }: CenterCardProps) {
+export const CenterCard = memo(function CenterCard({ center, index, isActive, onFocus, onShowOnMap, images: imagesProp, priceRange, className = '' }: CenterCardProps) {
   const { t, dir } = useT();
   const isRtl = dir === 'rtl';
   const menuRef = useRef<HTMLDivElement>(null);
@@ -452,6 +452,6 @@ export function CenterCard({ center, index, isActive, onFocus, onShowOnMap, imag
       </div>
     </article>
   );
-}
+});
 
 export default CenterCard;

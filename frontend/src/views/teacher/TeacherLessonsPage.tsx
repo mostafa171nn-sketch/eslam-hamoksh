@@ -54,8 +54,8 @@ export default function TeacherLessonsPage() {
     [page, status],
   );
 
-  const { data: studentsData } = useApi(() => api.get<TeacherStudent[]>('/teachers/me/students', { page: 1, limit: 100 }), []);
-  const { data: locationsData } = useApi(() => api.get<Location[]>('/catalog/locations'), []);
+  const { data: studentsData } = useApi(() => api.get<TeacherStudent[]>('/teachers/me/students', { page: 1, limit: 100 }), [], { cacheKey: 'teachers:me:students', staleTTL: 30_000, cacheTTL: 300_000 });
+  const { data: locationsData } = useApi(() => api.get<Location[]>('/catalog/locations'), [], { cacheKey: 'catalog:locations', staleTTL: 300_000, cacheTTL: 600_000 });
 
   const students = studentsData ?? [];
   const subjects = user?.role === 'TEACHER' ? user.teacher.subjects : [];

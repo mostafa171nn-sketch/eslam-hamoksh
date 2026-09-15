@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { MapPin, Star, Share2, GraduationCap, Check, Sparkles, CalendarPlus } from 'lucide-react';
 import { useT, type DictKey } from '../../../i18n';
@@ -47,6 +47,8 @@ export function resolveLocationCoords(locationName: string | null | undefined): 
 function TeacherPopupContent({ teacher, t }: { teacher: PublicTeacher; t: TFunction }) {
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const subject = teacher.subjects[0]?.name ?? '';
   const coords = resolveLocationCoords(teacher.location?.name);

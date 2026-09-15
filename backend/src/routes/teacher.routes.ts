@@ -19,13 +19,14 @@ import {
   updateTeacherProfileSchema,
 } from '../validation';
 import { teacherReviewsHandler } from '../controllers/rating.controller';
+import { publicDiscoveryRateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
-router.get('/', validate(searchTeachersQuerySchema, 'query'), searchTeachersHandler);
-router.get('/reviews/:teacherId', teacherReviewsHandler);
-router.get('/:id/available-slots', attachUser, validate(availableSlotsSchema, 'query'), availableSlotsHandler);
-router.get('/:id', attachUser, getTeacherProfileHandler);
+router.get('/', publicDiscoveryRateLimiter, validate(searchTeachersQuerySchema, 'query'), searchTeachersHandler);
+router.get('/reviews/:teacherId', publicDiscoveryRateLimiter, teacherReviewsHandler);
+router.get('/:id/available-slots', publicDiscoveryRateLimiter, attachUser, validate(availableSlotsSchema, 'query'), availableSlotsHandler);
+router.get('/:id', publicDiscoveryRateLimiter, attachUser, getTeacherProfileHandler);
 
 router.use(authenticate);
 

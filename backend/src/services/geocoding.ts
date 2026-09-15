@@ -25,9 +25,23 @@ function isValidLongitude(lon: number): boolean {
 }
 
 /** Minimal in-process cache so we do not re-query the same address twice. */
+const MAX_CACHE_ENTRIES = 500;
 const cache = new Map<string, GeocodeResult | null>();
 const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000;
 const cacheTimes = new Map<string, number>();
+
+function cacheEntry(address: string, result: GeocodeResult | null, now: number) {
+  cache.set(address, result);
+  cacheTimes.set(address, now);
+  // Evict the oldest entry when at capacity (Map preserves insertion order).
+  if (cache.size > MAX_CACHE_ENTRIES) {
+    const oldest = cache.keys().next().value;
+    if (oldest !== undefined) {
+      cache.delete(oldest);
+      cacheTimes.delete(oldest);
+    }
+  }
+}
 
 /**
  * Build the most complete geocoding query from the available address pieces.
@@ -75,11 +89,9 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
   if (outcome.status === 'success') {
     result = outcome.result;
     // Cache both hit and miss to avoid pointless repeat requests.
-    cache.set(trimmed, result);
-    cacheTimes.set(trimmed, now);
+    cacheEntry(trimmed, result, now);
   } else if (outcome.status === 'empty') {
-    cache.set(trimmed, null);
-    cacheTimes.set(trimmed, now);
+    cacheEntry(trimmed, null, now);
   }
 
   return result;

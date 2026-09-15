@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { cookies } from 'next/headers';
 import { Inter, Noto_Sans_Arabic } from 'next/font/google';
@@ -6,6 +6,15 @@ import './globals.css';
 import { AppProviders } from '../src/components/AppProviders';
 import { ConditionalFooter } from '../src/components/layout/ConditionalFooter';
 import { RouteTransition } from '../src/components/RouteTransition';
+import { NavigationProgress } from '../src/components/NavigationProgress';
+import { RoutePrefetcher } from '../src/components/RoutePrefetcher';
+
+/**
+ * Absolute origin used to resolve every relative URL emitted by the metadata
+ * layer (canonical, robots, sitemap...). Override with NEXT_PUBLIC_SITE_URL
+ * when the production domain is final (defaults to the Maarej brand domain).
+ */
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maarej.com';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -21,16 +30,45 @@ const notoSansArabic = Noto_Sans_Arabic({
 
 export function generateMetadata(): Metadata {
   const lang = cookies().get('maarech-lang')?.value === 'en' ? 'en' : 'ar';
+  const common = {
+    metadataBase: new URL(SITE_URL),
+    robots: { index: true, follow: true },
+    icons: { icon: '/icon.svg' },
+  };
   return lang === 'ar'
     ? {
+        ...common,
         title: 'معارج | Maarej',
         description: 'منصة متكاملة متعددة الأطراف لإدارة مراكز التعليم: للمعلمين والطلاب وأولياء الأمور.',
+        openGraph: {
+          type: 'website',
+          locale: 'ar_SA',
+          siteName: 'معارج | Maarej',
+          title: 'معارج | Maarej',
+          description: 'منصة متكاملة متعددة الأطراف لإدارة مراكز التعليم: للمعلمين والطلاب وأولياء الأمور.',
+          url: SITE_URL,
+        },
       }
     : {
+        ...common,
         title: 'Maarej | Education Platform',
         description: 'A complete multi-tenant learning-center platform for teachers, students and parents.',
+        openGraph: {
+          type: 'website',
+          locale: 'en_US',
+          siteName: 'Maarej',
+          title: 'Maarej | Education Platform',
+          description: 'A complete multi-tenant learning-center platform for teachers, students and parents.',
+          url: SITE_URL,
+        },
       };
 }
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#4f46e5',
+};
 
 /**
  * Applied BEFORE first paint so the stored theme/direction never flashes.
@@ -57,6 +95,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="flex min-h-[100dvh] flex-col bg-slate-50 font-sans text-slate-900 antialiased dark:bg-slate-900 dark:text-slate-100">
+        <NavigationProgress />
+        <RoutePrefetcher />
         <AppProviders>
           <RouteTransition mode="page" className="flex-1">
             {children}

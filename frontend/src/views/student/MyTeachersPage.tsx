@@ -35,7 +35,7 @@ function lessonStatusKey(status: string): keyof Dict {
 
 export default function MyTeachersPage() {
   const { t } = useT();
-  const { data, initialLoading, error } = useApi(() => api.getMyTeachers<MyTeacher[]>(), []);
+  const { data, initialLoading, error } = useApi(() => api.getMyTeachers<MyTeacher[]>(), [], { cacheKey: 'students:me:teachers', staleTTL: 30_000, cacheTTL: 300_000 });
 
   if (initialLoading) return <PencilLoader label={t('loadingTeachers')} />;
   if (error || !data) return <Alert message={error || t('failedLoadTeachers')} />;

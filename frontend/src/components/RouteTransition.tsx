@@ -4,12 +4,9 @@ import { useLayoutEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-const RISE_MS = 400;
+const RISE_MS = 300;
 const RISE_EASE = 'cubic-bezier(0.16, 1, 0.3, 1)';
-const LIFT_PX = 18;
-const STAGGER_STEP_MS = 30;
-const STAGGER_MS = 300;
-const STAGGER_MAX = 12;
+const LIFT_PX = 10;
 
 const DASHBOARD_PREFIXES = [
   '/student',
@@ -45,10 +42,10 @@ interface RouteTransitionProps {
 
 /**
  * Page-enter transition. On soft navigations the wrapper rises from below
- * (opacity 0 -> 1, translateY 18px -> 0) and, when present, the first block
- * children fade in with a subtle stagger. Runs via the Web Animations API so
- * no global styles are required, is skipped on the first (hydrated) render and
- * under prefers-reduced-motion, and never leaves a lingering transform.
+ * (opacity 0 -> 1, translateY 10px -> 0) as a single unit — no per-card or
+ * staggered motion. Runs via the Web Animations API so no global styles are
+ * required, is skipped on the first (hydrated) render and under
+ * prefers-reduced-motion, and never leaves a lingering transform.
  */
 export function RouteTransition({ children, className, mode = 'page' }: RouteTransitionProps) {
   const pathname = usePathname();
@@ -83,20 +80,8 @@ export function RouteTransition({ children, className, mode = 'page' }: RouteTra
         { opacity: 0, transform: `translateY(${LIFT_PX}px)` },
         { opacity: 1, transform: 'translateY(0px)' },
       ],
-      { duration: RISE_MS, easing: RISE_EASE, fill: 'none' },
+      { duration: RISE_MS, easing: RISE_EASE, fill: 'backwards' },
     );
-
-    const kids = Array.from(el.children as unknown as Element[]);
-    if (kids.length > 1) {
-      kids.slice(0, STAGGER_MAX).forEach((kid, i) => {
-        kid.animate([{ opacity: 0 }, { opacity: 1 }], {
-          duration: STAGGER_MS,
-          delay: i * STAGGER_STEP_MS,
-          easing: 'ease-out',
-          fill: 'backwards',
-        });
-      });
-    }
   }, [pathname, mode]);
 
   return (

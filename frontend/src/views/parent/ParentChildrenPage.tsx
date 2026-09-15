@@ -26,7 +26,7 @@ interface ParentChild {
 
 export default function ParentChildrenPage() {
   const { t } = useT();
-  const { data, loading, initialLoading, error } = useApi(() => api.get<ParentChild[]>('/parents/children'), []);
+  const { data, loading, initialLoading, error } = useApi(() => api.get<ParentChild[]>('/parents/children'), [], { cacheKey: 'parents:children', staleTTL: 30_000, cacheTTL: 300_000 });
 
   return (
     <div>

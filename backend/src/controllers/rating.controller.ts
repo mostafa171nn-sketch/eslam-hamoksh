@@ -26,8 +26,13 @@ export const teacherReviewsHandler = asyncHandler(async (req: Request, res: Resp
   if (!teacher) {
     throw ApiError.notFound('Teacher not found.');
   }
-  const page = Number(req.query.page ?? 1);
-  const limit = Number(req.query.limit ?? 10);
+  // Bound pagination server-side: NaN/invalid input falls back to safe
+  // defaults, and `limit` is capped so a single request can never pull the
+  // entire reviews table (each row includes the author's user relation).
+  const rawPage = Number(req.query.page ?? 1);
+  const rawLimit = Number(req.query.limit ?? 10);
+  const page = Number.isInteger(rawPage) && rawPage >= 1 ? Math.floor(rawPage) : 1;
+  const limit = Number.isInteger(rawLimit) && rawLimit >= 1 ? Math.min(Math.floor(rawLimit), 50) : 10;
   const result = await listTeacherReviews(req.params.teacherId, page, limit);
   return ok(res, result.data, 'Reviews loaded.', {
     page: result.page,

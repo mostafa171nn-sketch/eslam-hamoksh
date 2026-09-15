@@ -25,12 +25,13 @@ import {
   cancelCenterSubscriptionSchema,
   changeCenterPlanSchema,
 } from '../validation';
+import { publicDiscoveryRateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
 // PUBLIC: active center packages (no auth) — must be registered before the
 // global authenticate guard below.
-router.get('/public/center-plans', listPublicCenterPlansHandler);
+router.get('/public/center-plans', publicDiscoveryRateLimiter, listPublicCenterPlansHandler);
 
 // All other subscription routes require authentication
 router.use(authenticate);

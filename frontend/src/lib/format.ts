@@ -19,7 +19,7 @@ const MONTH_NAMES_AR = [
 // The active UI language is kept here so the pure formatting helpers below can
 // localize (dates, currency, units) without every call site having to pass a
 // lang argument. `LangProvider` keeps this in sync when the user switches.
-let currentLang: 'ar' | 'en' = 'en';
+let currentLang: 'ar' | 'en' = 'ar';
 
 export function setFormatLang(lang: 'ar' | 'en') {
   currentLang = lang;

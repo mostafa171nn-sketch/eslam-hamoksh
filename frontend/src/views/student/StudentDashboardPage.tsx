@@ -63,11 +63,12 @@ export default function StudentDashboardPage() {
   const { t, dir } = useT();
   const { user } = useAuth();
   const { data, initialLoading, error } = useApi(() => api.get<StudentDashboard>('/students/dashboard'), []);
-  const { data: teachers } = useApi(() => api.getMyTeachers<MyTeacher[]>(), []);
+  const { data: teachers } = useApi(() => api.getMyTeachers<MyTeacher[]>(), [], { cacheKey: 'students:me:teachers', staleTTL: 30_000, cacheTTL: 300_000 });
   const { data: followed } = useApi(
     () =>
       api.getFollowedCenters() as Promise<import('../../lib/api').ApiResponse<import('../../lib/api').PublicCenter[]>>,
     [],
+    { cacheKey: 'students:follows', staleTTL: 30_000, cacheTTL: 300_000 },
   );
 
   if (initialLoading) return <PencilLoader label={t('loadingDashboard')} />;

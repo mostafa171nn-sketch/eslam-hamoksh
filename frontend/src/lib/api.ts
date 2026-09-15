@@ -289,10 +289,60 @@ async function rawRequest<T>(path: string, options: RequestInit): Promise<ApiRes
 // runs at a time while simultaneous 401 handlers await the same result.
 let refreshInFlight: Promise<boolean> | null = null;
 
+// Anonymous-auth optimization. The refresh token is HttpOnly (it cannot be
+// inspected from JS), so we keep a small origin-scoped marker in localStorage:
+//   - set on login, on a successful refresh, and on any successful /auth/me
+//   - cleared on logout
+// When the marker is absent there is (almost certainly) no session cookie, so
+// a 401 on the bootstrap /auth/me skips the pointless POST /auth/refresh that
+// would just 401 again. A valid returning session still restores because the
+// marker survives page reloads; on write errors we default to attempting the
+// refresh (the safe, pre-existing behaviour).
+const AUTH_SESSION_KEY = 'maarech-auth-session';
+
+// In-memory backup of the localStorage marker. It survives only within the
+// current tab, but it covers the case where storage is cleared/wiped while a
+// real (HttpOnly) refresh cookie still exists: the marker is gone, yet the
+// user demonstrably authenticated earlier in this tab, so we must NOT skip a
+// necessary refresh. It is reset on explicit logout with the marker.
+let sessionSeenInTab = false;
+
+/** Records that this browser holds (or has held) an account session. */
+export function recordAuthSession(): void {
+  sessionSeenInTab = true;
+  try {
+    window.localStorage.setItem(AUTH_SESSION_KEY, '1');
+  } catch {
+    /* storage unavailable — refresh path stays enabled */
+  }
+}
+
+/** Clears the session record (e.g. explicit logout). */
+export function clearAuthSessionRecord(): void {
+  sessionSeenInTab = false;
+  try {
+    window.localStorage.removeItem(AUTH_SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function hasAuthSessionRecord(): boolean {
+  try {
+    return sessionSeenInTab || window.localStorage.getItem(AUTH_SESSION_KEY) === '1';
+  } catch {
+    return true;
+  }
+}
+
 function tryRefresh(): Promise<boolean> {
+  if (!hasAuthSessionRecord()) return Promise.resolve(false);
   if (!refreshInFlight) {
     refreshInFlight = rawRequest('/auth/refresh', { method: 'POST' })
-      .then(() => true)
+      .then(() => {
+        recordAuthSession();
+        return true;
+      })
       .catch(() => false)
       .finally(() => {
         refreshInFlight = null;
@@ -347,14 +397,48 @@ function jsonOptions(method: string, body?: unknown): RequestInit {
 // soon as the promise settles so later independent loads still hit the API.
 const inflightGets = new Map<string, Promise<ApiResponse<unknown>>>();
 
+// Short-lived TTL cache for public catalog reference data (/catalog/subjects,
+// /catalog/grades, /catalog/locations). Those endpoints are static and fetched
+// by nearly every public + dashboard page, so a brief cache removes redundant
+// round-trips during navigation. Admin edits clear the entries explicitly via
+// invalidateCatalog (see CatalogManager).
+const CATALOG_TTL_MS = 5 * 60_000;
+const catalogCache = new Map<string, { expiresAt: number; data: unknown }>();
+
+/** Drop cached catalog entries. Pass a specific endpoint (e.g. /catalog/subjects) or call with no args to clear all. */
+export function invalidateCatalog(path?: string): void {
+  if (path) catalogCache.delete(path);
+  else catalogCache.clear();
+}
+
+function catalogCached<T>(url: string): Promise<ApiResponse<T>> | null {
+  const entry = catalogCache.get(url);
+  if (!entry) return null;
+  if (entry.expiresAt <= Date.now()) {
+    catalogCache.delete(url);
+    return null;
+  }
+  return Promise.resolve(entry.data as ApiResponse<T>);
+}
+
 function apiGet<T>(path: string, params?: Record<string, string | number | undefined | null>) {
   const url = path + qs(params);
+  if (path.startsWith('/catalog/')) {
+    const cached = catalogCached<T>(url);
+    if (cached) return cached;
+  }
   const inflight = inflightGets.get(url);
   if (inflight) return inflight as Promise<ApiResponse<T>>;
   const promise = request<T>(url, { method: 'GET' });
   inflightGets.set(url, promise as Promise<ApiResponse<unknown>>);
   const settled = () => inflightGets.delete(url);
-  promise.then(settled, settled);
+  promise.then(
+    (res) => {
+      if (path.startsWith('/catalog/')) catalogCache.set(url, { expiresAt: Date.now() + CATALOG_TTL_MS, data: res });
+      settled();
+    },
+    settled,
+  );
   return promise;
 }
 
@@ -390,7 +474,10 @@ export const api = {
     return request<T>('/students/me/teachers', { method: 'GET' });
   },
   login(payload: LoginPayload) {
-    return request<LoginResult>('/auth/login', jsonOptions('POST', payload));
+    return request<LoginResult>('/auth/login', jsonOptions('POST', payload)).then((res) => {
+      recordAuthSession();
+      return res;
+    });
   },
   register(payload: RegisterPayload) {
     const { role, ...rest } = payload;
@@ -401,18 +488,13 @@ export const api = {
       ...params,
       grades: params?.grades?.join(','),
     };
-    return request<PublicTeacher[]>(
-      '/teachers' + qs(query as Record<string, string | number | undefined | null>),
-      { method: 'GET' },
-    );
+    return apiGet<PublicTeacher[]>('/teachers', query as Record<string, string | number | undefined | null>);
   },
   getTeacher(id: string) {
     return request<TeacherProfile>('/teachers/' + encodeURIComponent(id), { method: 'GET' });
   },
   searchCenters(params?: SearchCentersParams) {
-    return request<SearchCentersResult>('/centers/search' + qs(params as Record<string, string | number | undefined | null>), {
-      method: 'GET',
-    });
+    return apiGet<SearchCentersResult>('/centers/search', params as Record<string, string | number | undefined | null>);
   },
   getPublicCenter(id: string) {
     return request<PublicCenter>('/centers/' + encodeURIComponent(id), { method: 'GET' });

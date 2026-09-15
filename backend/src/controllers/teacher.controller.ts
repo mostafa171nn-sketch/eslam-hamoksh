@@ -22,9 +22,16 @@ export async function requireTeacherActor(req: Request) {
 
 export const searchTeachersHandler = asyncHandler(async (req: Request, res: Response) => {
   const q = (req as Request & { validatedQuery?: Record<string, unknown> }).validatedQuery ?? req.query;
+  const rawGrades = q.grades;
+  const grades = Array.isArray(rawGrades)
+    ? (rawGrades as string[])
+    : typeof rawGrades === 'string'
+      ? rawGrades.split(',').map((s) => s.trim()).filter(Boolean)
+      : undefined;
   const result = await searchTeachers({
     subjectId: q.subjectId as string | undefined,
     gradeId: q.gradeId as string | undefined,
+    grades,
     day: q.day !== undefined && q.day !== '' ? Number(q.day) : undefined,
     time: q.time as string | undefined,
     locationId: q.locationId as string | undefined,
@@ -93,8 +100,12 @@ export const teacherStatsHandler = asyncHandler(async (req: Request, res: Respon
 
 export const teacherStudentsHandler = asyncHandler(async (req: Request, res: Response) => {
   const teacher = await requireTeacherActor(req);
-  const page = Number(req.query.page ?? 1);
-  const limit = Number(req.query.limit ?? 20);
+  // Bound pagination (see teacher reviews handler): invalid input falls back
+  // to the default and `limit` is capped to keep response size predictable.
+  const rawPage = Number(req.query.page ?? 1);
+  const rawLimit = Number(req.query.limit ?? 20);
+  const page = Number.isInteger(rawPage) && rawPage >= 1 ? Math.floor(rawPage) : 1;
+  const limit = Number.isInteger(rawLimit) && rawLimit >= 1 ? Math.min(Math.floor(rawLimit), 100) : 20;
   const result = await getTeacherStudents(teacher.id, page, limit);
   return ok(res, result.data, 'Students loaded.', {
     page: result.page,

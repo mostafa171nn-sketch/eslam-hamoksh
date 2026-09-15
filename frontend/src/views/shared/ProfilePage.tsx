@@ -15,6 +15,7 @@ import { useToast } from '../../context/ToastContext';
 import { useT } from '../../i18n';
 import { useApi, errorMessage } from '../../hooks/useApi';
 import { api } from '../../lib/api';
+import { dataCache } from '../../lib/dataCache';
 import type { Grade, Location, Subject } from '../../lib/types';
 import { dayName, formatDate } from '../../lib/format';
 
@@ -114,6 +115,7 @@ export default function ProfilePage() {
         Promise.resolve({ success: true as const, message: '', data: { subjects: s.data ?? [], grades: g.data ?? [], locations: l.data ?? [] } }),
       ),
     [],
+    { cacheKey: 'catalog:profile', staleTTL: 300_000, cacheTTL: 600_000 },
   );
 
   useEffect(() => {
@@ -173,6 +175,7 @@ export default function ProfilePage() {
         await api.put('/parents/profile', { fullName: fullName.trim(), phone: phone.trim() });
       }
       await refreshUser();
+      if (user.role === 'TEACHER') dataCache.invalidatePrefix('teachers:');
       toast.success(t('profileUpdatedToast'));
     } catch (err) {
       setError(errorMessage(err));
@@ -191,6 +194,7 @@ export default function ProfilePage() {
       else if (user.role === 'STUDENT') await api.putForm('/students/me/photo', form);
       else if (user.role === 'PARENT') await api.putForm('/parents/photo', form);
       await refreshUser();
+      if (user.role === 'TEACHER') dataCache.invalidatePrefix('teachers:');
       toast.success(t('photoUpdatedToast'));
     } catch (err) {
       setError(errorMessage(err));
@@ -212,6 +216,7 @@ export default function ProfilePage() {
         })),
       });
       await refreshUser();
+      dataCache.invalidatePrefix('teachers:');
       toast.success(t('availabilityUpdatedToast'));
     } catch (err) {
       setError(errorMessage(err));

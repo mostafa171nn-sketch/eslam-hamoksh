@@ -35,6 +35,9 @@ function checkQrRateLimit(studentId: string) {
       'RATE_LIMITED',
     );
   }
+  // All earlier timestamps have elapsed: drop the stale key instead of keeping
+  // an entry per student who ever generated a QR.
+  if (attempts.length === 0) qrAttempts.delete(studentId);
   attempts.push(now);
   qrAttempts.set(studentId, attempts);
 }

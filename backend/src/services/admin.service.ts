@@ -233,6 +233,19 @@ export async function listLocations() {
   return prisma.location.findMany({ orderBy: { name: 'asc' } });
 }
 
+/**
+ * Compact projection of locations for the PUBLIC catalog endpoint. Drops
+ * relation/admin-only columns (centerId, timestamps) that the public API never
+ * needed; the response stays an array of { id, name, address } and remains
+ * fully backward-compatible with the frontend Location type.
+ */
+export async function listPublicLocations() {
+  return prisma.location.findMany({
+    select: { id: true, name: true, address: true },
+    orderBy: { name: 'asc' },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Dashboard stats
 // ---------------------------------------------------------------------------
@@ -254,6 +267,7 @@ export async function adminDashboardStats() {
     totalAssignments,
     avgRating,
     newUsersThisMonth,
+    todayLessons,
   ] = await Promise.all([
     teacherRepository.count({}),
     studentRepository.count({}),
@@ -269,6 +283,7 @@ export async function adminDashboardStats() {
       role: { notIn: ['CENTER_ADMIN', 'SUPER_ADMIN'] },
       createdAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) },
     }),
+    lessonRepository.count({ date: { gte: todayStart, lt: todayEnd } }),
   ]);
 
   return {
@@ -283,7 +298,7 @@ export async function adminDashboardStats() {
     totalAssignments,
     averageTeacherRating: Number((avgRating._avg.stars ?? 0).toFixed(1)),
     newUsersThisMonth,
-    todayLessons: await lessonRepository.count({ date: { gte: todayStart, lt: todayEnd } }),
+    todayLessons,
   };
 }
 
@@ -379,8 +394,29 @@ export async function analyticsData(query: { from?: string; to?: string }) {
     busyHours[h] += row._count._all;
   }
 
-  const cancelledLessons = await lessonRepository.count({ status: 'CANCELLED' });
-  const completedLessonCount = await lessonRepository.count({ status: 'COMPLETED' });
+  const [
+    cancelledLessons,
+    completedLessonCount,
+    totalStudents,
+    activeStudents,
+    totalExams,
+    examPassRate,
+    totalAssignments,
+    submittedAssignments,
+    lateAssignments,
+  ] = await Promise.all([
+    lessonRepository.count({ status: 'CANCELLED' }),
+    lessonRepository.count({ status: 'COMPLETED' }),
+    studentRepository.count({}),
+    userRepository.count({ role: 'STUDENT', status: 'ACTIVE' }),
+    prisma.exam.count(),
+    computePassRate(from, to),
+    prisma.assignment.count({ where: { createdAt: { gte: from, lte: to } } }),
+    prisma.assignmentSubmission.count({
+      where: { submittedAt: { gte: from, lte: to }, status: { in: ['SUBMITTED', 'GRADED'] } },
+    }),
+    prisma.assignmentSubmission.count({ where: { status: 'LATE' } }),
+  ]);
 
   return {
     studentsPerGrade: studentsPerGrade.map((r) => ({
@@ -388,8 +424,8 @@ export async function analyticsData(query: { from?: string; to?: string }) {
       count: r._count._all,
     })),
     studentGrowth,
-    totalStudents: await studentRepository.count({}),
-    activeStudents: await userRepository.count({ role: 'STUDENT', status: 'ACTIVE' }),
+    totalStudents,
+    activeStudents,
     teachersPerSubject: teachersPerSubject.map((r) => ({
       subject: subjectMap.get(r.subjectId) ?? 'Unknown',
       count: r._count._all,
@@ -415,32 +451,34 @@ export async function analyticsData(query: { from?: string; to?: string }) {
       count: r._count._all,
     })),
     exams: {
-      total: await prisma.exam.count(),
+      total: totalExams,
       attempts: examStats._count._all,
       average: examStats._avg.percentage ? Math.round(examStats._avg.percentage) : 0,
       highest: examStats._max.percentage ? Math.round(examStats._max.percentage) : 0,
       lowest: examStats._min.percentage ? Math.round(examStats._min.percentage) : 0,
-      passRate: await computePassRate(from, to),
+      passRate: examPassRate,
     },
     assignments: {
-      total: await prisma.assignment.count({ where: { createdAt: { gte: from, lte: to } } }),
-      submitted: await prisma.assignmentSubmission.count({
-        where: { submittedAt: { gte: from, lte: to }, status: { in: ['SUBMITTED', 'GRADED'] } },
-      }),
-      late: await prisma.assignmentSubmission.count({ where: { status: 'LATE' } }),
+      total: totalAssignments,
+      submitted: submittedAssignments,
+      late: lateAssignments,
       averageGrade: assignmentStats._avg.grade ? Math.round(assignmentStats._avg.grade) : 0,
     },
   };
 }
 
 async function computePassRate(from: Date, to: Date) {
-  const attempts = await prisma.examAttempt.findMany({
-    where: { submittedAt: { gte: from, lte: to } },
-    select: { percentage: true },
-  });
-  if (attempts.length === 0) return 0;
-  const passed = attempts.filter((a) => (a.percentage ?? 0) >= 50).length;
-  return Math.round((passed / attempts.length) * 100);
+  // Set-based: two COUNTs instead of streaming every attempt row into Node
+  // just to filter on percentage >= 50 in JS. Semantics preserved (null
+  // percentage therefore counts as not-passed, matching the previous filter).
+  const [total, passed] = await Promise.all([
+    prisma.examAttempt.count({ where: { submittedAt: { gte: from, lte: to } } }),
+    prisma.examAttempt.count({
+      where: { submittedAt: { gte: from, lte: to }, percentage: { gte: 50 } },
+    }),
+  ]);
+  if (total === 0) return 0;
+  return Math.round((passed / total) * 100);
 }
 
 // ---------------------------------------------------------------------------

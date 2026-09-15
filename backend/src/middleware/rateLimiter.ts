@@ -15,6 +15,25 @@ export const apiRateLimiter = rateLimit({
   },
 });
 
+/**
+ * Stricter, separate budget for anonymous public browsing (catalog reference
+ * data, teacher/center discovery, public center plans). Authed dashboard
+ * endpoints keep the more permissive global `apiRateLimiter`. Expressed in
+ * requests per `RATE_LIMIT_WINDOW_MS` window.
+ */
+export const publicDiscoveryRateLimiter = rateLimit({
+  windowMs: env.RATE_LIMIT_WINDOW_MS,
+  max: env.PUBLIC_DISCOVERY_RATE_LIMIT_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many requests. Please try again later.',
+    data: null,
+    error: { code: 'RATE_LIMITED' },
+  },
+});
+
 /** Stricter limit for authentication endpoints (brute force protection). */
 export const authRateLimiter = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS,

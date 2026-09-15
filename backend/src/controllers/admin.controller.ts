@@ -37,12 +37,14 @@ export const dashboardStatsHandler = asyncHandler(async (_req: Request, res: Res
 });
 
 export const listUsersHandler = asyncHandler(async (req: Request, res: Response) => {
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
   const result = await listUsers({
     role: req.query.role as any,
     search: req.query.search as string | undefined,
     status: req.query.status as string | undefined,
-    page: Number(req.query.page ?? 1),
-    limit: Number(req.query.limit ?? 20),
+    page,
+    limit,
   });
   return ok(res, result.data, 'Users loaded.', {
     page: result.page,
@@ -99,7 +101,9 @@ export const reportHandler = asyncHandler(async (req: Request, res: Response) =>
 });
 
 export const activityLogsHandler = asyncHandler(async (req: Request, res: Response) => {
-  const result = await listActivityLogs(Number(req.query.page ?? 1), Number(req.query.limit ?? 50));
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 50));
+  const result = await listActivityLogs(page, limit);
   return ok(res, result.data, 'Activity logs loaded.', {
     page: result.page,
     limit: result.limit,
@@ -160,9 +164,11 @@ export const deleteLocationHandler = asyncHandler(async (req: Request, res: Resp
 });
 
 export const adminTeachersHandler = asyncHandler(async (req: Request, res: Response) => {
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
   const result = await listTeachersForAdmin(
-    Number(req.query.page ?? 1),
-    Number(req.query.limit ?? 20),
+    page,
+    limit,
     req.query.search as string | undefined,
   );
   return ok(res, result.data, 'Teachers loaded.', {

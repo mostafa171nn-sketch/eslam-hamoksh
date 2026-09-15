@@ -56,22 +56,21 @@ export async function updateStudentPhoto(userId: string, photoFile: string) {
   return fileUrl(photoFile);
 }
 
-export async function getStudentDashboard(studentId: string) {
+export async function getStudentDashboard(studentId: string, userId: string) {
   const now = new Date();
   const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
-  const [todayLessons, upcomingLessons, upcomingExams, pendingAssignments, recentResults, unreadNotifications, attendance] =
+  // One windowed query from today onward (instead of two separate `findMany`
+  // for today vs. upcoming) — the two reads carried identical nested relations,
+  // so each was costing a full Prisma relation fan-out (~5 statements each).
+  // The slices below preserve the exact previous output: today = all of today's
+  // lessons, upcoming = the next 10 from tomorrow on.
+  const [lessons, upcomingExams, pendingAssignments, recentResults, unreadNotifications, attendance] =
     await Promise.all([
       prisma.lesson.findMany({
-        where: { studentId, date: { gte: dayStart, lt: dayEnd }, status: { in: ['SCHEDULED', 'RESCHEDULED'] } },
-        orderBy: { startTime: 'asc' },
-        include: { teacher: { include: { user: { select: { fullName: true, photo: true } } } }, subject: true, location: true },
-      }),
-      prisma.lesson.findMany({
-        where: { studentId, date: { gte: dayEnd }, status: { in: ['SCHEDULED', 'RESCHEDULED'] } },
-        orderBy: { date: 'asc' },
-        take: 10,
+        where: { studentId, date: { gte: dayStart }, status: { in: ['SCHEDULED', 'RESCHEDULED'] } },
+        orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
         include: { teacher: { include: { user: { select: { fullName: true, photo: true } } } }, subject: true, location: true },
       }),
       prisma.exam.findMany({
@@ -96,7 +95,7 @@ export async function getStudentDashboard(studentId: string) {
         take: 5,
         include: { exam: { select: { name: true, subject: true } } },
       }),
-      prisma.notification.count({ where: { userId: (await studentRepository.findById(studentId))?.userId, read: false } }),
+      prisma.notification.count({ where: { userId, read: false } }),
       prisma.attendance.findMany({
         where: { studentId },
         orderBy: { createdAt: 'desc' },
@@ -104,6 +103,9 @@ export async function getStudentDashboard(studentId: string) {
         include: { lesson: { select: { date: true, subject: true } } },
       }),
     ]);
+
+  const todayLessons = lessons.filter((l) => l.date < dayEnd);
+  const upcomingLessons = lessons.filter((l) => l.date >= dayEnd).slice(0, 10);
 
   return {
     todayLessons: todayLessons.map((l) => shapeLesson(l)),

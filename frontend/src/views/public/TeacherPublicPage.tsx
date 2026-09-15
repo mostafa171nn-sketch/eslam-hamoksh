@@ -20,8 +20,13 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useT } from '../../i18n';
 import { AuthPrompt } from '../../components/AuthPrompt';
-import type { AvailableSlot, BookLessonInput } from '../../lib/types';
+import type { AvailableSlot, BookLessonInput, TeacherProfile } from '../../lib/types';
 import { dayName, formatCurrency, formatDate, formatTime, timeAgo } from '../../lib/format';
+
+export interface TeacherPublicPageProps {
+  /** Server-rendered teacher profile — skips the initial client fetch. */
+  initialProfile?: TeacherProfile;
+}
 
 function Stars({ value, size = 'h-4 w-4' }: { value: number; size?: string }) {
   return (
@@ -49,7 +54,7 @@ function localDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export default function TeacherPublicPage() {
+export default function TeacherPublicPage({ initialProfile }: TeacherPublicPageProps) {
   const params = useParams<{ id: string }>();
   const id = params?.id ?? '';
   const router = useRouter();
@@ -74,7 +79,7 @@ export default function TeacherPublicPage() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
-  const { data, initialLoading, error, reload } = useApi(() => api.getTeacher(id), [id]);
+  const { data, initialLoading, error, reload } = useApi(() => api.getTeacher(id), [id], { initialData: initialProfile });
 
   const canRate = user?.role === 'STUDENT' || user?.role === 'PARENT';
   const isStudent = user?.role === 'STUDENT';
@@ -130,7 +135,9 @@ export default function TeacherPublicPage() {
     setSelectedSlot(null);
     setBookError('');
     setBookOpen(true);
-    loadSlots(todayStr);
+    // Slot loading is handled by the [bookOpen] effect below (single fetch per
+    // open) — calling loadSlots here too would double the available-slots
+    // round-trip on an interaction the user is already waiting on.
   };
 
   // Auto-open the existing booking modal when arriving with ?book=1.

@@ -19,6 +19,7 @@ import {
 } from '../controllers/rating.controller';
 import { authenticate, requireRole } from '../middleware/auth';
 import { requireSuperAdmin } from '../middleware/auth';
+import { publicDiscoveryRateLimiter } from '../middleware/rateLimiter';
 import { validate } from '../middleware/validate';
 import {
   centerIdParamSchema,
@@ -39,13 +40,13 @@ centerRoutes.post('/admin/:id/suspend', authenticate, requireSuperAdmin, validat
 centerRoutes.post('/admin/:id/reactivate', authenticate, requireSuperAdmin, validate(centerIdParamSchema, 'params'), reactivateCenterHandler);
 
 // Public: discover & register centers.
-centerRoutes.get('/search', validate(centerSearchSchema, 'query'), searchCenters);
-centerRoutes.get('/:id', validate(centerIdParamSchema, 'params'), getPublicCenter);
+centerRoutes.get('/search', publicDiscoveryRateLimiter, validate(centerSearchSchema, 'query'), searchCenters);
+centerRoutes.get('/:id', publicDiscoveryRateLimiter, validate(centerIdParamSchema, 'params'), getPublicCenter);
 // Teachers that belong to ONE specific center (public browsing).
-centerRoutes.get('/:id/teachers', validate(centerIdParamSchema, 'params'), getPublicCenterTeachers);
+centerRoutes.get('/:id/teachers', publicDiscoveryRateLimiter, validate(centerIdParamSchema, 'params'), getPublicCenterTeachers);
 
 // Center ratings: public aggregate + authenticated submit / own-rating lookup.
-centerRoutes.get('/:id/rating', validate(centerIdParamSchema, 'params'), centerRatingSummaryHandler);
+centerRoutes.get('/:id/rating', publicDiscoveryRateLimiter, validate(centerIdParamSchema, 'params'), centerRatingSummaryHandler);
 centerRoutes.get(
   '/:id/rating/me',
   authenticate,

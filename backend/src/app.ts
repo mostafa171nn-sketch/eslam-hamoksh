@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import compression from 'compression';
 import path from 'path';
 import { env } from './config/env';
 import { apiRateLimiter } from './middleware/rateLimiter';
@@ -57,7 +58,14 @@ import { prisma } from './lib/prisma';
 
 export const app = express();
 
-app.set('trust proxy', 1);
+// Client-IP inference. We do NOT trust proxies by default: rate limiting and
+// audit logging then key on the actual socket peer, which cannot be spoofed via
+// X-Forwarded-For. Production behind a reverse proxy/CDN must set
+// TRUST_PROXY_HOPS to the number of trusted hops in front of this process
+// (express-rate-limit v7 fails closed on an unexpected X-Forwarded-For header,
+// so an unset value surfaces a clear error instead of silently weakening the
+// limiter). 0 (no proxy) is the safe default everywhere else.
+app.set('trust proxy', env.TRUST_PROXY_HOPS);
 
 // Security headers. CSP is left to the frontend (API does not serve HTML).
 app.use(
@@ -112,8 +120,32 @@ app.use(cookieParser());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// Public static files for uploads (photos, homework, attachments).
-app.use('/uploads', express.static(path.resolve(process.cwd(), env.UPLOAD_DIR)));
+// Response compression (gzip/brotli/...). Skips already-compressed binary
+// media (images/video/audio/fonts) so CPU is not wasted re-compressing them.
+// Applied before the routes so every JSON payload benefits. The default
+// express-rate-limit/streaming behaviour is preserved (Vary: Accept-Encoding
+// is added by the middleware).
+app.use(
+  compression({
+    threshold: 1024,
+    filter: (req, res) => {
+      const type = res.getHeader('Content-Type');
+      if (typeof type === 'string' && /^\s*(image\/|video\/|audio\/|font\/)/i.test(type)) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+  }),
+);
+
+// Backstop rate limit for every API route. Public discovery gets its own
+// tighter budget via `publicDiscoveryRateLimiter` applied at the route level.
+app.use('/api', apiRateLimiter);
+
+// Public static files for uploads (photos, homework, attachments). 1h browser
+// cache: uploaded file URLs are content-addressed in practice and public, so a
+// short maxAge is safe and keeps repeat photo loads off the backend.
+app.use('/uploads', express.static(path.resolve(process.cwd(), env.UPLOAD_DIR), { maxAge: '1h' }));
 
 // Health check
 app.get('/api/health', async (_req, res) => {
