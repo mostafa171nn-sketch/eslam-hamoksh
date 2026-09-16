@@ -96,13 +96,12 @@ export const loginHandler = asyncHandler(async (req: Request, res: Response) => 
   };
   const result = await login(username || '', password);
   setAuthCookies(res, result.accessToken, result.refreshToken, result.refreshExpiresAt);
-  const user = await userRepository.findById(result.userId);
-  const profile = await getUserProfile(user!.id);
+  const profile = await getUserProfile(result.userId);
 
   // Surface center/subscription state so the frontend can enforce gating.
-  const center = user?.centerId
+  const center = result.centerId
     ? (await centerRepository.findMany({
-        where: { id: user.centerId },
+        where: { id: result.centerId },
         select: {
           id: true,
           name: true,
@@ -146,7 +145,7 @@ export const refreshHandler = asyncHandler(async (req: Request, res: Response) =
   const record = await userRepository.findRefreshTokenByHash(hashToken(refreshToken));
   if (!record) throw ApiError.unauthorized('Invalid session. Please log in again.');
 
-  const user = await userRepository.findById(record.userId);
+  const user = await userRepository.findSessionUser(record.userId);
   if (!user || user.status !== 'ACTIVE') {
     throw ApiError.unauthorized('Your account is not active.');
   }

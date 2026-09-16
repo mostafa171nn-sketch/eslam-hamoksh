@@ -1,0 +1,57 @@
+{
+  "success": true,
+  "message": "Profile loaded.",
+  "data": {
+    "id": "a44bbd83-bb9c-4d0f-ac37-f562af7068dc",
+    "username": "demo.student.1",
+    "fullName": "Omar Mohamed",
+    "phone": "+20 100 001 0001",
+    "photo": null,
+    "email": "omar.mohamed@demo.eg",
+    "role": "STUDENT",
+    "status": "ACTIVE",
+    "createdAt": "2026-08-29T10:48:22.954Z",
+    "student": {
+      "id": "67892f69-a033-498d-8901-a0eaa33ac1de",
+      "studentNumber": "STU-DEMO-001",
+      "grade": {
+        "id": "130036a8-34d7-450a-9954-e2ee8259275d",
+        "name": "Grade 1 Primary"
+      },
+      "subjects": [
+        {
+          "id": "d8954dec-e592-422a-8ac8-59d1848a82e3",
+          "name": "Mathematics",
+          "icon": null,
+          "description": null,
+          "createdAt": "2026-08-29T10:46:44.217Z"
+        },
+        {
+          "id": "ecba4a96-cec3-4cce-a63f-df03f80dbb11",
+          "name": "Arabic",
+          "icon": null,
+          "description": null,
+          "createdAt": "2026-08-29T10:46:52.363Z"
+        }
+      ],
+      "teachers": [
+        {
+          "id": "60c5fc7b-3da6-4c52-be44-3e28805465d7",
+          "fullName": "Ahmed Hassan",
+          "photo": null
+        },
+        {
+          "id": "f995546f-ccfc-4e10-876c-1ef8fc410ca8",
+          "fullName": "Khaled Ibrahim",
+          "photo": null
+        }
+      ],
+      "parents": [
+        {
+          "id": "6b990ba3-87ce-43ac-9e70-c477159f8327",
+          "fullName": "Mr. Mohamed Hassan"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "success": true,
+  "message": "Profile loaded.",
+  "data": {
+    "id": "9fb0a109-eb05-4475-92d7-b5bd9833d003",
+    "username": "demo.super.admin",
+    "fullName": "Demo Super Admin",
+    "phone": "+20 111 000 0000",
+    "photo": null,
+    "email": "demo.super.admin@demo.eg",
+    "role": "SUPER_ADMIN",
+    "status": "ACTIVE",
+    "createdAt": "2026-08-29T10:47:13.961Z",
+    "superAdmin": true
+  }
+}

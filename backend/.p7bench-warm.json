@@ -1,0 +1,229 @@
+{
+  "base": "http://localhost:4001",
+  "connections": 6,
+  "duration": 8,
+  "scenarios": {
+    "baseline": [
+      {
+        "label": "health",
+        "path": "/api/health",
+        "requests": 97,
+        "reqPerSec": 12.13,
+        "p50": 353.62,
+        "p90": 632.78,
+        "p95": 1054,
+        "p97_5": 3338.71,
+        "p99": 3361.58,
+        "p99_9": 3365.61,
+        "min": 174.2,
+        "max": 3366.05,
+        "ok": 97,
+        "non2xx": 0,
+        "errors": 0,
+        "classCodes": {
+          "2xx": 97,
+          "4xx": 0,
+          "5xx": 0
+        }
+      },
+      {
+        "label": "catalog:grades",
+        "path": "/api/catalog/grades",
+        "requests": 177,
+        "reqPerSec": 22.13,
+        "p50": 228.89,
+        "p90": 409.51,
+        "p95": 518.77,
+        "p97_5": 534.69,
+        "p99": 543.12,
+        "p99_9": 576.83,
+        "min": 186,
+        "max": 582.2,
+        "ok": 177,
+        "non2xx": 0,
+        "errors": 0,
+        "classCodes": {
+          "2xx": 177,
+          "4xx": 0,
+          "5xx": 0
+        }
+      },
+      {
+        "label": "catalog:locations",
+        "path": "/api/catalog/locations",
+        "requests": 197,
+        "reqPerSec": 24.63,
+        "p50": 213.09,
+        "p90": 434.66,
+        "p95": 449.9,
+        "p97_5": 459.73,
+        "p99": 480.64,
+        "p99_9": 518.29,
+        "min": 184.23,
+        "max": 519.32,
+        "ok": 197,
+        "non2xx": 0,
+        "errors": 0,
+        "classCodes": {
+          "2xx": 197,
+          "4xx": 0,
+          "5xx": 0
+        }
+      },
+      {
+        "label": "public:teachers-list",
+        "path": "/api/teachers?limit=12",
+        "requests": 14,
+        "reqPerSec": 1.75,
+        "p50": 4249.22,
+        "p90": 6811.72,
+        "p95": 7150.44,
+        "p97_5": 7155.81,
+        "p99": 7159.04,
+        "p99_9": 7160.97,
+        "min": 1714.2,
+        "max": 7161.19,
+        "ok": 14,
+        "non2xx": 0,
+        "errors": 0,
+        "classCodes": {
+          "2xx": 14,
+          "4xx": 0,
+          "5xx": 0
+        }
+      },
+      {
+        "label": "public:teacher-detail",
+        "path": "/api/teachers/1a53376e-ec1f-477c-9cb8-f36346f15860",
+        "requests": 12,
+        "reqPerSec": 1.5,
+        "p50": 4733.31,
+        "p90": 5880.4,
+        "p95": 6038.22,
+        "p97_5": 6120.07,
+        "p99": 6169.18,
+        "p99_9": 6198.64,
+        "min": 3024.68,
+        "max": 6201.92,
+        "ok": 12,
+        "non2xx": 0,
+        "errors": 0,
+        "classCodes": {
+          "2xx": 12,
+          "4xx": 0,
+          "5xx": 0
+        }
+      },
+      {
+        "label": "public:center-detail",
+        "path": "/api/centers/4ffcdfc8-9082-4185-99a4-3885591a674a",
+        "requests": 30,
+        "reqPerSec": 3.75,
+        "p50": 1774.9,
+        "p90": 2203.43,
+        "p95": 2384.36,
+        "p97_5": 2497.05,
+        "p99": 2535.87,
+        "p99_9": 2559.17,
+        "min": 980.57,
+        "max": 2561.76,
+        "ok": 30,
+        "non2xx": 0,
+        "errors": 0,
+        "classCodes": {
+          "2xx": 30,
+          "4xx": 0,
+          "5xx": 0
+        }
+      },
+      {
+        "label": "public:center-teachers",
+        "path": "/api/centers/4ffcdfc8-9082-4185-99a4-3885591a674a/teachers?limit=12",
+        "requests": 19,
+        "reqPerSec": 2.38,
+        "p50": 3082.6,
+        "p90": 4401.22,
+        "p95": 4409.15,
+        "p97_5": 4413.94,
+        "p99": 4416.81,
+        "p99_9": 4418.54,
+        "min": 1720.05,
+        "max": 4418.73,
+        "ok": 19,
+        "non2xx": 0,
+        "errors": 0,
+        "classCodes": {
+          "2xx": 19,
+          "4xx": 0,
+          "5xx": 0
+        }
+      },
+      {
+        "label": "public:teacher-search-name",
+        "path": "/api/teachers?name=Math&limit=12",
+        "requests": 152,
+        "reqPerSec": 19,
+        "p50": 249.08,
+        "p90": 443.2,
+        "p95": 538.06,
+        "p97_5": 1209.18,
+        "p99": 1558.93,
+        "p99_9": 1693.34,
+        "min": 199.41,
+        "max": 1695.39,
+        "ok": 152,
+        "non2xx": 0,
+        "errors": 0,
+        "classCodes": {
+          "2xx": 152,
+          "4xx": 0,
+          "5xx": 0
+        }
+      },
+      {
+        "label": "auth:me-student",
+        "path": "/api/auth/me",
+        "requests": 11,
+        "reqPerSec": 1.38,
+        "p50": 5866.44,
+        "p90": 7980.85,
+        "p95": 8187.51,
+        "p97_5": 8290.84,
+        "p99": 8352.84,
+        "p99_9": 8390.04,
+        "min": 4024.25,
+        "max": 8394.17,
+        "ok": 11,
+        "non2xx": 0,
+        "errors": 0,
+        "classCodes": {
+          "2xx": 11,
+          "4xx": 0,
+          "5xx": 0
+        }
+      },
+      {
+        "label": "student:dashboard",
+        "path": "/api/students/dashboard",
+        "requests": 15,
+        "reqPerSec": 1.88,
+        "p50": 3600.97,
+        "p90": 4943.38,
+        "p95": 5413.67,
+        "p97_5": 5821.31,
+        "p99": 6065.89,
+        "p99_9": 6212.65,
+        "min": 1895.59,
+        "max": 6228.95,
+        "ok": 15,
+        "non2xx": 0,
+        "errors": 0,
+        "classCodes": {
+          "2xx": 15,
+          "4xx": 0,
+          "5xx": 0
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "success": true,
+  "message": "Logged in successfully.",
+  "data": {
+    "role": "CENTER_ADMIN",
+    "user": {
+      "id": "cf26888a-6e56-40d5-ab6b-b3c80598d7a1",
+      "username": "demo.center.admin1",
+      "fullName": "Karim El-Sayed",
+      "phone": "+20 111 234 5678",
+      "photo": null,
+      "email": "k.el-sayed@nile-education.eg",
+      "role": "CENTER_ADMIN",
+      "status": "ACTIVE",
+      "createdAt": "2026-08-29T10:47:22.923Z",
+      "admin": {
+        "id": "cf26888a-6e56-40d5-ab6b-b3c80598d7a1"
+      }
+    },
+    "center": {
+      "id": "5e6cfd7f-f0a9-4c96-befb-bdfa56a28c8e",
+      "name": "Nile Education Center",
+      "slug": "nile-education-center",
+      "status": "ACTIVE",
+      "subscriptionStatus": "ACTIVE",
+      "requiresApproval": false
+    }
+  }
+}

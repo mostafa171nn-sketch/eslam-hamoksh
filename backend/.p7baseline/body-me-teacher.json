@@ -1,0 +1,81 @@
+{
+  "success": true,
+  "message": "Profile loaded.",
+  "data": {
+    "id": "ada3cbdb-47ab-4d63-b429-36880b9dea8e",
+    "username": "demo.teacher.1",
+    "fullName": "Ahmed Hassan",
+    "phone": "+20 111 111 1111",
+    "photo": null,
+    "email": "ahmed.hassan@nile-education.eg",
+    "role": "TEACHER",
+    "status": "ACTIVE",
+    "createdAt": "2026-08-29T10:47:30.722Z",
+    "teacher": {
+      "id": "60c5fc7b-3da6-4c52-be44-3e28805465d7",
+      "bio": "Mathematics specialist with 8 years of experience preparing students for secondary exams.",
+      "yearsExperience": 8,
+      "hourlyRate": 200,
+      "location": null,
+      "subjects": [
+        {
+          "id": "d8954dec-e592-422a-8ac8-59d1848a82e3",
+          "name": "Mathematics",
+          "icon": null,
+          "description": null,
+          "createdAt": "2026-08-29T10:46:44.217Z"
+        }
+      ],
+      "grades": [
+        {
+          "id": "130036a8-34d7-450a-9954-e2ee8259275d",
+          "name": "Grade 1 Primary",
+          "level": 1,
+          "createdAt": "2026-08-29T10:46:56.289Z"
+        },
+        {
+          "id": "7d0e8490-0aa6-43ab-b9b1-d95270a93df7",
+          "name": "Grade 2 Primary",
+          "level": 1,
+          "createdAt": "2026-08-29T10:46:58.185Z"
+        },
+        {
+          "id": "15489192-4d9c-4e42-bb05-f2a0d32cd16d",
+          "name": "Grade 3 Primary",
+          "level": 1,
+          "createdAt": "2026-08-29T10:46:59.538Z"
+        }
+      ],
+      "availability": [
+        {
+          "id": "7d531eb7-74f1-40a5-ac7e-98325f50547b",
+          "day": 0,
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "location": null
+        },
+        {
+          "id": "24ba0809-79a8-4c9f-9792-9e5f7e9d2d61",
+          "day": 0,
+          "startTime": "12:00",
+          "endTime": "13:00",
+          "location": null
+        },
+        {
+          "id": "03129d08-85c6-4846-b74f-d3ebb2d79828",
+          "day": 1,
+          "startTime": "14:00",
+          "endTime": "15:00",
+          "location": null
+        },
+        {
+          "id": "466adaed-ada5-4532-8fbf-e4a85c831439",
+          "day": 3,
+          "startTime": "16:00",
+          "endTime": "17:00",
+          "location": null
+        }
+      ]
+    }
+  }
+}

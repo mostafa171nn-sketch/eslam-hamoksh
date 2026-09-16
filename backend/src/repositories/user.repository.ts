@@ -6,6 +6,18 @@ export const userRepository = {
     return prisma.user.findUnique({ where: { id } });
   },
 
+  /**
+   * Session-scoped, column-pruned user lookup used by the auth handlers.
+   * Only the fields the session/identity path consumes are read; the password
+   * hash and other sensitive/managerial columns are never transferred.
+   */
+  findSessionUser(id: string) {
+    return prisma.user.findUnique({
+      where: { id },
+      select: { id: true, role: true, status: true, centerId: true },
+    });
+  },
+
   findByUsername(username: string) {
     return prisma.user.findUnique({ where: { username } });
   },

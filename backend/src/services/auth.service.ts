@@ -439,6 +439,7 @@ export async function registerCenter(input: RegisterCenterInput) {
 
 export interface LoginResult {
   userId: string;
+  centerId: string | null;
   accessToken: string;
   refreshToken: string;
   refreshExpiresAt: Date;
@@ -465,7 +466,7 @@ export async function login(username: string, password: string): Promise<LoginRe
 
   await recordActivity({ userId: user.id, role: user.role, action: 'logged_in', entity: 'User' });
 
-  return { userId: user.id, accessToken, refreshToken, refreshExpiresAt: expiresAt };
+  return { userId: user.id, centerId: user.centerId, accessToken, refreshToken, refreshExpiresAt: expiresAt };
 }
 
 export async function refreshSession(userId: string, role: string, oldRefreshToken: string) {

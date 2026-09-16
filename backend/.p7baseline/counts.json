@@ -1,0 +1,58 @@
+[
+  {
+    "endpoint": "login:superAdmin",
+    "status": 200,
+    "wallMs": 3366.5,
+    "stmts": 13,
+    "dbMs": 2980
+  },
+  {
+    "endpoint": "auth:me-superAdmin",
+    "status": 200,
+    "wallMs": 1449.6,
+    "stmts": 5,
+    "dbMs": 1400
+  },
+  {
+    "endpoint": "login:centerAdmin",
+    "status": 200,
+    "wallMs": 3254.9,
+    "stmts": 13,
+    "dbMs": 3038
+  },
+  {
+    "endpoint": "auth:me-centerAdmin",
+    "status": 200,
+    "wallMs": 1286.7,
+    "stmts": 5,
+    "dbMs": 1232
+  },
+  {
+    "endpoint": "login:teacher",
+    "status": 200,
+    "wallMs": 9667.9,
+    "stmts": 19,
+    "dbMs": 9203
+  },
+  {
+    "endpoint": "auth:me-teacher",
+    "status": 200,
+    "wallMs": 1984.4,
+    "stmts": 10,
+    "dbMs": 1880
+  },
+  {
+    "endpoint": "login:student",
+    "status": 200,
+    "wallMs": 6417.4,
+    "stmts": 22,
+    "dbMs": 6012
+  },
+  {
+    "endpoint": "auth:me-student",
+    "status": 200,
+    "wallMs": 2757.8,
+    "stmts": 14,
+    "dbMs": 2667
+  }
+]
