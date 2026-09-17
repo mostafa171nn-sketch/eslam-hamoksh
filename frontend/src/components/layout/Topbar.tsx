@@ -3,15 +3,24 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, Menu, User as UserIcon, BookOpen } from 'lucide-react';
+import { LogOut, User as UserIcon, BookOpen } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useT } from '../../i18n';
 import { Avatar } from '../ui/Avatar';
 import { NotificationsBell } from './NotificationsBell';
+import { SidebarTrigger } from './SidebarTrigger';
 import { ThemeToggle } from '../ThemeToggle';
 import { LangToggle } from '../LangToggle';
 
-export function Topbar({ onOpenSidebar, collapsed }: { onOpenSidebar: () => void; collapsed: boolean }) {
+export function Topbar({
+  onOpenSidebar,
+  collapsed,
+  onToggleCollapse,
+}: {
+  onOpenSidebar: () => void;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+}) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const { t, lang } = useT();
@@ -53,13 +62,12 @@ export function Topbar({ onOpenSidebar, collapsed }: { onOpenSidebar: () => void
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200/70 bg-white/80 px-4 backdrop-blur-xl dark:border-slate-800/70 dark:bg-slate-900/80 sm:px-6">
       <div className="flex min-w-0 items-center gap-2.5">
-        <button
-          onClick={onOpenSidebar}
-          className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 lg:hidden"
-          aria-label={t('openMenu')}
-        >
-          <Menu className="h-5 w-5" />
-        </button>
+        <SidebarTrigger
+          onOpen={onOpenSidebar}
+          collapsed={collapsed}
+          onToggleCollapse={onToggleCollapse}
+          className="text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+        />
         <span
           className={`hidden shrink-0 items-center gap-2 ${collapsed ? 'lg:flex' : 'lg:hidden'}`}
           aria-hidden

@@ -88,10 +88,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         mobileOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         collapsed={collapsed}
-        onToggleCollapse={toggleCollapse}
       />
       <div className={`relative transition-[padding-inline-start] duration-300 ease-out-expo ${collapsed ? 'lg:ps-20' : 'lg:ps-64'}`}>
-        <Topbar onOpenSidebar={() => setSidebarOpen(true)} collapsed={collapsed} />
+        <Topbar onOpenSidebar={() => setSidebarOpen(true)} collapsed={collapsed} onToggleCollapse={toggleCollapse} />
         <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:pb-8">
           <div className="pb-24 lg:pb-0">
             {showBack && (

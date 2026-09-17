@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Menu, Settings, User as UserIcon, LogOut, ChevronDown } from 'lucide-react';
+import { Settings, User as UserIcon, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useT } from '../../../i18n';
 import { useCenterBranch } from './CenterBranchContext';
 import { Avatar } from '../../../components/ui/Avatar';
 import { NotificationsBell } from '../../../components/layout/NotificationsBell';
+import { SidebarTrigger } from '../../../components/layout/SidebarTrigger';
 import { ThemeToggle } from '../../../components/ThemeToggle';
 import { LangToggle } from '../../../components/LangToggle';
 
@@ -61,13 +62,10 @@ export function CenterHeader({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   return (
     <header className="mj-header sticky top-0 z-30 flex h-[72px] items-center justify-between px-4 sm:px-8">
       <div className="flex min-w-0 items-center gap-3">
-        <button
-          onClick={onOpenSidebar}
-          className="-ms-1 rounded-lg p-2 text-[color:var(--mj-muted)] transition-colors hover:bg-[color:var(--mj-wash)] lg:hidden"
-          aria-label={t('openMenu')}
-        >
-          <Menu className="h-5 w-5" />
-        </button>
+        <SidebarTrigger
+          onOpen={onOpenSidebar}
+          className="text-[color:var(--mj-muted)] hover:bg-[color:var(--mj-wash)]"
+        />
         <div className="min-w-0">
           <p className="truncate text-[1.0625rem] font-bold leading-tight text-[color:var(--mj-ink-strong)]">
             {center?.name || t('centerDashboard')}
