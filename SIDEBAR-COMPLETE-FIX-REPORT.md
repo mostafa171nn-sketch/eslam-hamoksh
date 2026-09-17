@@ -68,3 +68,36 @@ All rows: `errs=0` (no `pageerror`, no console errors beyond expected 401 `/auth
 - `frontend/src/components/layout/SidebarTrigger.tsx` — **new** shared menu/collapse trigger (T4).
 - `frontend/src/layouts/DashboardLayout.tsx` — persists collapse; passes `onToggleCollapse` to `Topbar` only.
 - `frontend/src/views/center/dashboard/CenterHeader.tsx` — hamburger replaced with shared `SidebarTrigger`.
+
+---
+
+## 6. Delivery status
+
+| Item | Value |
+|---|---|
+| Branch | `master` (upstream `origin/master`) |
+| Commit | `54bebce` — `fix: improve responsive account sidebar behavior` |
+| Commit contents | the 5 files in §5 + this report (6 files, verified; `git show --stat` clean, no credentials/secrets, no debug scripts, no Phase 8-12 files) |
+| Push | `97da77c..54bebce` to `origin/master` — remote HEAD confirmed at `54bebce`; local in sync |
+| Vercel project | `maarej.` (team `mostafas-projects-eac0d0fe`, repo `mostafa171nn-sketch/eslam-hamoksh`) |
+| Vercel deployment | `dpl_DGmSNbi6X8XgHovfNq51dEN6NG9N` — commit `54bebce`, production target, state **READY**, no build/deploy errors |
+| Deployment URL | `https://maarej-dowl40rv1-mostafas-projects-eac0d0fe.vercel.app` |
+| Production URL | `https://maarej-kappa.vercel.app` (alias of the `54bebce` deployment) |
+
+### 6.1 Production verification (`https://maarej-kappa.vercel.app`, live deployment)
+Logged in as SUPER_ADMIN on the deployed site and exercised the sidebar end-to-end:
+
+| Check | Result |
+|---|---|
+| EN desktop 1440×900 LTR | PASS — sidebar on-screen 256px; 14 labeled links; sections OVERVIEW / MANAGEMENT / OPERATIONS / SETTINGS; collapse → icon-only (labels hidden) → expand trigger appears in Topbar → reopen works; state persists across reload (`maarech-sidebar`); no horizontal overflow |
+| AR desktop RTL | PASS — `dir=rtl`, sidebar anchored on the right (`start-0`, right edge = viewport right); Arabic sections `نظرة عامة / الإدارة / العمليات / الإعدادات`; collapse/reopen works in RTL with `طي القائمة الجانبية / توسيع القائمة الجانبية` toggles |
+| Mobile 375×812 (EN + AR) | PASS — hamburger (`Open menu` / `فتح القائمة`) opens full drawer with 22 labels + all 4 section titles; `Close menu` / `إغلاق القائمة` closes it back off-screen; no horizontal overflow |
+| Tablet 768×1024 (AR) | PASS — hamburger only, no desktop collapse toggle on-screen; no horizontal overflow |
+| Console / page errors | PASS — 0 errors, 0 warnings (only the expected boot 401 `/auth/me`, excluded) |
+| Rates/deploys | no checks listed for the deployment; deployment healthy |
+
+Notes: during automation the machine window was backgrounded, which freezes CSS width transitions; functional verification relied on computed classes/state (equals) plus measurements taken with the window foregrounded (expanded = 256px confirmed), so the reported `rectW` mid-transition values were discounted.
+
+### 6.2 Post-delivery workspace state
+- The working tree still contains **pre-existing, uncommitted Phase 8-12 work** (backend auth/index/logger changes, `frontend/middleware.ts`, `frontend/src/lib/api.ts`, `frontend/src/hooks/useApi.ts`, `frontend/src/i18n/index.tsx`, `frontend/src/lib/ssr.ts`, `frontend/app/*`, `next.config.mjs`, `tsconfig.json`, `.gitignore`, untracked `PHASE*-REPORT.md`, `frontend/app/{error,global-error}.tsx`, `backend/scripts/*`, `.mjs` debug scripts, `.png` screenshots, deployment `.yml` snapshots) — **intentionally not committed**. These belong to the separate Phase 8-12 delivery, not to this sidebar fix.
+- Final `git status`: module clean for this scope; nothing from the sidebar fix is left uncommitted or missing.
