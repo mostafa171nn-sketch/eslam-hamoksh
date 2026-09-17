@@ -1062,7 +1062,7 @@ body {
   display: flex;
   align-items: center;
   gap: 7px;
-  width: 172px;
+  width: 190px;
   padding: 5px;
   border: 1px solid #cfe0f2;
   border-radius: 14px;
@@ -1089,9 +1089,9 @@ body {
   grid-template-columns: 42px 1fr;
   grid-template-rows: auto auto;
   column-gap: 6px;
-  row-gap: 1px;
+  row-gap: 2px;
   align-items: center;
-  width: 108px;
+  width: 164px;
   padding: 4px;
   border: 1px solid #238dd7;
   border-radius: 17px;
@@ -1193,11 +1193,11 @@ body {
 }
 
 .ecms-entity-name--center {
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .ecms-entity-name--teacher {
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .ecms-entity-name-row {
@@ -1206,7 +1206,7 @@ body {
   gap: 1px;
   min-width: 0;
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 1;
 }
 
 .ecms-entity-name-row .ecms-entity-name {
@@ -1240,7 +1240,7 @@ body {
 
 .ecms-entity-rate--teacher {
   grid-column: 2;
-  grid-row: 1;
+  grid-row: 2;
   font-size: 10px;
 }
 
@@ -1416,73 +1416,6 @@ html {
 /* Prevent any flex/grid child from forcing overflow */
 .min-w-0 {
   min-width: 0;
-}
-
-/* ============================================================
-   Animated Hamburger Button — Mobile only
-   ============================================================ */
-.toggle {
-  position: relative;
-  width: 40px;
-  height: 40px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 10px;
-  transition-duration: .5s;
-  background: transparent;
-  border: none;
-  padding: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.bars {
-  width: 100%;
-  height: 4px;
-  background-color: rgb(92, 130, 255);
-  border-radius: 4px;
-  transform-origin: center center;
-}
-
-#bar2 {
-  transition-duration: .8s;
-}
-
-#bar1 {
-  width: 50%;
-}
-
-#bar2 {
-  width: 75%;
-}
-
-.toggle.open .bars {
-  position: absolute;
-  left: 0;
-}
-
-.toggle.open #bar2 {
-  transform: scaleX(0);
-  transition-duration: .1s;
-}
-
-.toggle.open #bar1 {
-  width: 100%;
-  transform: rotate(45deg);
-  transition-duration: .5s;
-}
-
-.toggle.open #bar3 {
-  width: 100%;
-  transform: rotate(-45deg);
-  transition-duration: .5s;
-}
-
-.toggle.open {
-  transition-duration: .5s;
-  transform: rotate(180deg);
 }
 
 /* ============================================================

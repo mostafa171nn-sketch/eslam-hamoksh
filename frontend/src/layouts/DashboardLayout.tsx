@@ -4,11 +4,13 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { Sidebar } from '../../src/components/layout/Sidebar';
+import { Sidebar, AccountNavContent } from '../../src/components/layout/Sidebar';
 import { Topbar } from '../../src/components/layout/Topbar';
 import { BottomNav } from '../../src/components/layout/BottomNav';
 import { PageBackButton } from '../../src/components/layout/PageBackButton';
 import { RouteTransition } from '../../src/components/RouteTransition';
+import { MobileNavPanel } from '../../src/components/layout/MobileNavPanel';
+import { useAuth } from '../../src/context/AuthContext';
 
 const SIDEBAR_STORAGE_KEY = 'maarech-sidebar';
 
@@ -60,7 +62,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   const pathname = usePathname();
+  const { user } = useAuth();
   const showBack = pathname ? !NO_BACK.has(pathname) : false;
+  const isStudent = user?.role === 'STUDENT';
 
   // The Center account dashboard uses its own scoped shell (right-side teal
   // sidebar + custom header). Only /center routes are affected; every other
@@ -85,10 +89,20 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     <div className="min-h-[100dvh] bg-slate-50 dark:bg-slate-900">
       <div aria-hidden className="pointer-events-none fixed inset-x-0 top-0 z-0 h-64 bg-gradient-to-b from-brand-100/40 via-transparent to-transparent dark:from-brand-950/20" />
       <Sidebar
-        mobileOpen={sidebarOpen}
+        mobileOpen={isStudent ? false : sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         collapsed={collapsed}
       />
+      {isStudent && (
+        <MobileNavPanel
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          tone="dark"
+          offsetClass="top-16"
+        >
+          <AccountNavContent collapsed={false} onNavigate={() => setSidebarOpen(false)} />
+        </MobileNavPanel>
+      )}
       <div className={`relative transition-[padding-inline-start] duration-300 ease-out-expo ${collapsed ? 'lg:ps-20' : 'lg:ps-64'}`}>
         <Topbar onOpenSidebar={() => setSidebarOpen(true)} collapsed={collapsed} onToggleCollapse={toggleCollapse} />
         <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:pb-8">

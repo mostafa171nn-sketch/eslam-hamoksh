@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpen, GraduationCap, Wrench } from 'lucide-react';
 import { ThemeToggle } from '../ThemeToggle';
 import { LangToggle } from '../LangToggle';
+import { SidebarTrigger } from './SidebarTrigger';
+import { MobileNavPanel } from './MobileNavPanel';
 import { useT } from '../../i18n';
 
 const NAV_LINKS = [
@@ -20,27 +22,8 @@ export function PublicNav() {
   const { t } = useT();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMobileOpen(false);
-      }
-    };
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMobileOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleEsc);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleEsc);
-    };
-  }, [mobileOpen]);
 
   const activeClass =
     'text-[#0878f8] dark:text-sky-300';
@@ -91,27 +74,13 @@ export function PublicNav() {
         <div className="flex items-center gap-1 lg:hidden">
           <LangToggle />
           <ThemeToggle />
-          <button
-            type="button"
-            className={`toggle ${mobileOpen ? 'open' : ''}`}
-            onClick={() => setMobileOpen((p) => !p)}
-            aria-label="Toggle navigation menu"
-            aria-expanded={mobileOpen}
-          >
-            <div id="bar1" className="bars" />
-            <div id="bar2" className="bars" />
-            <div id="bar3" className="bars" />
-          </button>
+          <SidebarTrigger onOpen={() => setMobileOpen(true)} />
         </div>
       </div>
 
-      {/* Mobile menu dropdown */}
-      {mobileOpen && (
-        <div
-          ref={menuRef}
-          className="animate-slide-in border-t border-slate-200/80 bg-white/95 backdrop-blur-xl lg:hidden dark:border-slate-800/80 dark:bg-slate-900/95"
-        >
-          <nav className="flex flex-col gap-1 px-4 py-3">
+      {/* Mobile menu top-drop panel */}
+      <MobileNavPanel open={mobileOpen} onClose={() => setMobileOpen(false)}>
+        <nav className="flex flex-col gap-1 px-4 py-3">
             {NAV_LINKS.map(({ href, key }) => (
               <Link
                 key={href}
@@ -181,8 +150,7 @@ export function PublicNav() {
               {t('studentPortal')}
             </Link>
           </nav>
-        </div>
-      )}
+      </MobileNavPanel>
     </header>
   );
 }

@@ -188,6 +188,40 @@ function NavLink({ item, collapsed, onNavigate }: { item: NavItem; collapsed: bo
   );
 }
 
+export function AccountNavContent({
+  collapsed,
+  onNavigate,
+}: {
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
+  const { user } = useAuth();
+  const { t } = useT();
+  if (!user) return null;
+  const groups = NAVS[user.role];
+
+  return (
+    <nav aria-label={t('mainNavigation')} className="relative mt-2 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-4">
+      {groups.map((group) => (
+        <div key={group.group} className="mb-1">
+          <div
+            aria-hidden
+            className={`mx-auto my-2 h-px w-8 rounded bg-white/10 ${collapsed ? 'hidden lg:block' : 'hidden'}`}
+          />
+          <p className={`px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 ${collapsed ? 'lg:hidden' : ''}`}>
+            {t(GROUP_LABEL[group.group])}
+          </p>
+          <div className="space-y-0.5">
+            {group.items.map((item) => (
+              <NavLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
 export function Sidebar({
   mobileOpen,
   onClose,
@@ -200,7 +234,6 @@ export function Sidebar({
   const { user, center } = useAuth();
   const { t, dir } = useT();
   if (!user) return null;
-  const groups = NAVS[user.role];
 
   const roleLabel =
     user.role === 'SUPER_ADMIN'
@@ -241,24 +274,7 @@ export function Sidebar({
         </div>
 
         {/* Navigation */}
-        <nav aria-label={t('mainNavigation')} className="relative mt-2 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-4">
-          {groups.map((group) => (
-            <div key={group.group} className="mb-1">
-              <div
-                aria-hidden
-                className={`mx-auto my-2 h-px w-8 rounded bg-white/10 ${collapsed ? 'hidden lg:block' : 'hidden'}`}
-              />
-              <p className={`px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 ${collapsed ? 'lg:hidden' : ''}`}>
-                {t(GROUP_LABEL[group.group])}
-              </p>
-              <div className="space-y-0.5">
-                {group.items.map((item) => (
-                  <NavLink key={item.to} item={item} collapsed={collapsed} onNavigate={onClose} />
-                ))}
-              </div>
-            </div>
-          ))}
-        </nav>
+        <AccountNavContent collapsed={collapsed} onNavigate={onClose} />
 
         {/* Footer */}
         <div className="relative shrink-0 border-t border-white/5 px-3 py-3">
