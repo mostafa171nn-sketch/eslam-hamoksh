@@ -233,7 +233,7 @@ export default function HomeView({ initialTeachers, initialCentersResult }: Home
   };
 
   return (
-    <div className="min-h-screen bg-[#f7fbff] dark:bg-slate-900">
+    <main className="min-h-screen bg-[#f7fbff] dark:bg-slate-900">
       <PublicNav />
 
       {/* Hero — marketplace reference */}
@@ -472,6 +472,6 @@ export default function HomeView({ initialTeachers, initialCentersResult }: Home
           </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }
