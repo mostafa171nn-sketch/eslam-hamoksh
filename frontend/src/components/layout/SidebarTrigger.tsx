@@ -8,19 +8,25 @@ export function SidebarTrigger({
   collapsed,
   onToggleCollapse,
   className = '',
+  expanded,
+  controlsId,
 }: {
   onOpen: () => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   className?: string;
+  expanded?: boolean;
+  controlsId?: string;
 }) {
   const { t, dir } = useT();
   return (
     <>
       <button
         onClick={onOpen}
-        className={`-ms-1 rounded-lg p-2 transition-colors lg:hidden ${className}`}
+        aria-expanded={expanded}
+        aria-controls={controlsId}
         aria-label={t('openMenu')}
+        className={`-ms-1 rounded-lg p-2 transition-colors lg:hidden ${className}`}
       >
         <Menu className="h-5 w-5" />
       </button>

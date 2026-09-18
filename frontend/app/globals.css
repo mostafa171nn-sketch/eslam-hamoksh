@@ -433,6 +433,53 @@
   animation: slide-in 0.15s ease-out;
 }
 
+/* ============================================================
+   Mobile top-drop navigation panel
+   ============================================================ */
+
+@keyframes nav-item-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobile-nav-panel {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: auto;
+  -webkit-mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+}
+
+.mobile-nav-panel .nav-item {
+  opacity: 0;
+  animation: nav-item-reveal 220ms ease-out both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+  transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.mobile-nav-panel .nav-item:hover {
+  background-color: rgba(8, 120, 248, 0.08);
+}
+
+.mobile-nav-panel .nav-item:active {
+  background-color: rgba(8, 120, 248, 0.16);
+  transition-duration: 50ms;
+}
+
+.mobile-nav-panel .nav-item:focus-visible {
+  outline: 2px solid #0878f8;
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+
 /* Ascent animation — upward reveal */
 @keyframes ascent-reveal {
   from {

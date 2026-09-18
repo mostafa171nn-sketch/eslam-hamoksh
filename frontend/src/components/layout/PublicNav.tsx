@@ -74,82 +74,90 @@ export function PublicNav() {
         <div className="flex items-center gap-1 lg:hidden">
           <LangToggle />
           <ThemeToggle />
-          <SidebarTrigger onOpen={() => setMobileOpen(true)} />
+          <SidebarTrigger onOpen={() => setMobileOpen(true)} expanded={mobileOpen} controlsId="mobile-nav-panel" />
         </div>
       </div>
 
       {/* Mobile menu top-drop panel */}
-      <MobileNavPanel open={mobileOpen} onClose={() => setMobileOpen(false)}>
-        <nav className="flex flex-col gap-1 px-4 py-3">
-            {NAV_LINKS.map(({ href, key }) => (
-              <Link
-                key={href}
-                href={href}
-                onClick={() => setMobileOpen(false)}
-                className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive(href) ? activeClass + ' bg-sky-50 dark:bg-slate-800' : idleClass}`}
-              >
-                {t(key)}
-              </Link>
-            ))}
+      <MobileNavPanel open={mobileOpen} onClose={() => setMobileOpen(false)} id="mobile-nav-panel">
+        <nav className="flex flex-col items-center gap-0.5 px-4 py-3">
+          {NAV_LINKS.map(({ href, key }, i) => (
             <Link
-              href="/packages"
+              key={href}
+              href={href}
               onClick={() => setMobileOpen(false)}
-              className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive('/packages') ? activeClass + ' bg-sky-50 dark:bg-slate-800' : idleClass}`}
+              className="nav-item w-full rounded-lg px-4 py-3 text-center text-sm font-medium transition-colors"
+              style={{ '--i': i } as React.CSSProperties}
             >
-              {t('packagesNav')}
+              {t(key)}
             </Link>
+          ))}
+          <Link
+            href="/packages"
+            onClick={() => setMobileOpen(false)}
+            className="nav-item w-full rounded-lg px-4 py-3 text-center text-sm font-medium transition-colors"
+            style={{ '--i': NAV_LINKS.length } as React.CSSProperties}
+          >
+            {t('packagesNav')}
+          </Link>
 
-            <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
-            <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              {t('createAccount')}
-            </p>
-            <Link
-              href="/register/student"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              {t('register')} — {t('student')}
-            </Link>
-            <Link
-              href="/register/teacher"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              {t('register')} — {t('teacher')}
-            </Link>
-            <Link
-              href="/register/parent"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              {t('register')} — {t('parent')}
-            </Link>
-            <Link
-              href="/centers/register"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              <Wrench className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-              {t('registerCenter')}
-            </Link>
+          <div className="my-2 border-t border-slate-100 dark:border-slate-800" />
+          <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            {t('createAccount')}
+          </p>
+          <Link
+            href="/register/student"
+            onClick={() => setMobileOpen(false)}
+            className="nav-item w-full rounded-lg px-4 py-3 text-center text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            style={{ '--i': NAV_LINKS.length + 1 } as React.CSSProperties}
+          >
+            {t('register')} — {t('student')}
+          </Link>
+          <Link
+            href="/register/teacher"
+            onClick={() => setMobileOpen(false)}
+            className="nav-item w-full rounded-lg px-4 py-3 text-center text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            style={{ '--i': NAV_LINKS.length + 2 } as React.CSSProperties}
+          >
+            {t('register')} — {t('teacher')}
+          </Link>
+          <Link
+            href="/register/parent"
+            onClick={() => setMobileOpen(false)}
+            className="nav-item w-full rounded-lg px-4 py-3 text-center text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            style={{ '--i': NAV_LINKS.length + 3 } as React.CSSProperties}
+          >
+            {t('register')} — {t('parent')}
+          </Link>
+          <Link
+            href="/centers/register"
+            onClick={() => setMobileOpen(false)}
+            className="nav-item flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-center text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            style={{ '--i': NAV_LINKS.length + 4 } as React.CSSProperties}
+          >
+            <Wrench className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+            {t('registerCenter')}
+          </Link>
 
-            <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
-            <Link
-              href="/login"
-              onClick={() => setMobileOpen(false)}
-              className="rounded-lg bg-gradient-to-br from-[#1499ff] to-[#0878f8] px-4 py-2.5 text-center text-sm font-bold text-white shadow-[0_6px_18px_rgba(8,120,248,0.35)]"
-            >
-              {t('login')}
-            </Link>
-            <Link
-              href="/student"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-            >
-              <GraduationCap className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-              {t('studentPortal')}
-            </Link>
-          </nav>
+          <div className="my-2 border-t border-slate-100 dark:border-slate-800" />
+          <Link
+            href="/login"
+            onClick={() => setMobileOpen(false)}
+            className="nav-item w-full rounded-lg bg-gradient-to-br from-[#1499ff] to-[#0878f8] px-4 py-3 text-center text-sm font-bold text-white shadow-[0_6px_18px_rgba(8,120,248,0.35)] transition-colors hover:shadow-[0_8px_24px_rgba(8,120,248,0.45)]"
+            style={{ '--i': NAV_LINKS.length + 5 } as React.CSSProperties}
+          >
+            {t('login')}
+          </Link>
+          <Link
+            href="/student"
+            onClick={() => setMobileOpen(false)}
+            className="nav-item flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-center text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            style={{ '--i': NAV_LINKS.length + 6 } as React.CSSProperties}
+          >
+            <GraduationCap className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+            {t('studentPortal')}
+          </Link>
+        </nav>
       </MobileNavPanel>
     </header>
   );

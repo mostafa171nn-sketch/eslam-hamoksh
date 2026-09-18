@@ -157,7 +157,7 @@ function isActive(pathname: string | null, item: NavItem): boolean {
   return item.end ? pathname === item.to : (pathname ?? '').startsWith(item.to);
 }
 
-function NavLink({ item, collapsed, onNavigate }: { item: NavItem; collapsed: boolean; onNavigate?: () => void }) {
+function NavLink({ item, collapsed, onNavigate, index }: { item: NavItem; collapsed: boolean; onNavigate?: () => void; index: number }) {
   const pathname = usePathname();
   const { t } = useT();
   const active = isActive(pathname, item);
@@ -171,9 +171,10 @@ function NavLink({ item, collapsed, onNavigate }: { item: NavItem; collapsed: bo
       onClick={onNavigate}
       title={collapsed ? label : undefined}
       aria-current={active ? 'page' : undefined}
-      className={`group relative flex items-center rounded-lg text-sm font-medium transition-all duration-150 px-3 py-2 gap-3 ${
+      className={`nav-item group relative flex items-center rounded-lg text-sm font-medium transition-all duration-150 px-3 py-2 gap-3 ${
         collapsed ? 'lg:justify-center lg:px-0 lg:py-2.5' : ''
       } ${active ? 'bg-white/10 text-white shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+      style={{ '--i': index } as React.CSSProperties}
     >
       {active && (
         <span aria-hidden className="absolute inset-y-1.5 start-0 w-0.5 rounded-full bg-brand-400" />
@@ -212,8 +213,8 @@ export function AccountNavContent({
             {t(GROUP_LABEL[group.group])}
           </p>
           <div className="space-y-0.5">
-            {group.items.map((item) => (
-              <NavLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
+            {group.items.map((item, i) => (
+              <NavLink key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} index={i} />
             ))}
           </div>
         </div>

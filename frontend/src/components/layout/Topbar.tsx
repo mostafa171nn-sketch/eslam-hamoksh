@@ -16,10 +16,12 @@ export function Topbar({
   onOpenSidebar,
   collapsed,
   onToggleCollapse,
+  sidebarOpen,
 }: {
   onOpenSidebar: () => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
+  sidebarOpen?: boolean;
 }) {
   const { user, logout } = useAuth();
   const router = useRouter();
@@ -66,6 +68,8 @@ export function Topbar({
           onOpen={onOpenSidebar}
           collapsed={collapsed}
           onToggleCollapse={onToggleCollapse}
+          expanded={sidebarOpen}
+          controlsId="account-sidebar"
           className="text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
         />
         <span
