@@ -47,8 +47,9 @@ export interface PublicApiResult<T> {
 const cachedGet = cache(
   async (url: string, revalidateSeconds: number): Promise<PublicApiResult<unknown>> => {
     const res = await fetch(url, {
-      cache: revalidateSeconds > 0 ? 'force-cache' : 'no-store',
-      ...(revalidateSeconds > 0 ? { next: { revalidate: revalidateSeconds } } : {}),
+      ...(revalidateSeconds > 0
+        ? { next: { revalidate: revalidateSeconds } }
+        : { cache: 'no-store' }),
     });
     if (!res.ok) {
       throw new PublicApiError(`API ${res.status} for ${url.split('?')[0].replace('/api', '')}`, res.status);
