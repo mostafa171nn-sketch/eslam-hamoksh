@@ -14,7 +14,7 @@ export interface LocationMapItem extends Omit<EntityMarkerData, 'id' | 'name' | 
   city?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  kind?: 'center' | 'teacher';
+  kind?: 'center' | 'teacher' | 'space';
 }
 
 interface LocationMapProps {

@@ -1,6 +1,8 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import StudentTeachersPage from '../../src/views/public/StudentTeachersPage';
 import { PublicNav } from '../../src/components/layout/PublicNav';
+import { PublicBottomNav } from '../../src/components/layout/PublicBottomNav';
 import { PencilLoader } from '../../src/components/ui/PencilLoader';
 import { publicApiGet } from '@/src/lib/ssr';
 import type { PublicTeacher } from '@/src/lib/types';
@@ -24,6 +26,12 @@ function dayFromDate(dateStr?: string): number | undefined {
 interface BrowseTeachersSearchParams {
   [key: string]: string | string[] | undefined;
 }
+
+export const metadata: Metadata = {
+  title: 'تصفح المعلمين | معارج',
+  description: 'تصفح معلمينا الموثوقين واحجز دروساً معهم.',
+  alternates: { canonical: '/teachers' },
+};
 
 export default async function BrowseTeachersRoute({ searchParams }: { searchParams?: BrowseTeachersSearchParams }) {
   const sp = searchParams ?? {};
@@ -51,7 +59,7 @@ export default async function BrowseTeachersRoute({ searchParams }: { searchPara
   return (
     <div className="min-h-screen bg-[#f7fbff] dark:bg-slate-900">
       <PublicNav />
-      <main className="mx-auto max-w-[1180px] px-4 py-6 sm:px-6 sm:py-8">
+      <main className="mx-auto max-w-[920px] px-4 py-6 sm:px-6 sm:py-8">
         <Suspense
           fallback={
             <div className="flex justify-center py-24">
@@ -70,6 +78,7 @@ export default async function BrowseTeachersRoute({ searchParams }: { searchPara
           />
         </Suspense>
       </main>
+      <PublicBottomNav />
     </div>
   );
 }

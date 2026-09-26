@@ -5,15 +5,18 @@ import { useRouter } from 'next/navigation';
 
 /**
  * Global route prefetching for the public navigation.
- * - After the browser is idle we warm the key public destinations.
  * - On pointer-over we prefetch any internal <a href> under the cursor
  *   (public nav, sidebar, footer, card links…).
  * Prefetch only downloads the route chunk/RSC payload – it never fires API
  * calls and never navigates, so it is invisible to the network-flow that pages
  * actually use. In development Next disables prefetch, making this a no-op.
+ *
+ * Idle warm-up of KEY_ROUTES was removed (C3): next/link already viewport-
+ * prefetches all visible nav links, making idle warm-up a redundant second
+ * RSC render of every public route on every page load (measured: 6 extra
+ * RSC fetches per page including /student and /parent which are not linked
+ * from public pages).
  */
-const KEY_ROUTES = ['/teachers', '/centers', '/search', '/student', '/parent', '/packages'] as const;
-
 export function RoutePrefetcher() {
   const router = useRouter();
 
@@ -26,16 +29,6 @@ export function RoutePrefetcher() {
       prefetched.add(href);
       router.prefetch(href);
     };
-
-    const scheduleIdle = (cb: () => void) => {
-      const w = window as Window & { requestIdleCallback?: (c: () => void, o?: { timeout: number }) => number };
-      if (w.requestIdleCallback) w.requestIdleCallback(cb, { timeout: 2000 });
-      else setTimeout(cb, 1200);
-    };
-
-    scheduleIdle(() => {
-      for (const route of KEY_ROUTES) prefetch(route);
-    });
 
     const onPointerOver = (e: PointerEvent) => {
       const anchor = (e.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;

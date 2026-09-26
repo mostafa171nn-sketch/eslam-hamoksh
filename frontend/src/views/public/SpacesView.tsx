@@ -7,48 +7,50 @@ import { Button } from '@/src/components/ui/Button';
 import { PencilLoader } from '@/src/components/ui/PencilLoader';
 import { Alert } from '@/src/components/ui/ErrorAlert';
 import { EmptyState } from '@/src/components/ui/EmptyState';
-import { CenterCardV637 } from '@/src/components/centers/CenterCardV637';
+import { SpaceCardV637 } from '@/src/components/spaces/SpaceCardV637';
 import { PublicBottomNav, FiltersIcon, MapIcon, ResultsIcon } from '@/src/components/layout/PublicBottomNav';
-import { api, type PublicCenter, type SearchCentersResult } from '@/src/lib/api';
+import { api, type PublicSpace, type SearchSpacesResult } from '@/src/lib/api';
 import { useApi } from '@/src/hooks/useApi';
 import { useT } from '@/src/i18n';
 
 /*
-  /centers — faithful rebuild of the reference `centers.html` (V6.37 market
-  search), adapted to the real `PublicCenter` data.
+  /spaces — faithful rebuild of the reference `spaces.html` (V6.37 co-space
+  "youth marketplace" search), adapted to the agreed future `PublicSpace`
+  contract.
 
   Reference → adaptation notes:
-    - Map hero (#centerMap) renders real center coordinates (Leaflet). Centers
-      without lat/lng simply don't appear on the map (honest).
-    - The "market kind switch" keeps two tiles; the active tile links to
-      /centers, the "المساحات/Co-space" tile links to /spaces.
-    - Only two of the seven quick-filter chips are backed by real data:
-      المحافظة (server `city` contains filter; options = distinct cities seen
-      in results) and التقييم (client-side `ratingAverage` ≥ 4/3/2).
-      المنطقة/السعة/السعر/التجهيزات/الميعاد are rendered disabled, exactly
-      like the reference's `opacity:.45` disabled chips.
-    - Sort: "الأقرب إليك" uses the real coordinates + the browser location when
-      granted (otherwise server order); "الأعلى تقييمًا" sorts by
-      ratingAverage/ratingCount. The two price sorts are rendered disabled (no
-      price data in the public contract).
-    - The reference shows all results at once; the API pages at 12, so a
-      "تحميل المزيد" button appends pages instead of a pager.
+    - The backend has NO public co-space endpoint yet, so `searchSpaces` is a
+      future contract and this page currently renders its honest loading →
+      error → empty state. It lights up automatically when `GET /spaces/search`
+      ships (no rebuild needed).
+    - Map hero (#spaceMap) renders real space coordinates via the shared Leaflet
+      map when they exist; otherwise its "no locations yet" message.
+    - Market kind switch (v15): the "المساحات/Co-space" tile is the active page;
+      the "السناتر/قاعات تعليمية" tile links to /centers.
+    - Only المحافظة (governorate) is backed by real data: its options come from
+      distinct governorates seen in the results. المنطقة/نوع المساحة/السعة/
+      السعر/التجهيزات/الميعاد are rendered disabled like the reference's
+      `opacity:.45` chips — they auto-enable when that field exists on results.
+    - Sort "الأقرب إليك" uses real coordinates (browser location when granted),
+      "الأعلى تقييمًا" sorts by rating. The two price sorts are disabled until
+      a price exists in the contract.
+    - Results are paged server-side at 12; "تحميل المزيد" appends pages.
 */
 
-const CENTERS_BOTTOM_NAV = [
-  { id: 'filters', targetId: 'centerFilters', labelKey: 'centersFiltersNav', icon: <FiltersIcon /> },
-  { id: 'map', targetId: 'centerMap', labelKey: 'centersMapNav', icon: <MapIcon /> },
-  { id: 'results', targetId: 'centerResultsHead', labelKey: 'centersResultsNav', icon: <ResultsIcon /> },
+const SPACES_BOTTOM_NAV = [
+  { id: 'filters', targetId: 'spaceFilters', labelKey: 'spacesFiltersNav', icon: <FiltersIcon /> },
+  { id: 'map', targetId: 'spaceMap', labelKey: 'spacesMapNav', icon: <MapIcon /> },
+  { id: 'results', targetId: 'spaceResultsHead', labelKey: 'spacesResultsNav', icon: <ResultsIcon /> },
 ] as const;
 
 const EGYPT_DEFAULT = { lat: 30.0444, lng: 31.2357, zoom: 9 };
 
-const CenterMap = dynamic(() => import('@/src/components/centers/CenterMap'), {
+const SpaceMap = dynamic(() => import('@/src/components/spaces/SpaceMap'), {
   ssr: false,
-  loading: CenterMapLoader,
+  loading: SpaceMapLoader,
 });
 
-function CenterMapLoader() {
+function SpaceMapLoader() {
   const { t } = useT();
   return (
     <div className="flex h-full w-full items-center justify-center bg-[#eef2ec] text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-400">
@@ -88,10 +90,6 @@ const ICON_USERS = (
     <path d="M16 4.6c1.7.5 3 2 3 3.4s-1.3 2.9-3 3.4" />
     <path d="M18.2 14.2c1.6.9 2.6 2.6 2.9 5.3" />
   </>
-);
-
-const ICON_STAR = (
-  <path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z" />
 );
 
 const ICON_CALENDAR = (
@@ -143,7 +141,7 @@ const ICON_BRIEFCASE = (
   </>
 );
 
-type CenterFilterId = 'governorate' | 'area' | 'seats' | 'price' | 'equipment' | 'availability' | 'rating';
+type SpaceFilterId = 'governorate' | 'area' | 'category' | 'capacity' | 'price' | 'equipment' | 'availability';
 type SortId = 'near' | 'rating' | 'priceAsc' | 'priceDesc';
 
 function haversineKm(latA: number, lngA: number, latB: number, lngB: number): number {
@@ -156,34 +154,35 @@ function haversineKm(latA: number, lngA: number, latB: number, lngB: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export interface CentersViewProps {
+export interface SpacesViewProps {
   /** Server-rendered results for the default (no filter, page 1) query. */
-  initialResult?: SearchCentersResult | null;
+  initialResult?: SearchSpacesResult | null;
 }
 
-function citiesFrom(items: readonly PublicCenter[]): string[] {
+function governoratesFrom(items: readonly PublicSpace[]): string[] {
   const seen = new Set<string>();
-  for (const c of items) {
-    if (c.city) seen.add(c.city);
+  for (const s of items) {
+    if (s.governorate) seen.add(s.governorate as string);
   }
   return [...seen].sort((a, b) => a.localeCompare(b, 'ar'));
 }
 
-export default function CentersView({ initialResult }: CentersViewProps) {
+export default function SpacesView({ initialResult }: SpacesViewProps) {
   const { t } = useT();
 
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
-  const [city, setCity] = useState('');
-  const [minRating, setMinRating] = useState('');
+  const [governorate, setGovernorate] = useState('');
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortId>('near');
-  const [openFilter, setOpenFilter] = useState<CenterFilterId | null>(null);
+  const [openFilter, setOpenFilter] = useState<SpaceFilterId | null>(null);
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
 
-  const [cityOptions, setCityOptions] = useState<string[]>(() => citiesFrom(initialResult?.items ?? []));
+  const [governorateOptions, setGovernorateOptions] = useState<string[]>(() =>
+    governoratesFrom(initialResult?.items ?? []),
+  );
 
-  /* Debounce the search input (300 ms, like the reference's `#cq` keyup). */
+  /* Debounce the search input (300 ms, like the reference's `#sq` keyup). */
   useEffect(() => {
     const id = window.setTimeout(() => setDebouncedQ(q), 300);
     return () => window.clearTimeout(id);
@@ -199,17 +198,17 @@ export default function CentersView({ initialResult }: CentersViewProps) {
     );
   }, []);
 
-  const { data, loading, initialLoading, error } = useApi<SearchCentersResult>(
+  const { data, loading, initialLoading, error } = useApi<SearchSpacesResult>(
     () =>
-      api.searchCenters({
+      api.searchSpaces({
         q: debouncedQ || undefined,
-        city: city || undefined,
+        governorate: governorate || undefined,
         page,
         limit: 12,
       }),
-    [debouncedQ, city, page],
+    [debouncedQ, governorate, page],
     {
-      cacheKey: `centers:search:${debouncedQ}:${city}:${page}`,
+      cacheKey: `spaces:search:${debouncedQ}:${governorate}:${page}`,
       staleTTL: 30_000,
       cacheTTL: 120_000,
       initialData: page === 1 ? (initialResult ?? undefined) : undefined,
@@ -226,7 +225,7 @@ export default function CentersView({ initialResult }: CentersViewProps) {
   );
 
   /* Accumulate loaded pages so "تحميل المزيد" appends instead of replacing. */
-  const [allItems, setAllItems] = useState<PublicCenter[]>(() => initialResult?.items ?? []);
+  const [allItems, setAllItems] = useState<PublicSpace[]>(() => initialResult?.items ?? []);
   useEffect(() => {
     if (!data) return;
     setAllItems((prev) => {
@@ -240,11 +239,11 @@ export default function CentersView({ initialResult }: CentersViewProps) {
     });
   }, [data, page]);
 
-  /* Trace the distinct cities we've seen (survives the active city filter). */
+  /* Trace the distinct governorates we've seen (survives the active filter). */
   useEffect(() => {
     if (!data) return;
-    setCityOptions((prev) => {
-      const merged = [...new Set([...prev, ...citiesFrom(data.items)])];
+    setGovernorateOptions((prev) => {
+      const merged = [...new Set([...prev, ...governoratesFrom(data.items)])];
       return merged.sort((a, b) => a.localeCompare(b, 'ar'));
     });
   }, [data]);
@@ -252,156 +251,150 @@ export default function CentersView({ initialResult }: CentersViewProps) {
   /* The reference keeps the default sort while filters/search change. */
   useEffect(() => {
     setSort('near');
-  }, [q, city, minRating]);
+  }, [q, governorate]);
 
   const displayed = useMemo(() => {
     let list = allItems;
-    if (minRating) {
-      const floor = Number(minRating);
-      list = list.filter((c) => (c.ratingAverage ?? 0) >= floor);
-    }
     if (sort === 'rating') {
-      list = [...list].sort((a, b) => (b.ratingAverage ?? 0) - (a.ratingAverage ?? 0) || (b.ratingCount ?? 0) - (a.ratingCount ?? 0));
+      list = [...list].sort(
+        (a, b) => (b.ratingAverage ?? 0) - (a.ratingAverage ?? 0) || (b.ratingCount ?? 0) - (a.ratingCount ?? 0),
+      );
     } else if (sort === 'near' && userPos) {
       const pos = userPos;
       list = [...list].sort((a, b) => {
-        const da = a.latitude != null && a.longitude != null ? haversineKm(pos.lat, pos.lng, a.latitude, a.longitude) : Infinity;
-        const db = b.latitude != null && b.longitude != null ? haversineKm(pos.lat, pos.lng, b.latitude, b.longitude) : Infinity;
+        const da =
+          a.latitude != null && a.longitude != null
+            ? haversineKm(pos.lat, pos.lng, a.latitude, a.longitude)
+            : Infinity;
+        const db =
+          b.latitude != null && b.longitude != null
+            ? haversineKm(pos.lat, pos.lng, b.latitude, b.longitude)
+            : Infinity;
         return da - db;
       });
     }
     return list;
-  }, [allItems, minRating, sort, userPos]);
+  }, [allItems, sort, userPos]);
 
-  const total = minRating ? displayed.length : data?.total ?? allItems.length;
+  const total = data?.total ?? allItems.length;
   const totalPages = data?.totalPages ?? Math.max(1, Math.ceil((initialResult?.total ?? 0) / 12));
   const hasMore = page < totalPages;
 
-  const withCoords = useMemo(() => allItems.filter((c) => c.latitude != null && c.longitude != null), [allItems]);
+  const withCoords = useMemo(
+    () => allItems.filter((c) => c.latitude != null && c.longitude != null),
+    [allItems],
+  );
 
-  const hasFilters = Boolean(q) || Boolean(city) || Boolean(minRating);
+  const hasFilters = Boolean(q) || Boolean(governorate);
 
   const clearFilters = () => {
     setQ('');
     setDebouncedQ('');
-    setCity('');
-    setMinRating('');
+    setGovernorate('');
     setSort('near');
     setPage(1);
     setOpenFilter(null);
   };
 
-  const changeFilter = (id: CenterFilterId, value: string) => {
-    if (id === 'governorate') setCity(value);
-    else if (id === 'rating') setMinRating(value);
+  const changeFilter = (id: SpaceFilterId, value: string) => {
+    if (id === 'governorate') setGovernorate(value);
     setPage(1);
     setOpenFilter(null);
   };
 
-  const RATING_OPTIONS = [
-    { value: '', label: t('chipRatingAny') },
-    { value: '4', label: `4 ★ ${t('andAbove')}` },
-    { value: '3', label: `3 ★ ${t('andAbove')}` },
-    { value: '2', label: `2 ★ ${t('andAbove')}` },
-  ];
-
-  const labels: Record<CenterFilterId, { value: string; label: string; icon: ReactNode }> = {
-    governorate: { value: city, label: city ? t('chipGovernorate') + ': ' + city : t('chipGovernorate'), icon: <UiIcon>{ICON_PIN}</UiIcon> },
+  const labels: Record<SpaceFilterId, { value: string; label: string; icon: ReactNode }> = {
+    governorate: {
+      value: governorate,
+      label: governorate ? t('chipGovernorate') + ': ' + governorate : t('chipGovernorate'),
+      icon: <UiIcon>{ICON_PIN}</UiIcon>,
+    },
     area: { value: '', label: t('chipArea'), icon: <UiIcon>{ICON_PIN}</UiIcon> },
-    seats: { value: '', label: t('chipSeats'), icon: <UiIcon>{ICON_USERS}</UiIcon> },
+    category: { value: '', label: t('chipCategory'), icon: <UiIcon>{ICON_BRIEFCASE}</UiIcon> },
+    capacity: { value: '', label: t('chipCapacity'), icon: <UiIcon>{ICON_USERS}</UiIcon> },
     price: { value: '', label: t('chipPrice'), icon: <UiIcon>{ICON_SPARKLE}</UiIcon> },
     equipment: { value: '', label: t('chipEquipment'), icon: <UiIcon>{ICON_CHECK}</UiIcon> },
     availability: { value: '', label: t('chipAvailability'), icon: <UiIcon>{ICON_CALENDAR}</UiIcon> },
-    rating: { value: minRating, label: minRating ? `${minRating} ★ ${t('andAbove')}` : t('chipRating'), icon: <UiIcon>{ICON_STAR}</UiIcon> },
   };
 
-  const enabled: Partial<Record<CenterFilterId, true>> = { governorate: true, rating: true };
-  const chipIds: CenterFilterId[] = ['governorate', 'area', 'seats', 'price', 'equipment', 'availability', 'rating'];
+  const enabled: Partial<Record<SpaceFilterId, true>> = { governorate: true };
+  const chipIds: SpaceFilterId[] = ['governorate', 'area', 'category', 'capacity', 'price', 'equipment', 'availability'];
 
-  const openPanelTitle = openFilter === 'governorate' ? t('chipGovernorate') : openFilter === 'rating' ? t('chipRating') : '';
+  const openPanelTitle = openFilter === 'governorate' ? t('chipGovernorate') : '';
   const openOptions =
     openFilter === 'governorate'
-      ? [{ value: '', label: t('chipGovernorateAll') }, ...cityOptions.map((c) => ({ value: c, label: c }))]
-      : openFilter === 'rating'
-        ? RATING_OPTIONS
-        : [];
+      ? [{ value: '', label: t('chipGovernorateAll') }, ...governorateOptions.map((g) => ({ value: g, label: g }))]
+      : [];
   const currentValue = openFilter ? labels[openFilter].value : '';
 
   return (
     <div className="min-h-screen bg-[#f7fbff] dark:bg-slate-900">
-      {/* ── Map hero (#centerMap) — full-bleed, real coordinates (Leaflet) ── */}
-      <section id="centerMap" aria-label={t('centersMapRegion')} className="sm:px-[22px] sm:pt-[14px]">
+      {/* ── Map hero (#spaceMap) — full-bleed, honest empty Leaflet state ── */}
+      <section id="spaceMap" aria-label={t('spacesMapRegion')} className="sm:px-[22px] sm:pt-[14px]">
         <div
           role="region"
-          aria-label={t('centersMapRegion')}
-          className="relative h-[300px] w-full overflow-hidden border-y border-[#dbe9f7] bg-[#eef2ec] sm:h-[390px] sm:rounded-[24px] sm:border dark:border-slate-600 max-[600px]:h-[290px]"
+          aria-label={t('spacesMapRegion')}
+          className="relative h-[300px] w-full overflow-hidden border-y border-[#dbe9f7] bg-[#eef2ec] sm:h-[390px] sm:max-h-none sm:rounded-[24px] sm:border dark:border-slate-600 max-[600px]:h-[290px]"
         >
-          <CenterMap
-            centers={withCoords}
-            focusCenterId={null}
-            onFocusCenter={() => {}}
+          <SpaceMap
+            spaces={withCoords}
+            focusSpaceId={null}
+            onFocusSpace={() => {}}
             defaultPos={EGYPT_DEFAULT}
           />
         </div>
       </section>
 
       {/* ── Market kind switch (reference `nav.market-kind-switch-v15`) ── */}
-      <nav
-        aria-label={t('centersCategoryLabel')}
-        className="mx-auto mb-1.5 mt-3 w-[min(680px,calc(100%-24px))]"
-      >
-        <div className="grid grid-cols-2 gap-2.5">
-          {/* Active tile → /centers (this page) */}
+      <nav aria-label={t('spacesCategoryLabel')} className="mx-auto mb-1.5 mt-3 w-[min(680px,calc(100%-24px))]">
+        <div className="relative grid grid-cols-2 items-stretch gap-[7px] overflow-hidden rounded-[24px] border border-[#d9e8f4] bg-[linear-gradient(135deg,#f4f9ff_0%,#eef7ff_50%,#f6fbff_100%)] p-[6px] shadow-[0_10px_28px_rgba(18,65,104,0.09)] dark:border-slate-600 dark:bg-slate-800/80">
+          {/* Active tile → /spaces (this page) */}
           <a
-            href="/centers"
+            href="/spaces"
             aria-current="page"
-            className="relative flex min-h-[68px] items-center gap-3 rounded-[22px] border border-transparent bg-[linear-gradient(135deg,#0b5ee0,#7a4be4)] px-5 text-white shadow-[0_14px_30px_rgba(38,92,229,0.32)]"
+            className="relative grid h-[60px] grid-cols-[40px_minmax(0,1fr)_24px] items-center gap-[9px] rounded-[18px] border border-transparent bg-[linear-gradient(135deg,#078af2_0%,#146ee7_55%,#6259e8_125%)] px-[10px] text-white shadow-[0_12px_28px_rgba(8,119,228,0.26)] after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:bg-[linear-gradient(115deg,transparent_20%,rgba(255,255,255,0.18)_42%,transparent_62%)]"
           >
-            <span className="grid h-9 w-9 shrink-0 place-items-center">
-              <UiIcon className="h-8 w-8 text-white/95">{ICON_BUILDING}</UiIcon>
+            <span className="grid h-10 w-10 place-items-center rounded-[13px] bg-white/18 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.22)]">
+              <UiIcon className="h-[22px] w-[22px]">{ICON_BRIEFCASE}</UiIcon>
             </span>
-            <span className="flex flex-col">
-              <b className="text-[17px] font-extrabold leading-tight">{t('centersKindCenters')}</b>
-              <small className="text-[9.5px] font-medium text-white/75">{t('centersKindCentersSub')}</small>
+            <span className="flex min-w-0 flex-col items-start text-[14px] font-extrabold leading-[1.2]">
+              {t('centersKindSpaces')}
+              <small className="mt-[3px] text-[8.5px] font-bold text-white/75">{t('centersKindSpacesSub')}</small>
             </span>
-            <span
-              aria-hidden
-              className="grid h-5 w-5 place-items-center rounded-full bg-white text-[11px] font-black text-[#4a44d8]"
-            >
-              ✓
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-[12px] font-black text-[#0a78e7]">
+              ←
             </span>
           </a>
 
-          {/* Non-active tile → /spaces */}
+          {/* Non-active tile → /centers */}
           <a
-            href="/spaces"
-            className="relative flex min-h-[68px] items-center gap-3 rounded-[22px] border-[0.8px] border-[#d7e1ef] bg-white px-5 text-[#5a6b86] opacity-90 transition-opacity hover:opacity-100"
+            href="/centers"
+            className="grid h-[60px] grid-cols-[40px_minmax(0,1fr)_24px] items-center gap-[9px] rounded-[18px] border border-[rgba(216,231,243,0.92)] bg-white/84 px-[10px] text-[#567087] shadow-[0_5px_16px_rgba(15,67,110,0.05)] transition-transform duration-150 hover:-translate-y-0.5 dark:border-slate-600 dark:bg-slate-900/50"
           >
-            <span className="grid h-9 w-9 shrink-0 place-items-center">
-              <UiIcon className="h-8 w-8 text-[#9aa7c0]">{ICON_BRIEFCASE}</UiIcon>
+            <span className="grid h-10 w-10 place-items-center rounded-[13px] bg-[#edf7ff] text-[#087bd8] shadow-[inset_0_0_0_1px_#d8ebfa]">
+              <UiIcon className="h-[22px] w-[22px]">{ICON_BUILDING}</UiIcon>
             </span>
-            <span className="flex flex-col">
-              <b className="text-[17px] font-extrabold leading-tight text-[#44556f]">{t('centersKindSpaces')}</b>
-              <small className="text-[9.5px] font-medium text-[#9aa7c0]">{t('centersKindSpacesSub')}</small>
+            <span className="flex min-w-0 flex-col items-start text-[14px] font-extrabold leading-[1.2]">
+              {t('centersKindCenters')}
+              <small className="mt-[3px] text-[8.5px] font-bold text-[#567087]/75">{t('centersKindCentersSub')}</small>
             </span>
-            <span className="ms-auto grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#edf6fd] text-[11px] font-black text-[#1878c7]">
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-[#edf6fd] text-[12px] font-black text-[#1878c7]">
               ←
             </span>
           </a>
         </div>
       </nav>
 
-      {/* ── Location status (reference #cAreaHint) ── */}
-      {!city && (
+      {/* ── Location status (reference #spaceLocationState) ── */}
+      {!governorate && (
         <p className="mx-auto mb-0 mt-1 w-full max-w-[1180px] px-[22px] text-center text-[11px] font-semibold text-[#8a96b3]">
-          {t('centersLocationStatus')}
+          {t('spacesLocationStatus')}
         </p>
       )}
 
-      {/* ── Search + filter chips (#centerFilters, max-width 1180) ── */}
+      {/* ── Search + filter chips (#spaceFilters, max-width 1180) ── */}
       <section
-        id="centerFilters"
-        aria-label={t('centersSearchControls')}
+        id="spaceFilters"
+        aria-label={t('spacesSearchControls')}
         className="mx-auto w-full max-w-[1180px] px-[22px] py-4"
       >
         <div className="relative">
@@ -410,20 +403,20 @@ export default function CentersView({ initialResult }: CentersViewProps) {
             aria-hidden
           />
           <input
-            id="centerSearch"
+            id="spaceSearch"
             value={q}
             onChange={(e) => {
               setQ(e.target.value);
               setPage(1);
             }}
-            placeholder={t('centersSearchPlaceholder')}
-            aria-label={t('centersSearchPlaceholder')}
-            className="h-[52px] w-full rounded-[16px] border border-[#dbe9f7] bg-white ps-11 pe-11 text-[14px] font-medium text-[#0b1b61] placeholder:text-[#9aa8c4] transition-colors focus:border-[#0878f8] focus:outline-none dark:border-slate-600 dark:bg-slate-900/60 dark:text-white dark:placeholder:text-slate-500"
+            placeholder={t('spacesSearchPlaceholder')}
+            aria-label={t('spacesSearchPlaceholder')}
+            className="h-[50px] w-full rounded-[17px] border border-[#dbe7f1] bg-white ps-11 pe-11 text-[14px] font-medium text-[#0b1b61] placeholder:text-[#9aa8c4] transition-colors focus:border-[#0e9c80] focus:outline-none dark:border-slate-600 dark:bg-slate-900/60 dark:text-white dark:placeholder:text-slate-500"
           />
           {q && (
             <button
               type="button"
-              aria-label={t('centersSearchClear')}
+              aria-label={t('spacesSearchClear')}
               onClick={() => {
                 setQ('');
                 setPage(1);
@@ -437,7 +430,7 @@ export default function CentersView({ initialResult }: CentersViewProps) {
 
         {/* Quick-filter chips row (reference `.market-quick-filters`) */}
         <div className="relative mt-3">
-          <div id="centerFilterRow" className="flex flex-wrap items-center gap-2">
+          <div id="spaceFilterRow" className="flex flex-wrap items-center gap-2">
             {chipIds.map((id) => {
               const isEnabled = !!enabled[id];
               const isActive = labels[id].value !== '';
@@ -453,7 +446,7 @@ export default function CentersView({ initialResult }: CentersViewProps) {
                   className={`inline-flex h-11 max-w-full items-center gap-1.5 rounded-[14px] border-[0.8px] px-3 text-[12px] font-semibold transition-colors ${
                     isEnabled
                       ? isActive
-                        ? 'border-[#0878f8] bg-[#e8f4ff] text-[#0878f8] dark:border-sky-400 dark:bg-sky-500/15 dark:text-sky-300'
+                        ? 'border-[#0e9c80] bg-[#e7f8f2] text-[#0e9c80] dark:border-emerald-400 dark:bg-emerald-500/15 dark:text-emerald-300'
                         : 'border-[#d6e4f4] bg-[#f7fbff] text-[#4d6281] hover:border-[#bcd6ef] hover:text-[#0b1b61] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300'
                       : 'border-[#d6e4f4] bg-[#f7fbff] text-[#4d6281] opacity-45 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300'
                   } ${isEnabled ? 'cursor-pointer' : 'cursor-not-allowed'}`}
@@ -467,7 +460,7 @@ export default function CentersView({ initialResult }: CentersViewProps) {
 
             <button
               type="button"
-              id="centerReset"
+              id="spaceReset"
               disabled={!hasFilters}
               onClick={clearFilters}
               className="inline-flex h-11 cursor-pointer items-center gap-1.5 rounded-[14px] border-[0.8px] border-[#d6e4f4] px-3 text-[12px] font-semibold text-[#4d6281] transition-colors hover:border-[#bcd6ef] hover:text-[#0b1b61] disabled:cursor-not-allowed disabled:opacity-45 dark:border-slate-600 dark:text-slate-300"
@@ -486,7 +479,7 @@ export default function CentersView({ initialResult }: CentersViewProps) {
                 className="fixed inset-0 z-20 cursor-default"
               />
               <div
-                id="centerFilterSheet"
+                id="spaceFilterSheet"
                 role="listbox"
                 aria-label={openPanelTitle}
                 className="absolute start-0 top-full z-30 mt-2 w-full max-w-[520px] rounded-[18px] border-[0.8px] border-[#dfe9f4] bg-white p-3 shadow-[0_16px_40px_rgba(20,73,137,0.16)] dark:border-slate-600 dark:bg-slate-800"
@@ -501,7 +494,7 @@ export default function CentersView({ initialResult }: CentersViewProps) {
                           changeFilter(openFilter, '');
                           setOpenFilter(null);
                         }}
-                        className="text-[12px] font-bold text-[#0878f8] hover:underline dark:text-sky-300"
+                        className="text-[12px] font-bold text-[#0e9c80] hover:underline dark:text-emerald-300"
                       >
                         {t('clear')}
                       </button>
@@ -516,53 +509,61 @@ export default function CentersView({ initialResult }: CentersViewProps) {
                     </button>
                   </div>
                 </div>
-                <div className="grid max-h-[260px] grid-cols-2 gap-1.5 overflow-y-auto">
-                  {openOptions.map((o) => {
-                    const selected = o.value === currentValue;
-                    return (
-                      <button
-                        key={`${openFilter}:${o.value}`}
-                        type="button"
-                        aria-pressed={selected}
-                        onClick={() => changeFilter(openFilter, o.value)}
-                        className={`flex min-h-[42px] items-center justify-between gap-2 rounded-[13px] border-[0.8px] px-3 text-[13px] font-semibold text-start transition-colors ${
-                          selected
-                            ? 'border-[#0878f8] bg-[#e8f4ff] text-[#0878f8] dark:border-sky-400 dark:bg-sky-500/15 dark:text-sky-300'
-                            : 'border-[#e4edf7] bg-[#fafcfe] text-[#4d6281] hover:border-[#bcd6ef] hover:text-[#0b1b61] dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-300'
-                        }`}
-                      >
-                        <span className="truncate">{o.label}</span>
-                        {selected && <span aria-hidden className="shrink-0 text-[13px] font-black">✓</span>}
-                      </button>
-                    );
-                  })}
-                </div>
+                {openOptions.length > 0 ? (
+                  <div className="grid max-h-[260px] grid-cols-2 gap-1.5 overflow-y-auto">
+                    {openOptions.map((o) => {
+                      const selected = o.value === currentValue;
+                      return (
+                        <button
+                          key={`${openFilter}:${o.value}`}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => changeFilter(openFilter, o.value)}
+                          className={`flex min-h-[42px] items-center justify-between gap-2 rounded-[13px] border-[0.8px] px-3 text-[13px] font-semibold text-start transition-colors ${
+                            selected
+                              ? 'border-[#0e9c80] bg-[#e7f8f2] text-[#0e9c80] dark:border-emerald-400 dark:bg-emerald-500/15 dark:text-emerald-300'
+                              : 'border-[#e4edf7] bg-[#fafcfe] text-[#4d6281] hover:border-[#bcd6ef] hover:text-[#0b1b61] dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-300'
+                          }`}
+                        >
+                          <span className="truncate">{o.label}</span>
+                          {selected && <span aria-hidden className="shrink-0 text-[13px] font-black">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="px-2 py-5 text-center text-[12px] font-medium text-[#7b8d9e] dark:text-slate-400">
+                    {t('noSpacesData')}
+                  </p>
+                )}
               </div>
             </>
           )}
         </div>
       </section>
 
-      {/* ── Results head — total count + sort (reference #centerResultsHead) ── */}
-      <section id="centerResultsHead" aria-label={t('centersResultsNav')} className="w-full px-[24px] pt-3">
+      {/* ── Results head — total count + sort (reference #spaceResultsHead) ── */}
+      <section id="spaceResultsHead" aria-label={t('spacesResultsNav')} className="w-full px-[24px] pt-3">
         <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-3">
           <strong className="text-[19px] font-extrabold text-[#123457] sm:text-[20px] dark:text-white">
-            {t('centersCount', { count: total.toLocaleString() })}
+            {t('spacesCount', { count: total.toLocaleString() })}
           </strong>
-          <label className="relative shrink-0">
-            <span className="sr-only">{t('centersSortLabel')}</span>
+          <label className="relative flex h-10 shrink-0 items-center gap-2 rounded-[14px] border-[0.8px] border-[#d6e4f4] bg-white pe-2 ps-3 dark:border-slate-600 dark:bg-slate-800">
+            <span className="hidden text-[11px] font-medium text-[#75879b] sm:inline">{t('spacesSortLabel')}</span>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as SortId)}
-              aria-label={t('centersSortLabel')}
-              className="h-10 w-auto appearance-none rounded-[14px] border-[0.8px] border-[#d6e4f4] bg-white pe-7 ps-3 text-[12px] font-semibold text-[#354469] transition-colors hover:border-[#bcd6ef] focus:border-[#0878f8] focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+              aria-label={t('spacesSortLabel')}
+              className="h-full appearance-none bg-transparent text-[12px] font-semibold text-[#354469] focus:outline-none dark:text-slate-200"
             >
               <option value="near">{t('sortNear')}</option>
               <option value="rating">{t('sortRating')}</option>
               <option value="priceAsc" disabled>{t('sortPriceAsc')}</option>
               <option value="priceDesc" disabled>{t('sortPriceDesc')}</option>
             </select>
-            <span aria-hidden className="pointer-events-none absolute end-2.5 top-1/2 -translate-y-1/2 text-[12px] text-[#8a99b8]">⌄</span>
+            <span aria-hidden className="pointer-events-none absolute end-2.5 top-1/2 -translate-y-1/2 text-[12px] text-[#8a99b8]">
+              ⌄
+            </span>
           </label>
         </div>
       </section>
@@ -574,13 +575,13 @@ export default function CentersView({ initialResult }: CentersViewProps) {
           <PencilLoader />
         </div>
       ) : (
-        <section id="centerResults" aria-label={t('centerCardKind')} className="w-full px-[24px] py-4">
+        <section id="spaceResults" aria-label={t('spaceCardKind')} className="w-full px-[24px] py-4">
           {displayed.length === 0 ? (
             <div className="mx-auto mt-4 w-full max-w-[1180px]">
               <EmptyState
                 icon={MapPinOff}
-                title={t('centersNoMatch')}
-                description={t('centersNoMatchHint')}
+                title={t('spacesNoMatch')}
+                description={t('spacesNoMatchHint')}
                 action={
                   hasFilters ? (
                     <Button variant="outline" size="sm" onClick={clearFilters}>
@@ -591,9 +592,9 @@ export default function CentersView({ initialResult }: CentersViewProps) {
               />
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-[14px] min-[800px]:grid-cols-2">
-              {displayed.map((center, i) => (
-                <CenterCardV637 key={center.id} center={center} index={i} />
+            <div className="grid grid-cols-1 gap-[14px] min-[801px]:grid-cols-2">
+              {displayed.map((space, i) => (
+                <SpaceCardV637 key={space.id} space={space} index={i} />
               ))}
             </div>
           )}
@@ -615,7 +616,7 @@ export default function CentersView({ initialResult }: CentersViewProps) {
       )}
 
       {/* Contextual bottom nav — الفلاتر / الخريطة / النتائج (mobile) */}
-      <PublicBottomNav sections={CENTERS_BOTTOM_NAV} />
+      <PublicBottomNav sections={SPACES_BOTTOM_NAV} />
     </div>
   );
 }

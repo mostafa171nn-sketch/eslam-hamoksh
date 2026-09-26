@@ -31,17 +31,24 @@ function shouldNoindex(pathname: string): boolean {
 
   // Private (dashboard group) surfaces. Guarded with exact segments so the
   // public /teachers and /centers trees are never caught by /teacher or
-  // /center.
+  // /center. Exact matches cover the bare roots too (e.g. /dashboard), which
+  // the trailing-slash prefixes below would miss.
   if (
+    pathname === '/dashboard' ||
+    pathname === '/admin' ||
+    pathname === '/profile' ||
+    pathname === '/notifications' ||
+    pathname === '/student' ||
+    pathname === '/parent' ||
+    pathname === '/teacher' ||
+    pathname === '/center' ||
     pathname.startsWith('/dashboard/') ||
     pathname.startsWith('/admin/') ||
     pathname.startsWith('/profile/') ||
     pathname.startsWith('/notifications/') ||
     pathname.startsWith('/student/') ||
     pathname.startsWith('/parent/') ||
-    pathname === '/teacher' ||
     pathname.startsWith('/teacher/') ||
-    pathname === '/center' ||
     pathname.startsWith('/center/') ||
     pathname.startsWith('/centers/register')
   ) {

@@ -126,6 +126,19 @@ export function LangProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Metadata is now static (Arabic) so the root layout can be prerendered
+  // (ISR/static generation). English users get the English <title> restored
+  // client-side, mirroring the persisted language above. Only the tab title is
+  // touched — never the page body, which is already translated — and only when
+  // it still shows the Arabic brand default (per-page titles, e.g. teacher or
+  // center profiles, are always English and must not be overwritten).
+  useEffect(() => {
+    if (lang !== 'en') return;
+    if (document.title.includes('معارج')) {
+      document.title = 'Maarej | Education Platform';
+    }
+  }, [lang]);
+
   const setLang = useCallback(
     (next: Lang) => {
       setLangState(next);

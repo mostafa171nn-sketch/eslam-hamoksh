@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { cookies } from 'next/headers';
 import { Inter, Noto_Sans_Arabic } from 'next/font/google';
 import './globals.css';
 import { AppProviders } from '../src/components/AppProviders';
@@ -29,39 +28,32 @@ const notoSansArabic = Noto_Sans_Arabic({
 });
 
 export function generateMetadata(): Metadata {
-  const lang = cookies().get('maarech-lang')?.value === 'en' ? 'en' : 'ar';
   const common = {
     metadataBase: new URL(SITE_URL),
     robots: { index: true, follow: true },
     icons: { icon: '/icon.svg' },
   };
-  return lang === 'ar'
-    ? {
-        ...common,
-        title: 'معارج | Maarej',
-        description: 'منصة متكاملة متعددة الأطراف لإدارة مراكز التعليم: للمعلمين والطلاب وأولياء الأمور.',
-        openGraph: {
-          type: 'website',
-          locale: 'ar_SA',
-          siteName: 'معارج | Maarej',
-          title: 'معارج | Maarej',
-          description: 'منصة متكاملة متعددة الأطراف لإدارة مراكز التعليم: للمعلمين والطلاب وأولياء الأمور.',
-          url: SITE_URL,
-        },
-      }
-    : {
-        ...common,
-        title: 'Maarej | Education Platform',
-        description: 'A complete multi-tenant learning-center platform for teachers, students and parents.',
-        openGraph: {
-          type: 'website',
-          locale: 'en_US',
-          siteName: 'Maarej',
-          title: 'Maarej | Education Platform',
-          description: 'A complete multi-tenant learning-center platform for teachers, students and parents.',
-          url: SITE_URL,
-        },
-      };
+  return {
+    ...common,
+    title: 'معارج | Maarej',
+    description: 'منصة متكاملة متعددة الأطراف لإدارة مراكز التعليم: للمعلمين والطلاب وأولياء الأمور.',
+    alternates: { canonical: '/' },
+    openGraph: {
+      type: 'website',
+      locale: 'ar_SA',
+      siteName: 'معارج | Maarej',
+      title: 'معارج | Maarej',
+      description: 'منصة متكاملة متعددة الأطراف لإدارة مراكز التعليم: للمعلمين والطلاب وأولياء الأمور.',
+      url: SITE_URL,
+      images: [{ url: '/icon.svg', width: 512, height: 512, alt: 'معارج | Maarej' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'معارج | Maarej',
+      description: 'منصة متكاملة متعددة الأطراف لإدارة مراكز التعليم: للمعلمين والطلاب وأولياء الأمور.',
+      images: ['/icon.svg'],
+    },
+  };
 }
 
 export const viewport: Viewport = {

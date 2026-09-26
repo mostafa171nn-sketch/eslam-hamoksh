@@ -13,15 +13,23 @@ export default function robots(): MetadataRoute.Robots {
           '/api/',
           // Private / authenticated surfaces must not be indexed. Trailing
           // slashes keep the private /teacher and /center dashboards from
-          // ever shadowing the public /teachers and /centers listings.
+          // ever shadowing the public /teachers and /centers listings, while
+          // the bare entries cover the root URLs (e.g. /dashboard) that a
+          // trailing-slash pattern alone would miss.
           '/dashboard/',
+          '/dashboard',
           '/admin/',
+          '/admin',
           '/center/',
           '/teacher/',
           '/student/',
+          '/student',
           '/parent/',
+          '/parent',
           '/profile/',
+          '/profile',
           '/notifications/',
+          '/notifications',
           // Utility / session routes.
           '/login',
           '/register',

@@ -1,116 +1,144 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, type ReactNode } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Star } from 'lucide-react';
 import { Avatar } from '../../../components/ui/Avatar';
-import { dayName, formatCurrency, formatTime } from '../../../lib/format';
 import { useT } from '../../../i18n';
 import type { PublicTeacher } from '../../../lib/types';
-import { gradeStageChips, nextAvailableSlot } from './TeacherCard';
+import { gradeStageChips, ICON_BOOK, ICON_PIN, ICON_SCHOOL } from './TeacherCard';
 
-// Compact vertical card used ONLY on the desktop 4-per-row grid (xl+).
+function UiIcon({ children, className = 'h-[15px] w-[15px]' }: { children: ReactNode; className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      {children}
+    </svg>
+  );
+}
+
+// Compact vertical card — used on the desktop 3-column grid (lg+).
 const TeacherCardCompact = memo(function TeacherCardCompact({ teacher }: { teacher: PublicTeacher }) {
-  const { t, lang } = useT();
-  const router = useRouter();
-  const slot = nextAvailableSlot(teacher.availability);
-  const subject = teacher.subjects[0]?.name ?? '';
-  const chips = gradeStageChips(teacher.grades, t);
+  const { t } = useT();
   const profileHref = `/teachers/${teacher.id}`;
+  const subjectChips = (teacher.subjects ?? []).slice(0, 3);
+  const stageChips = gradeStageChips(teacher.grades, t);
+  const price = teacher.hourlyRate?.toLocaleString() ?? '—';
 
   return (
-    <article className="flex h-full w-full flex-col overflow-hidden rounded-[24px] border border-[#e2ebf6] bg-white shadow-[0_14px_42px_rgba(20,73,137,0.094)] transition-shadow duration-200 hover:shadow-[0_18px_52px_rgba(20,73,137,0.14)] dark:border-slate-700 dark:bg-slate-800">
+    <article className="flex h-full w-full flex-col rounded-[20px] border-[0.8px] border-[#e0eaf2] bg-white p-[10px] shadow-[0_8px_20px_rgba(18,58,91,0.075)] transition-shadow duration-200 hover:shadow-[0_10px_26px_rgba(18,58,91,0.11)] dark:border-slate-700 dark:bg-slate-800">
       {/* Photo */}
       <Link
         href={profileHref}
-        className="relative block aspect-[16/11] w-full shrink-0 overflow-hidden bg-[#e3effc] dark:bg-slate-700/60"
+        aria-label={teacher.fullName}
+        className="relative block h-[120px] w-full shrink-0 overflow-hidden rounded-[16px] bg-[#e3effc] dark:bg-slate-700/60"
       >
         {teacher.photo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={teacher.photo}
-            alt={teacher.fullName}
-            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
-            loading="lazy"
-            decoding="async"
-          />
+          <img src={teacher.photo} alt={teacher.fullName} className="h-full w-full object-cover" loading="lazy" decoding="async" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <Avatar name={teacher.fullName} size="lg" />
-          </div>
-        )}
-        {teacher.availability.length > 0 && (
-          <span className="absolute bottom-2 start-2 inline-flex max-w-[calc(100%-16px)] truncate rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-[#0b1b61] dark:bg-slate-900/90 dark:text-white">
-            {t('availableNow')}
+          <span className="flex h-full w-full items-center justify-center">
+            <Avatar name={teacher.fullName} size="xl" />
           </span>
         )}
       </Link>
 
-      {/* Body */}
-      <div className="flex flex-1 flex-col p-3.5">
-        <h3 className="text-[15px] font-bold leading-snug text-[#0b1b61] dark:text-white">
+      {/* Title + rating */}
+      <div className="mt-2.5 flex items-start justify-between gap-2">
+        <h3 className="min-w-0 truncate text-[15px] font-bold leading-snug text-[#0b1b61] dark:text-white" title={teacher.fullName}>
           <Link href={profileHref} className="transition-colors hover:text-[#0878f8]">
             {teacher.fullName}
           </Link>
         </h3>
-        <p className="mt-0.5 truncate text-[12px] font-black text-[#0878f8] dark:text-sky-300">{subject}</p>
+        <span className="inline-flex shrink-0 items-baseline gap-[3px] text-[#b8860b] dark:text-amber-300">
+          <i aria-hidden className="not-italic text-[12px] leading-none">★</i>
+          <b className="text-[13px] font-black leading-none">{teacher.rating.toFixed(1)}</b>
+          {teacher.ratingCount > 0 && (
+            <small className="text-[10px] font-semibold text-[#6e7b98] dark:text-slate-400">({teacher.ratingCount})</small>
+          )}
+        </span>
+      </div>
 
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-[#5f6d8c] dark:text-slate-400">
-          {teacher.location && <span className="max-w-[55%] truncate">{teacher.location.name}</span>}
-          {teacher.location && <span className="text-[#c3cede]">·</span>}
-          <span>
-            {teacher.yearsExperience} {t('yrsExp')}
-          </span>
-          <span className="text-[#c3cede]">·</span>
-          <span className="inline-flex items-center gap-0.5">
-            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-            {teacher.rating.toFixed(1)} ({teacher.ratingCount})
-          </span>
-        </div>
-
-        {teacher.bio && (
-          <p className="mt-2 line-clamp-2 text-[12px] leading-[1.55] text-[#6e7b98] dark:text-slate-400">
-            {teacher.bio}
-          </p>
+      {/* Fact chips */}
+      <div className="mt-2 flex flex-1 flex-col gap-1.5">
+        {subjectChips.length > 0 && (
+          <div className="flex items-start gap-2">
+            <span className="flex shrink-0 items-center gap-1 pt-1 text-[10px] font-semibold text-[#6e7b98] dark:text-slate-400">
+              <UiIcon>{ICON_BOOK}</UiIcon>
+              <small>{t('subjectsLabel')}</small>
+            </span>
+            <div className="flex min-w-0 flex-1 flex-wrap gap-1">
+              {subjectChips.map((s) => (
+                <span
+                  key={s.id}
+                  className="inline-flex max-w-full items-center gap-1 rounded-[10px] bg-[#e3f3ff] px-2 py-[5px] text-[11px] font-bold text-[#0878f8] dark:bg-sky-500/15 dark:text-sky-300"
+                >
+                  <UiIcon className="h-[12px] w-[12px] shrink-0">{ICON_BOOK}</UiIcon>
+                  <b className="truncate font-bold">{s.name}</b>
+                </span>
+              ))}
+            </div>
+          </div>
         )}
 
-        {chips.length > 0 && (
-          <div className="mt-2.5 flex flex-wrap gap-1">
-            {chips.slice(0, 2).map((c) => (
-              <span
-                key={c}
-                className="rounded-[10px] bg-[#e3f3ff] px-2 py-0.5 text-[10px] font-semibold text-[#0878f8] dark:bg-sky-500/15 dark:text-sky-300"
-              >
-                {c}
+        {teacher.location && (
+          <div className="flex items-start gap-2">
+            <span className="flex shrink-0 items-center gap-1 pt-1 text-[10px] font-semibold text-[#6e7b98] dark:text-slate-400">
+              <UiIcon>{ICON_PIN}</UiIcon>
+              <small>{t('areasLabel')}</small>
+            </span>
+            <div className="flex min-w-0 flex-1 flex-wrap gap-1">
+              <span className="inline-flex max-w-full items-center gap-1 rounded-[10px] bg-[#eef7ff] px-2 py-[5px] text-[11px] font-bold text-[#16557e] dark:bg-slate-700/70 dark:text-slate-200">
+                <UiIcon className="h-[12px] w-[12px] shrink-0">{ICON_PIN}</UiIcon>
+                <b className="truncate font-bold">{teacher.location.name}</b>
               </span>
-            ))}
+            </div>
           </div>
         )}
 
-        {/* Price + CTA */}
-        <div className="mt-auto flex items-end justify-between gap-2 border-t border-[#eef3f9] pt-3 dark:border-slate-700/60">
-          <div className="min-w-0">
-            <p className="whitespace-nowrap text-[18px] font-black leading-none text-[#0b1b61] dark:text-white">
-              {formatCurrency(teacher.hourlyRate)}
-            </p>
-            <p className="mt-1 text-[10px] font-medium text-[#6e7b98] dark:text-slate-400">{t('perHour')}</p>
+        {stageChips.length > 0 && (
+          <div className="flex items-start gap-2">
+            <span className="flex shrink-0 items-center gap-1 pt-1 text-[10px] font-semibold text-[#6e7b98] dark:text-slate-400">
+              <UiIcon>{ICON_SCHOOL}</UiIcon>
+              <small>{t('stagesLabel')}</small>
+            </span>
+            <div className="flex min-w-0 flex-1 flex-wrap gap-1">
+              {stageChips.map((c) => (
+                <span
+                  key={c}
+                  className="inline-flex items-center gap-1 rounded-[10px] bg-[#eef7ff] px-2 py-[5px] text-[11px] font-bold text-[#16557e] dark:bg-slate-700/70 dark:text-slate-200"
+                >
+                  <UiIcon className="h-[12px] w-[12px] shrink-0">{ICON_SCHOOL}</UiIcon>
+                  <b className="font-bold">{c}</b>
+                </span>
+              ))}
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={() => router.push(`${profileHref}?book=1`)}
-            className="h-10 rounded-[12px] bg-gradient-to-br from-[#0878f8] to-[#126bea] px-3.5 text-[13px] font-black text-white shadow-[0_8px_20px_rgba(8,120,248,0.35)] transition-all duration-150 hover:shadow-[0_10px_26px_rgba(8,120,248,0.45)] active:scale-[0.98]"
-          >
-            {t('bookNow')}
-          </button>
+        )}
+      </div>
+
+      {/* Footer — price + CTA */}
+      <div className="mt-2 flex items-center justify-between gap-3 border-t border-[#eef3f9] pt-2.5 dark:border-slate-700/60">
+        <div className="min-w-0">
+          <small className="block text-[10px] font-semibold text-[#6e7b98] dark:text-slate-400">{t('sessionPriceLabel')}</small>
+          <strong className="mt-0.5 block whitespace-nowrap text-[16px] font-black text-[#0b1b61] dark:text-white">
+            {price} <small className="text-[10px] font-semibold text-[#6e7b98] dark:text-slate-400">{t('priceSuffix')}</small>
+          </strong>
         </div>
-
-        {slot && (
-          <p className="mt-2.5 truncate text-[11px] font-semibold text-[#5f6d8c] dark:text-slate-400">
-            <span className="text-[#0878f8] dark:text-sky-300">{t('bestSlotTitle')}:</span>{' '}
-            {dayName(slot.day, lang)} · {formatTime(slot.startTime)}
-          </p>
-        )}
+        <Link
+          href={`${profileHref}?book=1`}
+          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-br from-[#0878f8] to-[#126bea] px-3.5 py-2 text-[12px] font-black text-white shadow-[0_8px_20px_rgba(8,120,248,0.35)] transition-all duration-150 hover:shadow-[0_10px_26px_rgba(8,120,248,0.45)] active:scale-[0.98]"
+        >
+          <span>{t('bookNow')}</span>
+          <b aria-hidden className="text-[13px] leading-none">←</b>
+        </Link>
       </div>
     </article>
   );

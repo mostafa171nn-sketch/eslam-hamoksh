@@ -1,4 +1,6 @@
 import type { PublicTeacher, TeacherProfile, User } from './types';
+import { isUiDemoMode } from '../demo/env';
+import { demoRespond } from '../demo/router';
 
 const BASE = '/api';
 
@@ -12,6 +14,13 @@ export function timeoutMessage(): string {
     : 'The server took too long to respond. Please try again.';
 }
 export const TIMEOUT_MESSAGE = timeoutMessage();
+
+/** Network-level failures (backend unreachable, connection dropped). */
+export function networkErrorMessage(): string {
+  return getFormatLang() === 'ar'
+    ? 'تعذر الاتصال بالخادم. تحقق من اتصالك بالإنترنت ثم حاول مرة أخرى.'
+    : 'Could not reach the server. Check your connection and try again.';
+}
 
 // --- Multi-tenant center types --------------------------------------------
 
@@ -155,6 +164,57 @@ export interface SearchCentersResult {
   totalPages: number;
 }
 
+/* ------------------------------------------------------------------ */
+/*  Co-space search — future public API contract                       */
+/*                                                                     */
+/*  The current backend exposes no public spaces endpoint yet, so      */
+/*  `searchSpaces` resolves as a 404 today and `/spaces` renders its   */
+/*  honest error/empty state. The shape below is the agreed contract   */
+/*  for the upcoming `GET /spaces/search`, so the `/spaces` page can   */
+/*  light up with zero rebuild work once that endpoint ships.          */
+/*  Every field is nullable so missing data never renders fake values. */
+/* ------------------------------------------------------------------ */
+
+export interface PublicSpace {
+  id: string;
+  name: string;
+  nameEn?: string | null;
+  /** Governorate the space is located in (user-facing, e.g. "القاهرة"). */
+  governorate?: string | null;
+  /** District / area within the governorate ("الزمالك"). */
+  area?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  photoUrl?: string | null;
+  /** Category label, e.g. "مساحة تركيز شخصي". */
+  spaceType?: string | null;
+  /** Maximum number of occupants. */
+  capacity?: number | null;
+  /** Hourly price range, e.g. `[50, 100]` — mirrors the reference data model. */
+  prices?: number[] | null;
+  /** Equipment / amenity names (Wi-Fi, شاشة, …). */
+  features?: string[] | null;
+  ratingAverage?: number | null;
+  ratingCount?: number | null;
+  /** When the space belongs to a center, its real profile link. */
+  centerId?: string | null;
+}
+
+export interface SearchSpacesParams {
+  q?: string;
+  governorate?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface SearchSpacesResult {
+  items: PublicSpace[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export interface RegisterCenterPayload {
   name: string;
   email?: string;
@@ -249,6 +309,26 @@ export function qs(params?: Record<string, string | number | undefined | null>):
 }
 
 async function rawRequest<T>(path: string, options: RequestInit): Promise<ApiResponse<T>> {
+  // UI-demo mode: short-circuit to the in-memory demo responder so the app
+  // runs fully without a backend. Unmatched paths fall through to the real API.
+  if (isUiDemoMode()) {
+    let body: unknown = options.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        body = undefined;
+      }
+    }
+    const hit = demoRespond(path, options.method ?? 'GET', body);
+    if (hit) {
+      if (hit.status >= 400) {
+        const errBody = (hit.body ?? {}) as { message?: string; error?: { code?: string; details?: unknown } };
+        throw new ApiClientError(errBody.message ?? `Demo request failed (${hit.status})`, hit.status, errBody.error?.code, errBody.error?.details);
+      }
+      return hit.body as ApiResponse<T>;
+    }
+  }
   // Never let a request hang forever: bound it with a timeout unless the
   // caller already provided its own signal.
   const controller = new AbortController();
@@ -495,6 +575,10 @@ export const api = {
   },
   searchCenters(params?: SearchCentersParams) {
     return apiGet<SearchCentersResult>('/centers/search', params as Record<string, string | number | undefined | null>);
+  },
+  /** Public: co-space search (endpoint does not exist yet — see PublicSpace). */
+  searchSpaces(params?: SearchSpacesParams) {
+    return apiGet<SearchSpacesResult>('/spaces/search', params as Record<string, string | number | undefined | null>);
   },
   getPublicCenter(id: string) {
     return request<PublicCenter>('/centers/' + encodeURIComponent(id), { method: 'GET' });

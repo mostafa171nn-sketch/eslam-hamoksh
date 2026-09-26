@@ -206,8 +206,8 @@ export default function CenterDashboardPage() {
     }
   }, [data, selectedRoomId]);
 
-  if (loading || !data) return <PencilLoader label={t('loadingDashboard')} />;
   if (error) return <Alert message={error} />;
+  if (loading || !data) return <PencilLoader label={t('loadingDashboard')} />;
 
   const m = data.metrics;
   const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();

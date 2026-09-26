@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type DependencyList } from 'react';
-import { ApiClientError, timeoutMessage, type ApiResponse } from '../lib/api';
+import { ApiClientError, networkErrorMessage, timeoutMessage, type ApiResponse } from '../lib/api';
 import { getFormatLang } from '../lib/format';
 import { dataCache } from '../lib/dataCache';
 
@@ -9,6 +9,7 @@ export function errorMessage(err: unknown, fallback?: string): string {
   if (err instanceof Error && err.name === 'AbortError') return '';
   if (err instanceof DOMException && err.name === 'TimeoutError') return timeoutMessage();
   if (err instanceof Error && err.message === 'The operation was aborted.') return timeoutMessage();
+  if (err instanceof TypeError) return networkErrorMessage();
   if (err instanceof Error && err.message) return err.message;
   return fallbackText;
 }

@@ -586,6 +586,16 @@ body {
    Interactive Map (Leaflet)
    ============================================================ */
 
+/*
+  Contain every Leaflet layer inside .ecms-map-box so its internal
+  z-indexes (panes 400, controls 1000) never escape into the page's
+  root stacking context. This keeps modals/dropdowns (raised to
+  ~1100+) permanently above the map without altering map behavior.
+*/
+.ecms-map-box {
+  isolation: isolate;
+}
+
 .ecms-map-box .leaflet-container {
   border-radius: 0.75rem;
   overflow: hidden;

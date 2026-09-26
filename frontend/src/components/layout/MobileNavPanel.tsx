@@ -91,7 +91,7 @@ export function MobileNavPanel({
       <div
         aria-hidden
         onClick={onClose}
-        className={`fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+        className={`fixed inset-0 z-[1100] bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       />
       <div
         id={id}
@@ -99,7 +99,7 @@ export function MobileNavPanel({
         aria-modal="true"
         aria-label={title ?? t('mainNavigation')}
         aria-hidden={!isVisible}
-        className="fixed inset-x-0 top-0 z-50 lg:hidden"
+        className="fixed inset-x-0 top-0 z-[1200] lg:hidden"
         style={{
           maxHeight: '100dvh',
           transform: phase === 'open' ? 'translateY(0)' : 'translateY(-100%)',

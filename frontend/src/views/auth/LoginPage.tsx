@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { StudentLoginShell } from '../../components/auth/StudentAuthShell';
@@ -10,6 +10,14 @@ import { InlineError } from '../../components/ui/ErrorAlert';
 import { useAuth } from '../../context/AuthContext';
 import { errorMessage } from '../../hooks/useApi';
 import { useT } from '../../i18n';
+import { api } from '../../lib/api';
+
+interface DemoAccount {
+  username: string;
+  role: string;
+  fullName: string;
+  centerId: string | null;
+}
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -23,6 +31,18 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [demoAccounts, setDemoAccounts] = useState<DemoAccount[]>([]);
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  useEffect(() => {
+    api.get<{ success: boolean; data: { enabled: boolean; password: string; accounts: DemoAccount[] } }>('/auth/mock-info')
+      .then((res) => {
+        if (res.data?.success && res.data.data.enabled) {
+          setDemoAccounts(res.data.data.accounts);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -44,9 +64,27 @@ export default function LoginPage() {
     }
   };
 
+  const useDemo = async (account: DemoAccount) => {
+    setUsername(account.username);
+    setPassword('Demo@12345');
+    setErrors({});
+    setServerError('');
+    setLoading(true);
+    try {
+      await login(account.username, 'Demo@12345');
+      router.replace(next);
+    } catch (err) {
+      setServerError(errorMessage(err, t('loginFailed')));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const roleLabel: Record<string, string> = { SUPER_ADMIN: 'Super Admin', CENTER_ADMIN: 'Center Admin', ADMIN: 'Admin', TEACHER: 'Teacher', STUDENT: 'Student', PARENT: 'Parent' };
+
   return (
-      <StudentLoginShell title={t('login')} subtitle={t('enterCredentials')} back={true} flipTo="/register/student" flipLabel={t('register')}>
-        <form onSubmit={submit} className="space-y-4">
+    <StudentLoginShell title={t('login')} subtitle={t('enterCredentials')} back={true} flipTo="/register/student" flipLabel={t('register')}>
+      <form onSubmit={submit} className="space-y-4">
         <InlineError message={serverError} />
         <Input
           label={t('username')}
@@ -97,7 +135,29 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {process.env.NODE_ENV !== 'production' && (
+      {demoAccounts.length > 0 && (
+        <div className="mt-4 rounded-xl border border-brand-200 bg-brand-50/60 p-4 dark:border-brand-800 dark:bg-brand-950/30">
+          <p className="text-sm font-semibold text-brand-700 dark:text-brand-300">{t('demoAccounts')}</p>
+          <p className="mt-1 text-xs text-brand-600 dark:text-brand-400">{t('demoAccountPicker')}</p>
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {demoAccounts.map((a) => (
+              <button
+                key={a.username}
+                type="button"
+                disabled={demoLoading}
+                onClick={() => { setDemoLoading(true); useDemo(a).finally(() => setDemoLoading(false)); }}
+                className="rounded-lg border border-brand-300 bg-white px-3 py-2 text-left text-xs font-medium text-brand-800 shadow-sm hover:bg-brand-100 dark:border-brand-700 dark:bg-slate-800 dark:text-brand-200 dark:hover:bg-brand-900/40"
+              >
+                <span className="block font-bold">{a.fullName}</span>
+                <span className="block text-[11px] opacity-70">{a.username} · {roleLabel[a.role] ?? a.role}</span>
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-brand-500 dark:text-brand-400">{t('demoPasswordLabel')}: <b>Demo@12345</b></p>
+        </div>
+      )}
+
+      {process.env.NODE_ENV !== 'production' && demoAccounts.length === 0 && (
         <p className="mt-2 text-[11px] text-slate-400">
           {t('testAccountsNote')}
         </p>

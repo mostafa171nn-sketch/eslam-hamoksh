@@ -1,39 +1,58 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, type ReactNode } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Star } from 'lucide-react';
 import { Avatar } from '../../../components/ui/Avatar';
-import { dayName, formatCurrency, formatTime } from '../../../lib/format';
 import { useT, type DictKey, type TranslateParams } from '../../../i18n';
-import type { AvailabilitySlot, PublicTeacher } from '../../../lib/types';
+import type { PublicTeacher } from '../../../lib/types';
 
 type Translate = (key: DictKey, params?: TranslateParams) => string;
 
-// Next upcoming availability (respecting the weekly day+startTime grid).
-export function nextAvailableSlot(
-  availability: PublicTeacher['availability'],
-  now: Date = new Date(),
-): AvailabilitySlot | null {
-  if (!availability?.length) return null;
-  const curDay = now.getDay();
-  const curMinutes = now.getHours() * 60 + now.getMinutes();
-  let best: AvailabilitySlot | null = null;
-  let bestScore = Infinity;
-  for (const a of availability) {
-    const [h, m] = a.startTime.split(':').map(Number);
-    const start = (h || 0) * 60 + (m || 0);
-    let delta = (a.day - curDay + 7) % 7;
-    if (delta === 0 && start <= curMinutes) delta = 7;
-    const score = delta * 1440 + (start - curMinutes);
-    if (score < bestScore) {
-      bestScore = score;
-      best = a;
-    }
-  }
-  return best;
+/* ------------------------------------------------------------------ */
+/*  Reference SVG glyphs (hand-drawn lucide-style paths)               */
+/* ------------------------------------------------------------------ */
+
+export const ICON_BOOK = (
+  <>
+    <path d="M4 5.5c2.8-.8 5.3-.4 8 1.5v12c-2.7-1.9-5.2-2.3-8-1.5v-12Z" />
+    <path d="M20 5.5c-2.8-.8-5.3-.4-8 1.5v12c2.7-1.9 5.2-2.3 8-1.5v-12Z" />
+  </>
+);
+
+export const ICON_PIN = (
+  <>
+    <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+    <circle cx="12" cy="10" r="2.4" />
+  </>
+);
+
+export const ICON_SCHOOL = (
+  <>
+    <path d="m3 9 9-5 9 5-9 5-9-5Z" />
+    <path d="M7 12.5V17c3.1 2.2 6.9 2.2 10 0v-4.5" />
+  </>
+);
+
+function UiIcon({ children, className = 'h-[15px] w-[15px]' }: { children: ReactNode; className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      {children}
+    </svg>
+  );
 }
+
+/* ------------------------------------------------------------------ */
+/*  Stage chips (grades → ابتدائي / إعدادي / ثانوي)                    */
+/* ------------------------------------------------------------------ */
 
 const STAGE_PATTERNS: { key: keyof typeof STAGE_KEYS; re: RegExp }[] = [
   { key: 'primary', re: /primary/i },
@@ -47,8 +66,7 @@ const STAGE_KEYS = {
   secondary: 'stageSecondary',
 } as const;
 
-// Collapse the many explicit grade rows (Grade 1 Primary … Grade 3 Secondary)
-// into the compact stage chips the reference page shows.
+// Collapse the many explicit grade rows into compact stage chips.
 export function gradeStageChips(grades: PublicTeacher['grades'], t: Translate): string[] {
   const seen = new Set<string>();
   const chips: string[] = [];
@@ -64,117 +82,131 @@ export function gradeStageChips(grades: PublicTeacher['grades'], t: Translate): 
   return chips;
 }
 
+/* ------------------------------------------------------------------ */
+/*  Reference compact card — horizontal on mobile & tablet             */
+/*  (photo left, name + rating, fact chips, price + CTA footer).       */
+/* ------------------------------------------------------------------ */
+
 const TeacherCard = memo(function TeacherCard({ teacher }: { teacher: PublicTeacher }) {
-  const { t, lang } = useT();
-  const router = useRouter();
-  const slot = nextAvailableSlot(teacher.availability);
-  const subject = teacher.subjects[0]?.name ?? '';
-  const chips = gradeStageChips(teacher.grades, t);
+  const { t } = useT();
   const profileHref = `/teachers/${teacher.id}`;
+  const subjectChips = (teacher.subjects ?? []).slice(0, 3);
+  const stageChips = gradeStageChips(teacher.grades, t);
+  const price = teacher.hourlyRate?.toLocaleString() ?? '—';
 
   return (
-    <article className="grid grid-cols-[104px_1fr] gap-3 rounded-[24px] border border-[#e2ebf6] bg-white p-3 shadow-[0_14px_42px_rgba(20,73,137,0.094)] transition-shadow duration-200 hover:shadow-[0_18px_52px_rgba(20,73,137,0.14)] sm:grid-cols-[150px_1fr_158px] sm:gap-[18px] sm:p-4 dark:border-slate-700 dark:bg-slate-800">
-      {/* Photo */}
-      <div className="relative min-h-[104px] overflow-hidden rounded-2xl bg-[#e3effc] sm:min-h-[150px] dark:bg-slate-700/60">
-        {teacher.photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={teacher.photo} alt={teacher.fullName} className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <Avatar name={teacher.fullName} size="xl" />
-          </div>
-        )}
-        {teacher.availability.length > 0 && (
-          <span className="absolute bottom-1.5 start-1.5 inline-flex max-w-[calc(100%-12px)] truncate rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-[#0b1b61] sm:text-[11px] dark:bg-slate-900/90 dark:text-white">
-            {t('availableNow')}
-          </span>
-        )}
-      </div>
-
-      {/* Main */}
-      <div className="min-w-0">
-        <h3 className="text-[15px] font-bold leading-snug text-[#0b1b61] sm:text-xl dark:text-white">
-          <Link href={profileHref} className="transition-colors hover:text-[#0878f8]">
-            {teacher.fullName}
-          </Link>
-        </h3>
-        <p className="mt-0.5 truncate text-[12px] font-black text-[#0878f8] sm:text-[13px] dark:text-sky-300">
-          {subject}
-        </p>
-
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-[#5f6d8c] sm:text-[12px] dark:text-slate-400">
-          {teacher.location && <span>{teacher.location.name}</span>}
-          {teacher.location && <span className="text-[#c3cede]">·</span>}
-          <span>
-            {teacher.yearsExperience} {t('yrsExp')}
-          </span>
-          <span className="text-[#c3cede]">·</span>
-          <span className="inline-flex items-center gap-0.5">
-            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-            {teacher.rating.toFixed(1)} ({teacher.ratingCount})
-          </span>
-        </div>
-
-        {teacher.bio && (
-          <p className="mt-2 line-clamp-2 text-[12px] leading-[1.55] text-[#6e7b98] sm:text-[13px] dark:text-slate-400">
-            {teacher.bio}
-          </p>
-        )}
-
-        {chips.length > 0 && (
-          <div className="mt-2.5 flex flex-wrap gap-1">
-            {chips.map((c) => (
-              <span
-                key={c}
-                className="rounded-[10px] bg-[#e3f3ff] px-2.5 py-1 text-[10px] font-semibold text-[#0878f8] sm:px-[9px] sm:py-[6px] sm:text-[11px] dark:bg-sky-500/15 dark:text-sky-300"
-              >
-                {c}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Side: rating, best slot, price, CTA */}
-      <aside className="col-span-2 mt-1 grid grid-cols-2 gap-x-3 gap-y-2 sm:col-span-1 sm:mt-0 sm:content-start sm:grid-cols-1 sm:gap-y-3">
-        <div className="min-w-0">
-          <div className="flex items-baseline gap-1">
-            <span className="text-lg font-black leading-none text-[#0b1b61] dark:text-white">
-              {teacher.rating.toFixed(1)}
+    <article className="rounded-[20px] border-[0.8px] border-[#e0eaf2] bg-white p-[10px] shadow-[0_8px_20px_rgba(18,58,91,0.075)] transition-shadow duration-200 hover:shadow-[0_10px_26px_rgba(18,58,91,0.11)] dark:border-slate-700 dark:bg-slate-800">
+      {/* Top row — summary (right) + photo (left) in RTL */}
+      <div className="flex gap-2.5">
+        {/* Summary */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="text-[15px] font-bold leading-snug text-[#0b1b61] dark:text-white">
+              <Link href={profileHref} className="transition-colors hover:text-[#0878f8]">
+                {teacher.fullName}
+              </Link>
+            </h3>
+            <span className="inline-flex shrink-0 items-baseline gap-[3px] text-[#b8860b] dark:text-amber-300">
+              <i aria-hidden className="not-italic text-[12px] leading-none">★</i>
+              <b className="text-[13px] font-black leading-none">{teacher.rating.toFixed(1)}</b>
+              {teacher.ratingCount > 0 && (
+                <small className="text-[10px] font-semibold text-[#6e7b98] dark:text-slate-400">({teacher.ratingCount})</small>
+              )}
             </span>
-            <span className="text-[10px] font-semibold text-[#6e7b98]">({teacher.ratingCount})</span>
           </div>
-          <p className="mt-0.5 text-[10px] font-medium text-[#6e7b98] dark:text-slate-400">{t('rating')}</p>
         </div>
 
-        <div className="min-w-0 rounded-xl border border-[#e3f0fa] bg-[#f4faff] px-3 py-2 sm:px-3.5 sm:py-2.5 dark:border-slate-600 dark:bg-slate-700/50">
-          <p className="text-[10px] font-semibold text-[#6e7b98] dark:text-slate-300">{t('bestSlotTitle')}</p>
-          {slot ? (
-            <p className="mt-0.5 truncate text-[12px] font-bold text-[#0b1b61] dark:text-white">
-              {dayName(slot.day, lang)} · {formatTime(slot.startTime)}
-            </p>
+        {/* Photo */}
+        <Link
+          href={profileHref}
+          aria-label={teacher.fullName}
+          className="relative block h-[86px] w-[86px] shrink-0 overflow-hidden rounded-[16px] bg-[#e3effc] dark:bg-slate-700/60"
+        >
+          {teacher.photo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={teacher.photo} alt={teacher.fullName} className="h-full w-full object-cover" loading="lazy" decoding="async" />
           ) : (
-            <p className="mt-0.5 text-[12px] font-medium text-[#6e7b98] dark:text-slate-400">{t('noSetSchedule')}</p>
+            <span className="flex h-full w-full items-center justify-center">
+              <Avatar name={teacher.fullName} size="lg" />
+            </span>
           )}
-        </div>
+        </Link>
+      </div>
 
-        <div className="min-w-0 text-left sm:text-start">
-          <p className="whitespace-nowrap text-[19px] font-black leading-none text-[#0b1b61] dark:text-white">
-            {formatCurrency(teacher.hourlyRate)}
-          </p>
-          <p className="mt-0.5 text-[10px] font-medium text-[#6e7b98] dark:text-slate-400">{t('perHour')}</p>
-        </div>
+      {/* Fact chips */}
+      <div className="mt-1 flex flex-col gap-1.5">
+        {subjectChips.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="flex shrink-0 items-center gap-1 text-[10px] font-semibold text-[#6e7b98] dark:text-slate-400">
+              <UiIcon>{ICON_BOOK}</UiIcon>
+              <small>{t('subjectsLabel')}</small>
+            </span>
+            <div className="flex min-w-0 flex-wrap gap-1">
+              {subjectChips.map((s) => (
+                <span
+                  key={s.id}
+                  className="inline-flex items-center gap-1 rounded-[10px] bg-[#e3f3ff] px-2 py-[5px] text-[11px] font-bold text-[#0878f8] dark:bg-sky-500/15 dark:text-sky-300"
+                >
+                  <UiIcon className="h-[12px] w-[12px]">{ICON_BOOK}</UiIcon>
+                  <b className="font-bold">{s.name}</b>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
+        {teacher.location && (
+          <div className="flex items-center gap-2">
+            <span className="flex shrink-0 items-center gap-1 text-[10px] font-semibold text-[#6e7b98] dark:text-slate-400">
+              <UiIcon>{ICON_PIN}</UiIcon>
+              <small>{t('areasLabel')}</small>
+            </span>
+            <div className="flex min-w-0 flex-wrap gap-1">
+              <span className="inline-flex items-center gap-1 rounded-[10px] bg-[#eef7ff] px-2 py-[5px] text-[11px] font-bold text-[#16557e] dark:bg-slate-700/70 dark:text-slate-200">
+                <UiIcon className="h-[12px] w-[12px]">{ICON_PIN}</UiIcon>
+                <b className="truncate">{teacher.location.name}</b>
+              </span>
+            </div>
+          </div>
+        )}
+
+        {stageChips.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="flex shrink-0 items-center gap-1 text-[10px] font-semibold text-[#6e7b98] dark:text-slate-400">
+              <UiIcon>{ICON_SCHOOL}</UiIcon>
+              <small>{t('stagesLabel')}</small>
+            </span>
+            <div className="flex min-w-0 flex-wrap gap-1">
+              {stageChips.map((c) => (
+                <span
+                  key={c}
+                  className="inline-flex items-center gap-1 rounded-[10px] bg-[#eef7ff] px-2 py-[5px] text-[11px] font-bold text-[#16557e] dark:bg-slate-700/70 dark:text-slate-200"
+                >
+                  <UiIcon className="h-[12px] w-[12px]">{ICON_SCHOOL}</UiIcon>
+                  <b className="font-bold">{c}</b>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer — price + CTA */}
+      <div className="mt-2 flex items-center justify-between gap-3 border-t border-[#eef3f9] pt-2.5 dark:border-slate-700/60">
         <div className="min-w-0">
-          <button
-            type="button"
-            onClick={() => router.push(`${profileHref}?book=1`)}
-            className="h-11 w-full rounded-[12px] bg-gradient-to-br from-[#0878f8] to-[#126bea] px-3 text-[15px] font-black text-white shadow-[0_8px_20px_rgba(8,120,248,0.35)] transition-all duration-150 hover:shadow-[0_10px_26px_rgba(8,120,248,0.45)] active:scale-[0.98] sm:h-12"
-          >
-            {t('bookNow')}
-          </button>
+          <small className="block text-[10px] font-semibold text-[#6e7b98] dark:text-slate-400">{t('sessionPriceLabel')}</small>
+          <strong className="mt-0.5 block whitespace-nowrap text-[15px] font-black text-[#0b1b61] dark:text-white">
+            {price} <small className="text-[10px] font-semibold text-[#6e7b98] dark:text-slate-400">{t('priceSuffix')}</small>
+          </strong>
         </div>
-      </aside>
+        <Link
+          href={`${profileHref}?book=1`}
+          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-br from-[#0878f8] to-[#126bea] px-3.5 py-2 text-[12px] font-black text-white shadow-[0_8px_20px_rgba(8,120,248,0.35)] transition-all duration-150 hover:shadow-[0_10px_26px_rgba(8,120,248,0.45)] active:scale-[0.98]"
+        >
+          <span>{t('bookNow')}</span>
+          <b aria-hidden className="text-[13px] leading-none">←</b>
+        </Link>
+      </div>
     </article>
   );
 });

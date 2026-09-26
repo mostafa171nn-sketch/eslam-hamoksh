@@ -11,7 +11,7 @@
 
 import L from 'leaflet';
 
-export type EntityMarkerKind = 'center' | 'teacher';
+export type EntityMarkerKind = 'center' | 'teacher' | 'space';
 
 /** The per-marker display data needed to render the floating card. */
 export interface EntityMarkerData {
@@ -23,8 +23,8 @@ export interface EntityMarkerData {
   kind?: EntityMarkerKind;
 }
 
-const CENTER_SIZE = { w: 172, h: 54 } as const;
-const TEACHER_SIZE = { w: 108, h: 52 } as const;
+const CENTER_SIZE = { w: 190, h: 54 } as const;
+const TEACHER_SIZE = { w: 164, h: 54 } as const;
 
 /* ------------------------------------------------------------------ */
 /*  Small HTML helpers                                                 */
@@ -39,6 +39,14 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
+/**
+ * Marker display name: the first two words of the entity name (whitespace
+ * normalized). Works for both Latin and Arabic names, including in RTL.
+ */
+function markerDisplayName(name: string): string {
+  return name.trim().split(/\s+/).filter(Boolean).slice(0, 2).join(' ');
+}
+
 function ratingHtml(
   rating: number | null | undefined,
   ratingCount: number | null | undefined,
@@ -50,7 +58,6 @@ function ratingHtml(
     `<span class="ecms-entity-rate${extraClass}">` +
     `<span class="ecms-entity-star" aria-hidden="true">&#9733;</span>` +
     `<span class="ecms-entity-rate-value" dir="ltr">${value}</span>` +
-    (ratingCount ? `<span class="ecms-entity-count" dir="ltr">(${ratingCount})</span>` : '') +
     `</span>`
   );
 }
@@ -83,7 +90,7 @@ function arrowHtml(): string {
 /* ------------------------------------------------------------------ */
 
 export function centerCardHtml(data: EntityMarkerData): string {
-  const name = escapeHtml(data.name);
+  const name = escapeHtml(markerDisplayName(data.name));
   const initial = escapeHtml(data.name.trim().charAt(0).toUpperCase() || '&#8226;');
   const rating = ratingHtml(data.rating, data.ratingCount, ' ecms-entity-rate--center');
   return (
@@ -98,14 +105,14 @@ export function centerCardHtml(data: EntityMarkerData): string {
 }
 
 export function teacherCardHtml(data: EntityMarkerData): string {
-  const name = escapeHtml(data.name);
+  const name = escapeHtml(markerDisplayName(data.name));
   const initial = escapeHtml(data.name.trim().charAt(0).toUpperCase() || '&#8226;');
   const rating = ratingHtml(data.rating, data.ratingCount, ' ecms-entity-rate--teacher');
   return (
     `<div class="ecms-entity-card ecms-entity-card--teacher">` +
     thumbHtml(data.image, initial, ' ecms-entity-thumb--teacher') +
-    rating +
     `<span class="ecms-entity-name-row"><span class="ecms-entity-name ecms-entity-name--teacher">${name}</span>${arrowHtml()}</span>` +
+    rating +
     `</div>`
   );
 }

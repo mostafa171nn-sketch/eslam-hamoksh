@@ -1,5 +1,7 @@
 import { cache } from 'react';
 import { qs, type ApiResponse, type ApiMeta } from './api';
+import { isUiDemoMode } from '../demo/env';
+import { demoRespond } from '../demo/router';
 
 /**
  * Server-side fetch helper for the public pages.
@@ -67,6 +69,19 @@ export async function publicApiGet<T>(
   params?: Record<string, string | number | undefined | null>,
   revalidateSeconds = 0,
 ): Promise<PublicApiResult<T>> {
+  if (isUiDemoMode()) {
+    const hit = demoRespond(path + qs(params), 'GET');
+    if (hit) {
+      if (hit.status >= 400) {
+        throw new PublicApiError((hit.body as { message?: string })?.message ?? `API ${hit.status} for ${path}`, hit.status);
+      }
+      const body = hit.body as ApiResponse<unknown>;
+      if (!body.success) {
+        throw new PublicApiError(body.message ?? 'Invalid API response', hit.status);
+      }
+      return { data: body.data as T, meta: body.meta };
+    }
+  }
   const url = `${PUBLIC_API_BASE}/api${path}${qs(params)}`;
   const { data, meta } = await cachedGet(url, revalidateSeconds);
   return { data: data as T, meta };

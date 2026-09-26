@@ -19,6 +19,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { PublicNav } from '@/src/components/layout/PublicNav';
+import { HomeBottomNav } from '@/src/components/layout/HomeBottomNav';
 import { Avatar } from '@/src/components/ui/Avatar';
 import { PencilLoader } from '@/src/components/ui/PencilLoader';
 import { EmptyState } from '@/src/components/ui/EmptyState';
@@ -233,7 +234,8 @@ export default function HomeView({ initialTeachers, initialCentersResult }: Home
   };
 
   return (
-    <main className="min-h-screen bg-[#f7fbff] dark:bg-slate-900">
+    <>
+      <main className="min-h-screen bg-[#f7fbff] dark:bg-slate-900">
       <PublicNav />
 
       {/* Hero — marketplace reference */}
@@ -301,7 +303,7 @@ export default function HomeView({ initialTeachers, initialCentersResult }: Home
       </section>
 
       {/* Mode links */}
-      <section className="mx-auto mt-7 w-full max-w-[1180px] px-4 sm:px-6">
+      <section id="discover" className="mx-auto mt-7 w-full max-w-[1180px] scroll-mt-[128px] px-4 sm:px-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Link
             href="/teachers"
@@ -333,7 +335,7 @@ export default function HomeView({ initialTeachers, initialCentersResult }: Home
       </section>
 
       {/* Quick + trust strip */}
-      <section className="mx-auto mt-6 w-full max-w-[1180px] px-4 sm:px-6">
+      <section id="howItWorks" className="mx-auto mt-6 w-full max-w-[1180px] scroll-mt-[128px] px-4 sm:px-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <article className="rounded-[24px] border border-slate-200/70 bg-white p-6 shadow-[0_2px_10px_rgba(20,73,137,0.05)] dark:border-slate-700 dark:bg-slate-800">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-50 text-[#0878f8] dark:bg-sky-500/10 dark:text-sky-300">
@@ -384,7 +386,7 @@ export default function HomeView({ initialTeachers, initialCentersResult }: Home
       ) : (
         <>
           {/* Featured teachers */}
-          <section className="mx-auto mt-12 w-full max-w-[1180px] px-4 sm:px-6">
+          <section id="forStudents" className="mx-auto mt-12 w-full max-w-[1180px] scroll-mt-[128px] px-4 sm:px-6">
             <SectionHeader
               title={t('homeFeaturedTeachersTitle')}
               sub={t('homeFeaturedTeachersSub')}
@@ -439,7 +441,7 @@ export default function HomeView({ initialTeachers, initialCentersResult }: Home
       )}
 
       {/* CTA band */}
-      <section className="mx-auto mt-14 w-full max-w-[1180px] px-4 pb-20 sm:px-6">
+      <section id="forParents" className="mx-auto mt-14 w-full max-w-[1180px] scroll-mt-[128px] px-4 pb-20 sm:px-6">
         <div className="relative overflow-hidden rounded-[30px] bg-gradient-to-br from-[#0b1b61] via-[#12308f] to-[#0878f8] px-6 py-14 text-center shadow-[0_24px_60px_rgba(8,120,248,0.3)] sm:px-12">
           <div className="absolute -top-16 -end-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" aria-hidden />
           <div className="absolute -bottom-20 -start-16 h-56 w-56 rounded-full bg-gold-400/20 blur-3xl" aria-hidden />
@@ -473,5 +475,8 @@ export default function HomeView({ initialTeachers, initialCentersResult }: Home
         </div>
       </section>
     </main>
+
+      <HomeBottomNav />
+    </>
   );
 }
