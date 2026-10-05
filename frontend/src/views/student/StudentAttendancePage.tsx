@@ -32,7 +32,7 @@ function attendanceStatusKey(status: string): keyof Dict {
 }
 
 export default function StudentAttendancePage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { user } = useAuth();
   const [page, setPage] = useState(1);
   const limit = 20;
@@ -94,7 +94,7 @@ export default function StudentAttendancePage() {
                       <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 dark:bg-slate-800/60">
                         <td className="py-3 pe-4 font-medium text-slate-800 dark:text-slate-100">{formatDate(r.lesson.date)}</td>
                         <td className="hidden py-3 pe-4 text-slate-500 sm:table-cell">
-                          {formatTime(r.lesson.startTime)} – {formatTime(r.lesson.endTime)}
+                          {formatTime(r.lesson.startTime, lang)} – {formatTime(r.lesson.endTime, lang)}
                         </td>
                         <td className="hidden py-3 pe-4 text-slate-600 dark:text-slate-300 md:table-cell">
                           {r.lesson.subject?.name ?? t('generalSubject')}

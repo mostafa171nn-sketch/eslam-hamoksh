@@ -62,14 +62,6 @@ export const getCenterDashboardOverview = asyncHandler(async (req: Request, res:
     complaints,
     messagesSummary,
     messagesUnread,
-    complaintsSummary,
-    todayPayments,
-    allPayments,
-    prevMonthPayments,
-    prevYearPayments,
-    pendingBookings,
-    pendingSettlements,
-    pendingComplaints,
   ] = await Promise.all([
     prisma.room.findMany({
       where: { centerId, status: 'ACTIVE', ...(branchId ? { locationId: branchId } : {}) },
@@ -107,6 +99,18 @@ export const getCenterDashboardOverview = asyncHandler(async (req: Request, res:
     }),
     prisma.centerMessage.count({ where: { centerId } }),
     prisma.centerMessage.count({ where: { centerId, read: false } }),
+  ]);
+
+  const [
+    complaintsSummary,
+    todayPayments,
+    allPayments,
+    prevMonthPayments,
+    prevYearPayments,
+    pendingBookings,
+    pendingSettlements,
+    pendingComplaints,
+  ] = await Promise.all([
     prisma.complaint.groupBy({
       by: ['severity'],
       where: { centerId, status: { in: ['OPEN', 'IN_PROGRESS'] } },

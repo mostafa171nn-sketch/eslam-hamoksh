@@ -59,7 +59,7 @@ const TeacherCardCompact = memo(function TeacherCardCompact({ teacher }: { teach
         </h3>
         <span className="inline-flex shrink-0 items-baseline gap-[3px] text-[#b8860b] dark:text-amber-300">
           <i aria-hidden className="not-italic text-[12px] leading-none">★</i>
-          <b className="text-[13px] font-black leading-none">{teacher.rating.toFixed(1)}</b>
+          <b className="text-[13px] font-black leading-none">{Number(teacher.rating ?? 0).toFixed(1)}</b>
           {teacher.ratingCount > 0 && (
             <small className="text-[10px] font-semibold text-[#6e7b98] dark:text-slate-400">({teacher.ratingCount})</small>
           )}

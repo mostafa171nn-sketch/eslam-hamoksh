@@ -50,11 +50,17 @@ export function formatDateTime(value: string | Date | null | undefined, lang: 'a
   return `${formatDate(d, lang)} · ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
 
-export function formatTime(value: string | null | undefined): string {
+/**
+ * Format an "HH:MM" slot time. `lang` is explicit (never the mutable module
+ * `currentLang`) so SSR and the client's first render always agree — the
+ * persisted language is applied in an effect, which must not change what the
+ * server already rendered. Defaults to Arabic, the app's default locale.
+ */
+export function formatTime(value: string | null | undefined, lang: 'ar' | 'en' = 'ar'): string {
   if (!value) return '—';
   const [h, m] = value.split(':').map(Number);
   if (Number.isNaN(h)) return value;
-  const ampm = h >= 12 ? (currentLang === 'ar' ? 'م' : 'PM') : currentLang === 'ar' ? 'ص' : 'AM';
+  const ampm = h >= 12 ? (lang === 'ar' ? 'م' : 'PM') : lang === 'ar' ? 'ص' : 'AM';
   const hour12 = h % 12 === 0 ? 12 : h % 12;
   return `${hour12}:${String(m).padStart(2, '0')} ${ampm}`;
 }

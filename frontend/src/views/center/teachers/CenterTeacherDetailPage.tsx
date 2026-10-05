@@ -157,8 +157,8 @@ const TAB_LIST: { id: DetailTab; labelKey: DictKey }[] = [
   { id: 'transactions', labelKey: 'transactionsTabLabel' },
 ];
 
-function bookingSlot(b: BookingBrief) {
-  const time = `${formatTime(b.startTime)} – ${formatTime(b.endTime)}`;
+function bookingSlot(b: BookingBrief, lang: 'ar' | 'en') {
+  const time = `${formatTime(b.startTime, lang)} – ${formatTime(b.endTime, lang)}`;
   if (b.date) return `${formatDate(b.date)} · ${time}`;
   if (b.dayOfWeek !== null && b.dayOfWeek !== undefined) return `${dayName(b.dayOfWeek)} · ${time}`;
   return time;
@@ -366,9 +366,9 @@ export default function CenterTeacherDetailPage() {
 
           {tab === 'overview' && <OverviewTab teacher={teacher} nextBooking={nextBooking} current={currentSettlement ?? null} onViewBookings={goToBookings} lang={lang} t={t} />}
 
-          {tab === 'bookings' && <BookingsTab teacher={teacher} t={t} />}
+          {tab === 'bookings' && <BookingsTab teacher={teacher} lang={lang} t={t} />}
 
-          {tab === 'groups' && <GroupsTab teacher={teacher} t={t} />}
+          {tab === 'groups' && <GroupsTab teacher={teacher} lang={lang} t={t} />}
 
           {tab === 'collections' && <CollectionsTab teacher={teacher} weekTotal={weekTotal} lang={lang} t={t} />}
 
@@ -473,7 +473,7 @@ function OverviewTab({ teacher, nextBooking, current, onViewBookings, lang, t }:
           <div className="p-5">
             <div className="flex flex-wrap items-center gap-2">
               <CenterPill tone="green">{t('upcomingBooking')}</CenterPill>
-              <span className="text-sm font-bold text-[color:var(--mj-ink-strong)]">{bookingSlot(nextBooking)}</span>
+              <span className="text-sm font-bold text-[color:var(--mj-ink-strong)]">{bookingSlot(nextBooking, lang)}</span>
               <span className="text-sm text-[color:var(--mj-muted)]">{t('room')} {nextBooking.room}</span>
               {nextBooking.group && <span className="text-sm text-[color:var(--mj-muted)]">{nextBooking.group}</span>}
             </div>
@@ -547,7 +547,7 @@ function OverviewTab({ teacher, nextBooking, current, onViewBookings, lang, t }:
   );
 }
 
-function BookingsTab({ teacher, t }: { teacher: TeacherDetail; t: T }) {
+function BookingsTab({ teacher, lang, t }: { teacher: TeacherDetail; lang: 'ar' | 'en'; t: T }) {
   const items = teacher.bookings.length > 0 ? teacher.bookings : [];
   if (items.length === 0) {
     return (
@@ -582,7 +582,7 @@ function BookingsTab({ teacher, t }: { teacher: TeacherDetail; t: T }) {
                 </td>
                 <td className="text-sm text-[color:var(--mj-ink)]">{b.room}</td>
                 <td className="text-sm text-[color:var(--mj-ink)]">{b.group ?? '—'}</td>
-                <td className="text-sm text-[color:var(--mj-ink)]" dir="ltr">{formatTime(b.startTime)} – {formatTime(b.endTime)}</td>
+                <td className="text-sm text-[color:var(--mj-ink)]" dir="ltr">{formatTime(b.startTime, lang)} – {formatTime(b.endTime, lang)}</td>
                 <td>{bookingStatusPill(b.status, t)}</td>
               </tr>
             ))}
@@ -593,7 +593,7 @@ function BookingsTab({ teacher, t }: { teacher: TeacherDetail; t: T }) {
   );
 }
 
-function GroupsTab({ teacher, t }: { teacher: TeacherDetail; t: T }) {
+function GroupsTab({ teacher, lang, t }: { teacher: TeacherDetail; lang: 'ar' | 'en'; t: T }) {
   return (
     <div className="space-y-4">
       <div className="mj-card mj-card--padding">
@@ -607,7 +607,7 @@ function GroupsTab({ teacher, t }: { teacher: TeacherDetail; t: T }) {
                   <div className="mt-0.5 text-xs text-[color:var(--mj-muted)]">
                     {g.subject ?? ''}
                     {g.room ? (g.subject ? ' · ' : '') + t('room') + ' ' + g.room : ''}
-                    {g.dayOfWeek !== null && g.dayOfWeek !== undefined ? ' · ' + dayName(g.dayOfWeek) + ' ' + formatTime(g.startTime) : ''}
+                     {g.dayOfWeek !== null && g.dayOfWeek !== undefined ? ' · ' + dayName(g.dayOfWeek) + ' ' + formatTime(g.startTime, lang) : ''}
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">

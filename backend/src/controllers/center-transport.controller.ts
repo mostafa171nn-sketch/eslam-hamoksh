@@ -46,7 +46,7 @@ export const getTransportSummary = asyncHandler(async (_req: Request, res: Respo
 
   const [routes, subscribed, availableSeats] = await Promise.all([
     prisma.transportRoute.count({ where: { centerId, status: 'ACTIVE' } }),
-    prisma.transportStudent.count({ where: { active: true } }),
+    prisma.transportStudent.count({ where: { active: true, route: { centerId } } }),
     prisma.transportRoute.aggregate({
       where: { centerId },
       _sum: { capacity: true },
@@ -54,7 +54,7 @@ export const getTransportSummary = asyncHandler(async (_req: Request, res: Respo
   ]);
 
   const totalSeats = routes > 0 ? availableSeats._sum.capacity || 0 : 0;
-  const occupied = await prisma.transportStudent.count({ where: { active: true } });
+  const occupied = subscribed;
 
   return ok(res, {
     routes,
@@ -82,7 +82,7 @@ export const getTransportStudents = asyncHandler(async (_req: Request, res: Resp
   if (!centerId) throw ApiError.unauthorized();
 
   const rows = await prisma.transportStudent.findMany({
-    where: { active: true },
+    where: { active: true, route: { centerId } },
     include: {
       route: { select: { name: true } },
       student: {

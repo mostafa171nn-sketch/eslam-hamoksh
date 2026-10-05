@@ -64,10 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    // Safety net: never hold the whole UI hostage if /auth/me stalls.
-    const timer = window.setTimeout(() => {
-      if (active) setLoading(false);
-    }, 3500);
+    // Session restore: `loading` stays true until this request settles, so
+    // route guards never mistake a slow-but-healthy restore for "logged out".
+    // A hung backend is still bounded by the API client's request timeout,
+    // which rejects and lands below in the same unauthenticated path.
     api
       .get<User>('/auth/me')
       .then((res) => {
@@ -81,13 +81,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .finally(() => {
         if (active) {
-          clearTimeout(timer);
           setLoading(false);
         }
       });
     return () => {
       active = false;
-      clearTimeout(timer);
     };
   }, []);
 

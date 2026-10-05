@@ -90,7 +90,7 @@ export default function CenterGroupDetailPage() {
   const days = Array.from({ length: 7 }, (_, i) => ({ value: String(i), label: dayName(i, lang) }));
 
   const dayLabel = group.dayOfWeek === null || group.dayOfWeek === undefined ? '—' : dayName(group.dayOfWeek, lang);
-  const timeRange = `${formatTime(group.startTime)} – ${formatTime(group.endTime)}`;
+  const timeRange = `${formatTime(group.startTime, lang)} – ${formatTime(group.endTime, lang)}`;
 
   const agreementLine = () => {
     const amount = formatCurrency(group.agreement.amount, lang);
@@ -185,7 +185,7 @@ export default function CenterGroupDetailPage() {
                       {group.room ? `${group.room} · ${dayLabel}` : `${t('groupNeedsRoom')} · ${dayLabel}`}
                     </p>
                     <p className="mt-0.5 text-sm text-[color:var(--mj-muted)]">
-                      {`${formatTime(group.startTime)} ${t('to')} ${formatTime(group.endTime)}`}
+                      {`${formatTime(group.startTime, lang)} ${t('to')} ${formatTime(group.endTime, lang)}`}
                     </p>
                     <Link href="/center/rooms" className="mj-link mt-3 inline-flex items-center gap-1 text-sm font-semibold">
                       <DoorOpen className="h-4 w-4" />

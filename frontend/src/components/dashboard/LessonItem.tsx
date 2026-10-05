@@ -47,7 +47,7 @@ export function LessonItem({
   trailing?: ReactNode;
   className?: string;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { label, tone } = lessonStatusMeta(lesson.status, t);
   const weekday = dayName(new Date(lesson.date).getDay());
 
@@ -59,7 +59,7 @@ export function LessonItem({
             {weekday}
           </span>
           <span className="mt-0.5 text-xs font-bold text-slate-900 dark:text-white">
-            {formatTime(lesson.startTime)}
+            {formatTime(lesson.startTime, lang)}
           </span>
         </div>
 

@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
 
-type ProgressVariant = 'brand' | 'gold' | 'green' | 'red';
+type ProgressVariant = 'brand' | 'gold' | 'green' | 'red' | 'slate';
 
 const VARIANT_CLASSES: Record<ProgressVariant, string> = {
   brand: 'bg-brand-600 dark:bg-brand-500',
   gold: 'bg-gold-500 dark:bg-gold-400',
   green: 'bg-emerald-600 dark:bg-emerald-500',
   red: 'bg-red-600 dark:bg-red-500',
+  slate: 'bg-slate-300 dark:bg-slate-600',
 };
 
 interface ProgressProps {

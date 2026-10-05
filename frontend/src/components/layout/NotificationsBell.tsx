@@ -6,6 +6,7 @@ import { Bell, CheckCheck } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useT } from '../../i18n';
 import { useAuth } from '../../context/AuthContext';
+import { PREF_NOTIF, usePref } from '../../hooks/useAppPrefs';
 import type { Notification } from '../../lib/types';
 import { timeAgo } from '../../lib/format';
 
@@ -17,6 +18,8 @@ export function NotificationsBell() {
   const ref = useRef<HTMLDivElement>(null);
   const { t, lang } = useT();
   const { user, loading: authLoading } = useAuth();
+  // Settings-page preference: hides the in-app unread indicator when off.
+  const [notifIndicator] = usePref(PREF_NOTIF, true);
 
   // Only poll notifications for signed-in users — visitors must never fire
   // (and then retry) authenticated requests on public pages.
@@ -100,7 +103,7 @@ export function NotificationsBell() {
         className={`relative rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 ${open ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200' : ''}`}
       >
         <Bell className="h-5 w-5" />
-        {unread > 0 && (
+        {notifIndicator && unread > 0 && (
           <span className="absolute end-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
             {unread > 9 ? '9+' : unread}
           </span>

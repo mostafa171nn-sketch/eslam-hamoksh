@@ -331,7 +331,7 @@ export default function CenterStudentDetailPage() {
                         <tr key={a.id}>
                           <td>
                             <span className="block font-medium text-[color:var(--mj-ink-strong)]">
-                              {fmtDateParts(a.date)}{a.time ? `، ${formatTime(a.time)}` : ''}
+                              {fmtDateParts(a.date)}{a.time ? `، ${formatTime(a.time, lang)}` : ''}
                             </span>
                           </td>
                           <td>{a.subject || t('subject')}</td>

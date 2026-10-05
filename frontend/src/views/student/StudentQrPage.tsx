@@ -56,7 +56,7 @@ function todayISO() {
 }
 
 export default function StudentQrPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [qr, setQr] = useState<Record<string, QrState>>({});
   const timers = useRef<Record<string, ReturnType<typeof setInterval>>>({});
 
@@ -156,7 +156,7 @@ export default function StudentQrPage() {
                   </h3>
                   <p className="mt-0.5 text-sm text-slate-500">{lesson.teacher.fullName}</p>
                   <p className="mt-0.5 text-sm text-slate-500">
-                    {formatTime(lesson.startTime)} – {formatTime(lesson.endTime)}
+                    {formatTime(lesson.startTime, lang)} – {formatTime(lesson.endTime, lang)}
                   </p>
                 </div>
                 <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-300">

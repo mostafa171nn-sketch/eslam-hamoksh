@@ -261,6 +261,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   ],
   STUDENT: [
     'lessons.view',
+    'lessons.create', // student self-booking via POST /lessons/book (public teacher sheet)
     'attendance.view',
     'assignments.view',
     'exams.view',

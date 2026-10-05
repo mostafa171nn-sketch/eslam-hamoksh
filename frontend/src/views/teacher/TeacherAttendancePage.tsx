@@ -61,7 +61,7 @@ function attendanceStatusKey(status: string): keyof Dict {
 }
 
 export default function TeacherAttendancePage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const toast = useToast();
 
   const { data: lessons, loading, initialLoading, error } = useApi<Lesson[]>(
@@ -165,7 +165,7 @@ export default function TeacherAttendancePage() {
                     {lesson.subject?.name ?? t('generalLesson')}
                   </h3>
                   <p className="mt-0.5 text-sm text-slate-500">
-                    {formatTime(lesson.startTime)} – {formatTime(lesson.endTime)} · {lesson.student.fullName}
+                    {formatTime(lesson.startTime, lang)} – {formatTime(lesson.endTime, lang)} · {lesson.student.fullName}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -205,7 +205,7 @@ export default function TeacherAttendancePage() {
                           <>
                             <Badge tone={STATUS_TONE[row.status] ?? 'slate'}>{t(attendanceStatusKey(row.status))}</Badge>
                             {row.markedAt && (
-                              <span className="text-xs text-slate-400">{formatTime(row.markedAt.slice(11, 16))}</span>
+                              <span className="text-xs text-slate-400">{formatTime(row.markedAt.slice(11, 16), lang)}</span>
                             )}
                           </>
                         ) : (
@@ -233,7 +233,7 @@ export default function TeacherAttendancePage() {
         {scanLesson && (
           <div>
             <p className="mb-3 text-sm text-slate-500">
-              {scanLesson.student.fullName} · {formatTime(scanLesson.startTime)} – {formatTime(scanLesson.endTime)}
+              {scanLesson.student.fullName} · {formatTime(scanLesson.startTime, lang)} – {formatTime(scanLesson.endTime, lang)}
             </p>
 
             {scanning && !scanResult && (

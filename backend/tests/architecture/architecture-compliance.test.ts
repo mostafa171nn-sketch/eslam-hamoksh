@@ -45,6 +45,7 @@ describe('Architecture Compliance: No direct prisma imports in services', () => 
     'user.service.ts',
     'wallet.service.ts',
     'center-employee.service.ts',
+    'center-admin.service.ts',
     'otp.service.ts',
     'student-center-follow.service.ts',
   ]);
@@ -103,8 +104,10 @@ describe('Architecture Compliance: Routes use authenticate', () => {
    * - catalog.routes.ts: subject/grade listings.
    * - otp.routes.ts: phone-OTP send/verify used by registration and the
    *   forgot-password flow — these endpoints must stay public.
+   * - mock-routes.ts: dev-only mock capability discovery (GET /auth/mock-info)
+   *   probed by the login page before authentication; must stay public.
    */
-  const PUBLIC_ROUTES = new Set(['catalog.routes.ts', 'otp.routes.ts']);
+  const PUBLIC_ROUTES = new Set(['catalog.routes.ts', 'otp.routes.ts', 'mock-routes.ts']);
 
   for (const file of routeFiles) {
     if (PUBLIC_ROUTES.has(file)) continue;

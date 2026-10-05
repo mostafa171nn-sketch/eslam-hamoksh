@@ -6,6 +6,7 @@ import { LangProvider } from '../i18n';
 import { ToastProvider } from '../context/ToastContext';
 import { AuthProvider } from '../context/AuthContext';
 import { ErrorBoundary } from './ErrorBoundary';
+import { PrefsApplier } from './PrefsApplier';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -13,7 +14,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
       <LangProvider>
         <ErrorBoundary>
           <ToastProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              <PrefsApplier />
+              {children}
+            </AuthProvider>
           </ToastProvider>
         </ErrorBoundary>
       </LangProvider>

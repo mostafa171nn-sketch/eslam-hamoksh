@@ -1,6 +1,7 @@
 import { app } from './app';
 import { env } from './config/env';
-import { prisma } from './lib/prisma';
+import { prisma, ensurePrismaReady, setMockPrisma } from './lib/prisma';
+import type { PrismaClient } from '@prisma/client';
 import { sweepExpiredAttempts } from './services/exam.service';
 import { sweepAttendanceFinalization, sweepSubscriptionExpiry } from './services/attendance.service';
 
@@ -8,11 +9,20 @@ let sweeper: NodeJS.Timeout | null = null;
 let attendanceSweeper: NodeJS.Timeout | null = null;
 
 async function start() {
-  // Bind HTTP before touching the database so the API stays reachable even if
-  // the DB is temporarily unavailable. Crashing on a failed startup connect
-  // would crash-loop the container → upstream never listens → 502
-  // "Application failed to respond". /api/health reports the real database
-  // state and the app recovers automatically once the DB accepts connections.
+  if (process.env.DEV_MOCK_DATA === 'true') {
+    try {
+      const mod = await import('./mock/mock-prisma.js');
+      await mod.ensureReady();
+      await setMockPrisma(mod.createMockPrisma() as unknown as PrismaClient);
+      console.log('[mock] DEV_MOCK_DATA enabled — in-memory data store active.');
+    } catch (err) {
+      console.error('[mock] Failed to initialize mock data:', err);
+      process.exit(1);
+    }
+  } else {
+    await ensurePrismaReady();
+  }
+
   app.listen(env.PORT, () => {
     // eslint-disable-next-line no-console
     console.log(`API running on http://localhost:${env.PORT} (${env.NODE_ENV})`);

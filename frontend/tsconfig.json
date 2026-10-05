@@ -40,7 +40,16 @@
     ".next-build-test/types/**/*.ts",
     ".next-demo/types/**/*.ts",
     ".next-demo2/types/**/*.ts",
-    ".next-demo3/types/**/*.ts"
+    ".next-demo3/types/**/*.ts",
+    ".next-verify/types/**/*.ts",
+    ".next-verify2/types/**/*.ts",
+    ".next-journey-check/types/**/*.ts",
+    ".next-jh-check/types/**/*.ts",
+    ".next-fin-check/types/**/*.ts",
+    ".next-search-check/types/**/*.ts",
+    ".next-auth-check/types/**/*.ts",
+    ".next-acc-check/types/**/*.ts",
+    ".next-final-check/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

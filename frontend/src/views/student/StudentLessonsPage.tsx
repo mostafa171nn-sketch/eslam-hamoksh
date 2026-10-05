@@ -33,7 +33,7 @@ function lessonStatusKey(status: string): keyof Dict {
 }
 
 export default function StudentLessonsPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const searchParams = useSearchParams();
   const teacherIdParam = searchParams.get('teacherId') ?? undefined;
   const [page, setPage] = useState(1);
@@ -100,7 +100,7 @@ export default function StudentLessonsPage() {
                         {isToday(l.date) && <Badge tone="blue">{t('today')}</Badge>}
                       </div>
                       <p className="mt-1 text-xs text-slate-500">
-                        {formatDate(l.date)} · {formatTime(l.startTime)} – {formatTime(l.endTime)}
+                        {formatDate(l.date)} · {formatTime(l.startTime, lang)} – {formatTime(l.endTime, lang)}
                       </p>
                       <p className="mt-0.5 text-xs text-slate-400">{t('with')} {l.teacher.fullName}</p>
                       {l.notes && <p className="mt-1 text-xs text-slate-500">{l.notes}</p>}

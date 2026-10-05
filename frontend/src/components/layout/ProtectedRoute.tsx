@@ -54,17 +54,20 @@ export function RoleRoute({ roles, children }: { roles: string[]; children: Reac
 }
 
 export function RoleDashboard() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    // Never redirect while the session is still restoring; a null user
+    // during hydration is "unknown", not "logged out".
+    if (loading) return;
     if (user?.role === 'SUPER_ADMIN') router.replace('/admin');
     else if (user?.role === 'CENTER_ADMIN' || user?.role === 'ADMIN') router.replace('/center');
     else if (user?.role === 'TEACHER') router.replace('/teacher');
     else if (user?.role === 'STUDENT') router.replace('/student');
     else if (user?.role === 'PARENT') router.replace('/parent');
     else router.replace('/login');
-  }, [user, router]);
+  }, [user, loading, router]);
 
   return null;
 }

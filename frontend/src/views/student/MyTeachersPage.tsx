@@ -34,7 +34,7 @@ function lessonStatusKey(status: string): keyof Dict {
 }
 
 export default function MyTeachersPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { data, initialLoading, error } = useApi(() => api.getMyTeachers<MyTeacher[]>(), [], { cacheKey: 'students:me:teachers', staleTTL: 30_000, cacheTTL: 300_000 });
 
   if (initialLoading) return <PencilLoader label={t('loadingTeachers')} />;
@@ -99,7 +99,7 @@ export default function MyTeachersPage() {
                         {t('nextLesson')}
                       </p>
                       <p className="mt-0.5 font-medium text-slate-800 dark:text-slate-100">
-                        {formatDate(teacher.upcomingLesson.date)} · {formatTime(teacher.upcomingLesson.startTime)}
+                        {formatDate(teacher.upcomingLesson.date)} · {formatTime(teacher.upcomingLesson.startTime, lang)}
                         {teacher.upcomingLesson.subject ? ` · ${teacher.upcomingLesson.subject.name}` : ''}
                       </p>
                     </div>

@@ -126,8 +126,8 @@ function agreementLabel(type: AgreementType, t: T): string {
   return type === 'monthly' ? t('agreementMonthly') : t('agreementSession');
 }
 
-function bookingTime(req: RoomRequest) {
-  const time = `${formatTime(req.startTime)} – ${formatTime(req.endTime)}`;
+function bookingTime(req: RoomRequest, lang: 'ar' | 'en') {
+  const time = `${formatTime(req.startTime, lang)} – ${formatTime(req.endTime, lang)}`;
   if (req.recurrence === 'WEEKLY' && req.dayOfWeek !== null) {
     return `${dayName(req.dayOfWeek)} · ${time}`;
   }
@@ -411,7 +411,7 @@ export default function CenterTeachersPage() {
       )}
 
       {tab === 'roomRequests' && (
-        <RoomRequestsTab queue={queue} queueLoading={queueLoading} t={t} />
+        <RoomRequestsTab queue={queue} queueLoading={queueLoading} lang={lang} t={t} />
       )}
 
       {tab === 'settlements' && <SettlementsTab queue={queue} queueLoading={queueLoading} lang={lang} t={t} />}
@@ -451,7 +451,7 @@ function StatusPill({ status }: { status: string }) {
   return <CenterPill tone="amber">{status}</CenterPill>;
 }
 
-function RoomRequestsTab({ queue, queueLoading, t }: { queue: TeacherQueue | null; queueLoading: boolean; t: T }) {
+function RoomRequestsTab({ queue, queueLoading, lang, t }: { queue: TeacherQueue | null; queueLoading: boolean; lang: 'ar' | 'en'; t: T }) {
   if (queueLoading && !queue) return <PencilLoader label={t('loading')} size="sm" />;
   const requests = queue?.roomRequests ?? [];
   if (requests.length === 0) {
@@ -478,7 +478,7 @@ function RoomRequestsTab({ queue, queueLoading, t }: { queue: TeacherQueue | nul
                 {req.subject ? (req.group ? ' · ' : '') + req.subject : ''}
                 {req.note ? ' — ' + req.note : ''}
               </div>
-              <div className="mj-queue-item-meta">{bookingTime(req)}</div>
+              <div className="mj-queue-item-meta">{bookingTime(req, lang)}</div>
             </div>
           </div>
         ))}

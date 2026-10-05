@@ -90,7 +90,7 @@ export default function CenterGroupsPage() {
   };
 
   const scheduleLine = (g: GroupRow) => {
-    const time = `${formatTime(g.startTime)}–${formatTime(g.endTime)}`;
+    const time = `${formatTime(g.startTime, lang)}–${formatTime(g.endTime, lang)}`;
     if (g.dayOfWeek === null || g.dayOfWeek === undefined) return '—';
     return `${dayName(g.dayOfWeek, lang)} · ${time}`;
   };

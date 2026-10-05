@@ -122,11 +122,12 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
   const prismaCode = err && typeof err === 'object' && 'code' in err ? (err as { code: string }).code : undefined;
   const detail = err instanceof Error ? err.message : String(err);
   const stack = err instanceof Error ? err.stack : undefined;
+  const requestId = (res.locals.requestId as string) || '-';
 
   if (env.isDev) {
     // eslint-disable-next-line no-console
     console.error(
-      `[ERROR] ${req.method} ${req.originalUrl}\n` +
+      `[${requestId}] [ERROR] ${req.method} ${req.originalUrl}\n` +
         `  name: ${err instanceof Error ? err.name : typeof err}\n` +
         `  message: ${detail}\n` +
         (prismaCode ? `  prismaCode: ${prismaCode}\n` : '') +
@@ -134,7 +135,7 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     );
   } else {
     // eslint-disable-next-line no-console
-    console.error(`[ERROR] ${req.method} ${req.originalUrl} | ${err instanceof Error ? err.name : 'unknown'}: ${detail}` + (prismaCode ? ` (${prismaCode})` : ''));
+    console.error(`[${requestId}] [ERROR] ${req.method} ${req.originalUrl} | ${err instanceof Error ? err.name : 'unknown'}: ${detail}` + (prismaCode ? ` (${prismaCode})` : ''));
   }
 
   // In development, return the actual error so the frontend can surface it.

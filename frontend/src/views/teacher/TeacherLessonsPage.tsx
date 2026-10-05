@@ -40,7 +40,7 @@ function lessonStatusKey(status: string): keyof Dict {
 }
 
 export default function TeacherLessonsPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { user } = useAuth();
   const toast = useToast();
   const [page, setPage] = useState(1);
@@ -186,7 +186,7 @@ export default function TeacherLessonsPage() {
                           {isToday(l.date) && <Badge tone="blue">{t('today')}</Badge>}
                         </div>
                         <p className="mt-0.5 text-xs text-slate-500">
-                          {l.subject?.name ?? t('noSubject')} · {formatTime(l.startTime)} – {formatTime(l.endTime)} ·{' '}
+                          {l.subject?.name ?? t('noSubject')} · {formatTime(l.startTime, lang)} – {formatTime(l.endTime, lang)} ·{' '}
                           {l.location?.name ?? t('online')}
                         </p>
                         {l.notes && <p className="mt-0.5 line-clamp-2 text-xs text-slate-400">{l.notes}</p>}
@@ -283,7 +283,7 @@ export default function TeacherLessonsPage() {
               <div>
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">{attendanceLesson.student.fullName}</p>
                 <p className="text-xs text-slate-500">
-                  {attendanceLesson.subject?.name ?? t('noSubject')} · {formatDate(attendanceLesson.date)} · {formatTime(attendanceLesson.startTime)}
+                  {attendanceLesson.subject?.name ?? t('noSubject')} · {formatDate(attendanceLesson.date)} · {formatTime(attendanceLesson.startTime, lang)}
                 </p>
               </div>
             </div>

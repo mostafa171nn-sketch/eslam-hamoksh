@@ -7,6 +7,7 @@ import path from 'path';
 import { env } from './config/env';
 import { apiRateLimiter } from './middleware/rateLimiter';
 import { errorHandler, notFoundHandler } from './middleware/error';
+import { requestLogger } from './middleware/requestLogger';
 import { uploadRootPath } from './middleware/upload';
 
 import authRoutes from './routes/auth.routes';
@@ -54,6 +55,7 @@ import centerFinanceRoutes from './routes/center-finance.routes';
 import centerCommunicationsRoutes from './routes/center-communications.routes';
 import centerBroadcastRoutes from './routes/center-broadcast.routes';
 import centerTasksRoutes from './routes/center-tasks.routes';
+import { mockRoutes } from './routes/mock-routes';
 import { prisma } from './lib/prisma';
 
 export const app = express();
@@ -66,6 +68,10 @@ export const app = express();
 // so an unset value surfaces a clear error instead of silently weakening the
 // limiter). 0 (no proxy) is the safe default everywhere else.
 app.set('trust proxy', env.TRUST_PROXY_HOPS);
+
+// First middleware so every request (including 404s and unhandled errors) gets a
+// correlation ID and an access-log line.
+app.use(requestLogger);
 
 // Security headers. CSP is left to the frontend (API does not serve HTML).
 app.use(
@@ -156,7 +162,7 @@ app.get('/api/health', async (_req, res) => {
     db = 'unavailable';
   }
   res.status(db === 'ok' ? 200 : 503).json({
-    status: 'ok',
+    status: db,
     uptime: Math.round(process.uptime()),
     timestamp: new Date().toISOString(),
     checks: { database: db },
@@ -208,6 +214,8 @@ app.use('/api/center/account/finance', centerFinanceRoutes);
 app.use('/api/center/account/communications', centerCommunicationsRoutes);
 app.use('/api/center/account/broadcast', centerBroadcastRoutes);
 app.use('/api/center/account/tasks', centerTasksRoutes);
+
+app.use('/api', mockRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

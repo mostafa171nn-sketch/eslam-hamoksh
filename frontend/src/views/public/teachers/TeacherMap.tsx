@@ -86,7 +86,7 @@ function TeacherPopupContent({ teacher, t }: { teacher: PublicTeacher; t: TFunct
       {(teacher.ratingCount ?? 0) > 0 && (
         <p className="mt-1.5 flex items-center gap-1 text-xs text-amber-600">
           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-          <span className="font-medium">{teacher.rating.toFixed(1)}</span>
+          <span className="font-medium">{Number(teacher.rating ?? 0).toFixed(1)}</span>
           <span className="text-slate-400">({teacher.ratingCount})</span>
         </p>
       )}

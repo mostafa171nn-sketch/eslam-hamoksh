@@ -38,7 +38,7 @@ function statusLabel(status: string): 'present' | 'late' | 'absent' | 'excused' 
 }
 
 export default function ParentAttendancePage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { data, loading, initialLoading, error } = useApi<ParentChildAttendance[]>(
     () => api.get<ParentChildAttendance[]>('/attendance/parent/overview'),
     [],
@@ -84,7 +84,7 @@ export default function ParentAttendancePage() {
                       <span className="text-slate-700">
                         {r.subject}
                         <span className="ms-1 text-xs text-slate-400">
-                          {formatDate(r.date)} {r.markedAt ? `· ${formatTime((r.markedAt as string).slice(11, 16))}` : ''}
+                          {formatDate(r.date)} {r.markedAt ? `· ${formatTime((r.markedAt as string).slice(11, 16), lang)}` : ''}
                         </span>
                       </span>
                       <Badge tone={STATUS_TONE[r.status]}>{t(statusLabel(r.status))}</Badge>

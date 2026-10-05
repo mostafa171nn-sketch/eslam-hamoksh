@@ -21,3 +21,5 @@ vercel-*.mjs
 verify-*.mjs
 
 
+.vercel
+.env*

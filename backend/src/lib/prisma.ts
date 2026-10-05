@@ -31,7 +31,6 @@ export const TENANT_MODELS = new Set<string>([
   'Complaint',
   'Broadcast',
   'TransportRoute',
-  'TransportStudent',
   'Expense',
   'EmployeeTask',
   'CenterMessage',
@@ -79,22 +78,35 @@ const extended = basePrisma.$extends({
           const ctx = getTenantContext();
           let nextArgs = args;
 
-          // Small helper used below to retry transient connection failures.
+          // Transient connection failures that are safe to retry while the
+          // Neon serverless compute is waking from its idle scale-down:
+          //   P1001  "Can't reach database server"     (connect refused/timeout)
+          //   P1002  "Database server timed out"       (response timeout)
+          //   P1017  "Server has closed the connection" (dropped while waking)
+          //   P2024  "Pool fetch timed out"            (concurrent first burst)
+          //   P2034  "Transaction already closed"      (dropped connection)
+          // Any other error is a real failure (e.g. a schema/query bug) and is
+          // rethrown immediately so it is never masked.
+          const TRANSIENT_CODES = new Set(['P1001', 'P1002', 'P1017', 'P2024', 'P2034']);
+          const RETRY_DELAYS_MS = [1500, 3000, 5000];
+
           const execute = async () => {
-            try {
-              return await query(nextArgs);
-            } catch (err: any) {
-              // Neon (serverless) scales the compute down when idle. The first
-              // query after idle can fail with P1001 ("Can't reach database
-              // server") because connection establishment is slower than
-              // Prisma's default timeout while the compute spins back up.
-              // Retrying once after a short delay lets the compute finish waking.
-              if (err && err.code === 'P1001') {
-                await new Promise((r) => setTimeout(r, 1500));
-                return query(nextArgs);
+            let lastErr: any;
+            for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
+              try {
+                return await query(nextArgs);
+              } catch (err: any) {
+                lastErr = err;
+                const code = err && typeof err.code === 'string' ? err.code : '';
+                if (!TRANSIENT_CODES.has(code)) throw err;
+                const delay = RETRY_DELAYS_MS[attempt];
+                if (delay === undefined) throw err;
+                // eslint-disable-next-line no-console
+                console.warn(`[db] transient ${code} on ${model}.${operation}, retrying in ${delay}ms (attempt ${attempt + 1})`);
+                await new Promise((r) => setTimeout(r, delay));
               }
-              throw err;
             }
+            throw lastErr;
           };
 
           if (!ctx || ctx.scope !== 'center' || !ctx.centerId) {
@@ -158,9 +170,9 @@ const extended = basePrisma.$extends({
   },
 });
 
-// The extended client keeps the tenant-isolation middleware at runtime, but we
-// cast it back to the base `PrismaClient` type so interactive transactions
-// (which receive a `Prisma.TransactionClient`) keep their original signatures.
-// The middleware still wraps every operation, including those inside a
-// transaction, because the runtime object is the extended client.
-export const prisma = extended as unknown as PrismaClient;
+export let prisma: PrismaClient = extended as unknown as PrismaClient;
+export let ensurePrismaReady: () => Promise<void> = async () => { /* no-op for real Prisma */ };
+export async function setMockPrisma(mock: PrismaClient) {
+  prisma = mock;
+  ensurePrismaReady = async () => {};
+}

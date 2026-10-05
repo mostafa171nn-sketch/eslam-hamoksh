@@ -56,8 +56,8 @@ const STUDENT_LEARN: NavItem[] = [
 ];
 
 const STUDENT_EXPLORE: NavItem[] = [
-  { to: '/centers', labelKey: 'centers', icon: Building2 },
-  { to: '/teachers', labelKey: 'browseTeachers', icon: GraduationCap },
+  { to: '/student/browse-centers', labelKey: 'centers', icon: Building2 },
+  { to: '/student/browse-teachers', labelKey: 'browseTeachers', icon: GraduationCap },
   { to: '/student/followed', labelKey: 'followedCenters', icon: Building2 },
 ];
 

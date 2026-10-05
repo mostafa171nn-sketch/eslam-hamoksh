@@ -30,7 +30,7 @@ import { LessonItem, lessonStatusMeta } from '../../components/dashboard/LessonI
 import { formatTime } from '../../lib/format';
 
 export default function TeacherDashboardPage() {
-  const { t, dir } = useT();
+  const { t, dir, lang } = useT();
   const { user } = useAuth();
   const { data, initialLoading, error } = useApi(() => api.get<TeacherStats>('/teachers/me/stats'), []);
 
@@ -245,7 +245,7 @@ export default function TeacherDashboardPage() {
               </div>
               <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{sorted[0].student.fullName}</p>
               <p className="text-xs text-slate-500">
-                {sorted[0].subject?.name ?? t('generalSubject')} · {formatTime(sorted[0].startTime)}
+                {sorted[0].subject?.name ?? t('generalSubject')} · {formatTime(sorted[0].startTime, lang)}
               </p>
               <div className="ms-auto">
                 <Badge tone={meta.tone}>{meta.label}</Badge>

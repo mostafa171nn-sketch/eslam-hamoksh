@@ -23,7 +23,7 @@ export function Avatar({
 }: {
   src?: string | null;
   name: string;
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'hero';
   className?: string;
 }) {
   const sizes = {
@@ -32,6 +32,7 @@ export function Avatar({
     md: 'h-10 w-10 text-sm',
     lg: 'h-14 w-14 text-lg',
     xl: 'h-20 w-20 text-2xl',
+    hero: 'h-20 w-20 text-2xl sm:h-32 sm:w-32 sm:text-4xl lg:h-40 lg:w-40 lg:text-5xl',
   };
   if (src) {
     return (

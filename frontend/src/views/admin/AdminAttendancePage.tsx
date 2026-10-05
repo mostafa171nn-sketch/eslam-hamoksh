@@ -29,7 +29,7 @@ const STATUS_TONE: Record<string, 'green' | 'red' | 'amber' | 'blue' | 'slate' |
 };
 
 export default function AdminAttendancePage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const toast = useToast();
   const STATUS_OPTIONS = [
     { value: '', label: t('allStatus') },
@@ -192,7 +192,7 @@ export default function AdminAttendancePage() {
                       <td className="py-3 pe-4 text-slate-600 dark:text-slate-300">
                         {row.lesson.subject} · {row.lesson.teacher}
                         <span className="block text-xs text-slate-400">
-                          {formatDate(row.lesson.date)} {formatTime(row.lesson.startTime)}
+                          {formatDate(row.lesson.date)} {formatTime(row.lesson.startTime, lang)}
                         </span>
                       </td>
                       <td className="py-3 pe-4">
@@ -200,7 +200,7 @@ export default function AdminAttendancePage() {
                       </td>
                       <td className="py-3 pe-4 text-slate-500">{row.method}</td>
                       <td className="py-3 pe-4 text-slate-500">
-                        {row.markedAt ? `${formatDate(row.markedAt)} ${formatTime(row.markedAt.slice(11, 16))}` : '—'}
+                        {row.markedAt ? `${formatDate(row.markedAt)} ${formatTime(row.markedAt.slice(11, 16), lang)}` : '—'}
                       </td>
                       <td className="py-3 pe-4">
                         <button onClick={() => openEdit(row)} className="text-brand-600 hover:underline">

@@ -30,13 +30,13 @@ export async function getUserProfile(userId: string) {
         include: {
           grade: true,
           studentSubjects: { include: { subject: true } },
-          teachers: { include: { teacher: { include: { user: true } } } },
-          parents: { include: { parent: { include: { user: true } } } },
+          teachers: { include: { teacher: { include: { user: { select: { fullName: true, photo: true } } } } } },
+          parents: { include: { parent: { include: { user: { select: { fullName: true } } } } } },
         },
       },
       parent: {
         include: {
-          children: { include: { student: { include: { user: true, grade: true } } } },
+          children: { include: { student: { include: { user: { select: { fullName: true, photo: true } }, grade: true } } } },
         },
       },
     },

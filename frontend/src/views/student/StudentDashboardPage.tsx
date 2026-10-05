@@ -60,7 +60,7 @@ const EXPLORE_CHIPS = [
 ] as const;
 
 export default function StudentDashboardPage() {
-  const { t, dir } = useT();
+  const { t, dir, lang } = useT();
   const { user } = useAuth();
   const { data, initialLoading, error } = useApi(() => api.get<StudentDashboard>('/students/dashboard'), []);
   const { data: teachers } = useApi(() => api.getMyTeachers<MyTeacher[]>(), [], { cacheKey: 'students:me:teachers', staleTTL: 30_000, cacheTTL: 300_000 });
@@ -349,7 +349,7 @@ export default function StudentDashboardPage() {
                   </div>
                   {teacher.upcomingLesson && (
                     <p className="mt-1.5 text-xs text-slate-500">
-                      {t('nextLabel')} {formatDate(teacher.upcomingLesson.date)} · {formatTime(teacher.upcomingLesson.startTime)}
+                      {t('nextLabel')} {formatDate(teacher.upcomingLesson.date)} · {formatTime(teacher.upcomingLesson.startTime, lang)}
                     </p>
                   )}
                 </div>
