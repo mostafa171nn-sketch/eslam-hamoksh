@@ -22,6 +22,7 @@ import { CenterPageHeader } from '../ui/CenterPageHeader';
 import { CenterStatCard } from '../ui/CenterStatCard';
 import { CenterPill, type CenterPillTone } from '../ui/CenterPill';
 import { CenterModal } from '../ui/CenterModal';
+import { PasswordVisibilityToggle } from '../../../components/ui/Input';
 import {
   accessLevelForOps,
   accessLevelLabel,
@@ -412,6 +413,7 @@ function ResetPasswordCard({ employee, onDone }: { employee: EmployeeDetail; onD
   const { t } = useT();
   const toast = useToast();
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -440,7 +442,12 @@ function ResetPasswordCard({ employee, onDone }: { employee: EmployeeDetail; onD
       <form onSubmit={submit} className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="mj-field flex-1">
           <label className="mj-label">{t('password')}</label>
-          <input className="mj-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <div className="relative">
+            <input className="mj-input" style={{ paddingInlineEnd: '2.75rem' }} type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} />
+            <span className="absolute inset-y-0 end-0 flex items-center pe-1.5">
+              <PasswordVisibilityToggle visible={showPassword} onToggle={() => setShowPassword((s) => !s)} className="h-8 w-8" />
+            </span>
+          </div>
         </div>
         <button type="submit" className="mj-btn mj-btn--primary" disabled={saving || password.length < 6}>
           <RefreshCcw className="h-4 w-4" />

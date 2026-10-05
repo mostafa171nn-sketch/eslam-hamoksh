@@ -93,6 +93,8 @@
   enterYourUsername: 'أدخل اسم المستخدم',
   password: 'كلمة المرور',
   passwordRequired: 'كلمة المرور مطلوبة.',
+  showPassword: 'إظهار كلمة المرور',
+  hidePassword: 'إخفاء كلمة المرور',
   fullName: 'الاسم الكامل',
   phone: 'الهاتف',
   role: 'الدور',

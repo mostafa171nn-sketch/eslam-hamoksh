@@ -96,6 +96,8 @@ export const en: Dict = {
   enterYourUsername: 'Enter your username',
   password: 'Password',
   passwordRequired: 'Password is required.',
+  showPassword: 'Show password',
+  hidePassword: 'Hide password',
   fullName: 'Full name',
   phone: 'Phone',
   role: 'Role',

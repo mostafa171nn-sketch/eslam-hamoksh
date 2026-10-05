@@ -18,6 +18,7 @@ import { CenterStatCard } from './ui/CenterStatCard';
 import { CenterPill, type CenterPillTone } from './ui/CenterPill';
 import { CenterSearchInput } from './ui/CenterSearchInput';
 import { CenterModal } from './ui/CenterModal';
+import { PasswordVisibilityToggle } from '../../components/ui/Input';
 import {
   accessLevelForOps,
   accessLevelLabel,
@@ -419,6 +420,7 @@ function AddEmployeeModal({ open, onClose, onSuccess }: { open: boolean; onClose
   const { t } = useT();
   const toast = useToast();
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ fullName: '', username: '', phone: '', email: '', password: '', role: 'CENTER_EMPLOYEE' });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -481,7 +483,12 @@ function AddEmployeeModal({ open, onClose, onSuccess }: { open: boolean; onClose
           </div>
           <div className="mj-field">
             <label className="mj-label">{t('password')}</label>
-            <input className="mj-input" type="password" required value={form.password} onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))} />
+            <div className="relative">
+              <input className="mj-input" style={{ paddingInlineEnd: '2.75rem' }} type={showPassword ? 'text' : 'password'} required value={form.password} onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))} />
+              <span className="absolute inset-y-0 end-0 flex items-center pe-1.5">
+                <PasswordVisibilityToggle visible={showPassword} onToggle={() => setShowPassword((s) => !s)} className="h-8 w-8" />
+              </span>
+            </div>
           </div>
         </div>
       </form>
